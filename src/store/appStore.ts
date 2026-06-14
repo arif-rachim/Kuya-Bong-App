@@ -1,7 +1,7 @@
 /**
- * Store tunggal Kuya Bong (mock, client-only).
+ * Store tunggal Realief Expert (mock, client-only).
  *
- * Semua mutasi data lewat action di sini — ini "seam" untuk integrasi manggaleh nanti
+ * Semua mutasi data lewat action di sini — ini "seam" untuk integrasi backend nanti
  * (ganti isi action dengan SDK call + optimistic update). Komponen TIDAK boleh
  * memutasi state langsung.
  *

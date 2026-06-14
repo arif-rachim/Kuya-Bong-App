@@ -2,7 +2,7 @@
 
 Prototype UI aplikasi booking & manajemen klinik **Realief Expert** — _Expert Care, Real Relief_ (fisioterapi & chiropractic, 2 klinik). Satu aplikasi untuk dua peran: **Pasien** dan **Admin**.
 
-Fase ini **client-only**: semua data berupa mock di [Zustand](https://github.com/pmndrs/zustand) + `localStorage`, belum terhubung backend. Nantinya akan diintegrasikan ke **manggaleh.com** (BaaS dengan optimistic live data) — semua mutasi sudah dirancang lewat action di store sebagai titik integrasi.
+Fase ini **client-only**: semua data berupa mock di [Zustand](https://github.com/pmndrs/zustand) + `localStorage`, belum terhubung backend. Nantinya akan diintegrasikan ke sebuah **backend/BaaS** (belum diputuskan) — semua mutasi sudah dirancang lewat action di store sebagai titik integrasi.
 
 ## Stack
 

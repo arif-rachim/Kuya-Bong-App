@@ -1,6 +1,6 @@
 /**
- * Tipe domain Kuya Bong (Section 15 blueprint).
- * Dipisah dari logika mock agar bisa dipakai ulang sebagai tipe SDK manggaleh nanti.
+ * Tipe domain Realief Expert (Section 15 blueprint).
+ * Dipisah dari logika mock agar bisa dipakai ulang sebagai tipe SDK backend nanti.
  */
 
 export type Role = 'patient' | 'admin'
