@@ -117,6 +117,7 @@ interface AppState {
   linkAdult: (parentUserId: string, emailOrMobile: string) => Result
   acceptLink: (familyMemberId: string) => void
   declineLink: (familyMemberId: string) => void
+  removeFamilyMember: (familyMemberId: string) => void
 
   // ---- products ----
   createProduct: (input: { name: string; category: ProductCategory; price: number; notes?: string }) => Result
@@ -530,6 +531,12 @@ export const useApp = create<AppState>()(
         })),
 
       declineLink: (familyMemberId) =>
+        set((s) => ({
+          family: s.family.filter((m) => m.id !== familyMemberId),
+        })),
+
+      // Remove a child or unlink an adult. Past package usage history is kept.
+      removeFamilyMember: (familyMemberId) =>
         set((s) => ({
           family: s.family.filter((m) => m.id !== familyMemberId),
         })),

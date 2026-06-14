@@ -32,6 +32,7 @@ export function Family() {
   const linkAdult = useApp((s) => s.linkAdult)
   const acceptLink = useApp((s) => s.acceptLink)
   const declineLink = useApp((s) => s.declineLink)
+  const removeFamilyMember = useApp((s) => s.removeFamilyMember)
 
   function inviterName(familyGroupId: string) {
     const inviter = profiles.find((p) => p.familyGroupId === familyGroupId)
@@ -60,6 +61,21 @@ export function Family() {
     if (!ok) return
     declineLink(memberId)
     toast.info('Request declined.')
+  }
+
+  async function removeMember(id: string, name: string, isChild: boolean) {
+    const ok = await confirm({
+      title: isChild ? 'Remove child?' : 'Remove family member?',
+      message: isChild
+        ? `Remove ${name} from your family? Past package usage history is kept.`
+        : `Unlink ${name}? They will no longer share your treatment packages. Past usage history is kept.`,
+      confirmLabel: 'Remove',
+      cancelLabel: 'Keep',
+      danger: true,
+    })
+    if (!ok) return
+    removeFamilyMember(id)
+    toast.success(`${name} removed.`)
   }
 
   const [modal, setModal] = useState<'child' | 'adult' | null>(null)
@@ -174,15 +190,24 @@ export function Family() {
                           <p className="text-label-md text-on-surface-variant">{role}</p>
                         </div>
                       </div>
-                      {pending ? (
-                        <span className="inline-flex items-center gap-xs rounded-full bg-tertiary-fixed px-sm py-xs font-label-md text-label-md text-on-tertiary-fixed-variant">
-                          <Icon name="schedule" size={16} /> Pending
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-xs font-label-lg text-label-lg text-primary">
-                          <Icon name="check_circle" size={18} fill /> Active
-                        </span>
-                      )}
+                      <div className="flex items-center gap-xs">
+                        {pending ? (
+                          <span className="inline-flex items-center gap-xs rounded-full bg-tertiary-fixed px-sm py-xs font-label-md text-label-md text-on-tertiary-fixed-variant">
+                            <Icon name="schedule" size={16} /> Pending
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-xs font-label-lg text-label-lg text-primary">
+                            <Icon name="check_circle" size={18} fill /> Active
+                          </span>
+                        )}
+                        <button
+                          onClick={() => removeMember(m.id, m.name, m.isChild)}
+                          aria-label={`Remove ${m.name}`}
+                          className="rounded-full p-xs text-on-surface-variant transition-colors hover:bg-error-container hover:text-error"
+                        >
+                          <Icon name="delete" size={20} />
+                        </button>
+                      </div>
                     </div>
                   </Card>
                 )
