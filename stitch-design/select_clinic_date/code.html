@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+        .step-transition {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#002020",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#587979",
+                        "surface-container": "#f0edec",
+                        "secondary-fixed": "#d9e6da",
+                        "on-primary-fixed-variant": "#004f4f",
+                        "primary-fixed": "#93f2f2",
+                        "on-secondary": "#ffffff",
+                        "outline": "#6e7979",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f3f0ef",
+                        "on-secondary-fixed": "#131e17",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#e5e2e1",
+                        "secondary": "#556158",
+                        "secondary-container": "#d9e6da",
+                        "surface-dim": "#dcd9d9",
+                        "primary-container": "#008080",
+                        "on-tertiary-fixed": "#002020",
+                        "on-surface": "#1c1b1b",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#bdcabe",
+                        "on-tertiary-container": "#e6fffe",
+                        "surface-container-high": "#ebe7e7",
+                        "outline-variant": "#bdc9c8",
+                        "inverse-surface": "#313030",
+                        "surface-container-low": "#f6f3f2",
+                        "tertiary": "#406060",
+                        "on-primary-container": "#e3fffe",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1c1b1b",
+                        "on-primary": "#ffffff",
+                        "background": "#fcf9f8",
+                        "on-error": "#ffffff",
+                        "primary-fixed-dim": "#76d6d5",
+                        "on-tertiary-fixed-variant": "#2c4c4c",
+                        "on-secondary-fixed-variant": "#3e4a41",
+                        "on-secondary-container": "#5b675e",
+                        "tertiary-fixed": "#c6e9e9",
+                        "surface": "#fcf9f8",
+                        "primary": "#006565",
+                        "surface-tint": "#006a6a",
+                        "surface-variant": "#e5e2e1",
+                        "tertiary-fixed-dim": "#abcdcd",
+                        "inverse-primary": "#76d6d5",
+                        "surface-bright": "#fcf9f8",
+                        "on-surface-variant": "#3e4949"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "64px",
+                        "sm": "12px",
+                        "base": "8px",
+                        "margin-desktop": "120px",
+                        "md": "24px",
+                        "xs": "4px",
+                        "lg": "40px",
+                        "gutter": "24px",
+                        "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "label-lg": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen font-body-md flex flex-col">
+<!-- Top Navigation -->
+<nav class="w-full top-0 sticky bg-surface dark:bg-surface-dim flex justify-between items-center px-margin-mobile md:px-margin-desktop py-base z-50">
+<div class="flex items-center gap-sm">
+<div class="flex items-center justify-center w-10 h-10 rounded-full bg-primary-container text-on-primary-container">
+<span class="material-symbols-outlined" data-icon="medical_services">medical_services</span>
+</div>
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">Calm Clinical</span>
+</div>
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-outline-variant">
+<img alt="user profile" class="w-full h-full object-cover" data-alt="A professional studio portrait of a friendly healthcare administrator with a warm smile. The lighting is bright and soft, typical of a modern medical facility. The background is a clean, out-of-focus clinical environment with soft teal and white tones, reflecting the Calm Clinical brand identity of reliability and serenity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQj01ksk4oPbsGk5v6VN8O82IKFl4WTYCOq8vsiRwG__mEA0fmOsbwLzK_yQtsDSzH13EdlF_udWbt6KKO4sQvfDI14L_RUWGLlcOU7znzfW7VQwaKwCtoURQBhw_APcWbEehoSVc4-vt_DPOf0t1F7QnyivY1glHYIy8cA01SeiGeWsd3kfOJZXA8FmoSSbUBsgKlAgbN5hClMKRTAVSoQCVPgB_5YNDYwQBhQSvcEnzkna1OkY8ksDXp34D69EmwvYjWp3Ze0Xs"/>
+</div>
+</div>
+</nav>
+<main class="flex-grow w-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop py-lg">
+<!-- Progress Stepper -->
+<div class="mb-xl max-w-2xl mx-auto">
+<div class="flex items-center justify-between relative">
+<div class="absolute top-1/2 left-0 w-full h-[8px] bg-surface-container-highest rounded-full -translate-y-1/2 -z-10"></div>
+<!-- Step 1 Active Bar -->
+<div class="absolute top-1/2 left-0 w-1/3 h-[8px] bg-primary-container rounded-full -translate-y-1/2 -z-10 transition-all duration-500" id="step-progress-bar"></div>
+<div class="flex flex-col items-center gap-xs">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold transition-colors duration-300" id="step-1-indicator">1</div>
+<span class="font-label-md text-label-md text-primary">Clinic</span>
+</div>
+<div class="flex flex-col items-center gap-xs">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-bold transition-colors duration-300" id="step-2-indicator">2</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Date</span>
+</div>
+<div class="flex flex-col items-center gap-xs">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-bold transition-colors duration-300" id="step-3-indicator">3</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Review</span>
+</div>
+</div>
+</div>
+<!-- Content Area -->
+<div class="relative overflow-hidden min-h-[500px]">
+<!-- STEP 1: SELECT CLINIC -->
+<section class="step-transition w-full" id="step-1-content">
+<div class="text-center mb-lg">
+<h1 class="font-headline-lg text-headline-lg mb-base">Choose your location</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Select the clinic branch most convenient for you.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter max-w-5xl mx-auto">
+<!-- Clinic A Card -->
+<button class="group text-left p-md bg-surface-container-lowest rounded-xl border-2 border-transparent hover:border-primary transition-all duration-300 shadow-[0_4px_20px_rgba(0,128,128,0.05)] focus:outline-none focus:ring-4 focus:ring-primary-fixed" onclick="selectClinic('A')">
+<div class="relative h-48 w-full rounded-lg overflow-hidden mb-md">
+<img alt="Clinic A Exterior" class="w-full h-full object-cover" data-alt="A modern and serene medical clinic entrance for Clinic A. The architecture is clean and minimalist with large glass windows and soft white stone textures. The scene is bathed in natural morning sunlight, creating a warm and welcoming atmosphere. Lush green landscaping borders the entrance, emphasizing the brand's healing leaf aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7RESqnNXDMlZvR57QEwu6RjaiBHJEpTrCb5Kpzr6oUrgOsdrIiPf8qK5nmCluOUCGKCRHFfonzR_FeFKUmjLsry6RQnoD6DokE5qddp9m0lyW3OTwzQJCA0_lIkWX6Oe5IzwZaoJpwt3Rsn-aW7YnjAaMEdAfPRppCKUfed_JAh-_P9RrhLg08HpQg5VinOK8GkTjkKiB9biYGXjpoP_f4fcxk9IwbPqETwdHe6BuWkdFvRN83I8BeKfNAEcameFOSZ9cSeq6BV4"/>
+<div class="absolute top-sm right-sm bg-primary text-on-primary px-sm py-xs rounded-full font-label-lg flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]" data-icon="location_on">location_on</span>
+                                Clinic A
+                            </div>
+</div>
+<div class="flex flex-col border-l-4 border-primary pl-md">
+<h3 class="font-headline-sm text-headline-sm text-primary mb-xs">Downtown Wellness Hub</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-base">124 Serenity Plaza, North District</p>
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" data-icon="schedule">schedule</span>
+<span class="font-label-md text-label-md">Mon - Fri: 8:00 AM - 7:00 PM</span>
+</div>
+</div>
+</button>
+<!-- Clinic B Card -->
+<button class="group text-left p-md bg-surface-container-lowest rounded-xl border-2 border-transparent hover:border-primary transition-all duration-300 shadow-[0_4px_20px_rgba(0,128,128,0.05)] focus:outline-none focus:ring-4 focus:ring-primary-fixed" onclick="selectClinic('B')">
+<div class="relative h-48 w-full rounded-lg overflow-hidden mb-md">
+<img alt="Clinic B Interior" class="w-full h-full object-cover" data-alt="The elegant and spacious interior reception of Clinic B. It features a modern minimalist design with high ceilings and a sophisticated 'Deep Sea' teal color palette. Soft, diffused lighting creates a sense of calm and precision. Comfortable ergonomic seating areas are separated by decorative wooden slats, providing a feeling of privacy and comfort for patients." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdULRy4UWTHUXw-BDinYLI6KONIOVfdJCUT6uWdlm7mMIOMlzUL1hUkQ9IygxVz-z9yxTBcO5_PLbqeLXkPEADoaE8pnlQ8M7y6V2c2O7oVLr_LFRGxdxRIt3IbSfiksa5AJ3Judjuk8eRtxlao-nyqccoVV3LTJ7CSjrkO1U4xV3a8SVZ4dhTok_SFR-YPODfS-Vb9LGWlSP2OlxcvBLz3l9k-VHc7-oxlRymcoJg2S8MVVEJQ9vC511FKZzUxA-TWDp-x-3qoMc"/>
+<div class="absolute top-sm right-sm bg-tertiary text-on-tertiary px-sm py-xs rounded-full font-label-lg flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]" data-icon="location_on">location_on</span>
+                                Clinic B
+                            </div>
+</div>
+<div class="flex flex-col bg-tertiary-container/5 rounded-lg p-md border-2 border-dashed border-tertiary/20">
+<h3 class="font-headline-sm text-headline-sm text-tertiary mb-xs">Riverside Healing Centre</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-base">89 Flowing River Way, East Bank</p>
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-tertiary" data-icon="schedule">schedule</span>
+<span class="font-label-md text-label-md">Mon - Sat: 9:00 AM - 8:00 PM</span>
+</div>
+</div>
+</button>
+</div>
+</section>
+<!-- STEP 2: SELECT DATE -->
+<section class="step-transition hidden absolute inset-0 w-full" id="step-2-content">
+<div class="text-center mb-lg">
+<button class="inline-flex items-center gap-xs text-primary font-label-lg mb-base hover:underline" onclick="goBackToStep1()">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+                        Change Clinic
+                    </button>
+<h1 class="font-headline-lg text-headline-lg mb-base">Select an appointment date</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Available dates for <span class="font-bold text-primary" id="selected-clinic-name">Clinic A</span></p>
+</div>
+<div class="max-w-4xl mx-auto bg-surface-container-lowest rounded-xl p-lg shadow-lg border border-outline-variant">
+<!-- Calendar Header -->
+<div class="flex items-center justify-between mb-lg">
+<h2 class="font-headline-sm text-headline-sm">November 2024</h2>
+<div class="flex gap-sm">
+<button class="p-sm rounded-full hover:bg-surface-container-high transition-colors border border-outline-variant">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="p-sm rounded-full hover:bg-surface-container-high transition-colors border border-outline-variant">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Calendar Grid -->
+<div class="calendar-grid gap-sm mb-lg">
+<!-- Days Header -->
+<div class="text-center font-label-md text-on-surface-variant py-sm">SUN</div>
+<div class="text-center font-label-md text-on-surface-variant py-sm">MON</div>
+<div class="text-center font-label-md text-on-surface-variant py-sm">TUE</div>
+<div class="text-center font-label-md text-on-surface-variant py-sm">WED</div>
+<div class="text-center font-label-md text-on-surface-variant py-sm">THU</div>
+<div class="text-center font-label-md text-on-surface-variant py-sm">FRI</div>
+<div class="text-center font-label-md text-on-surface-variant py-sm">SAT</div>
+<!-- Dummy Calendar Days -->
+<div class="text-center py-lg rounded-lg text-outline-variant cursor-not-allowed">27</div>
+<div class="text-center py-lg rounded-lg text-outline-variant cursor-not-allowed">28</div>
+<div class="text-center py-lg rounded-lg text-outline-variant cursor-not-allowed">29</div>
+<div class="text-center py-lg rounded-lg text-outline-variant cursor-not-allowed">30</div>
+<div class="text-center py-lg rounded-lg text-outline-variant cursor-not-allowed">31</div>
+<button class="text-center py-lg rounded-xl hover:bg-secondary-container transition-all border border-transparent font-medium" onclick="selectDate(1)">1</button>
+<button class="text-center py-lg rounded-xl hover:bg-secondary-container transition-all border border-transparent font-medium" onclick="selectDate(2)">2</button>
+<div class="text-center py-lg rounded-lg text-outline-variant">3</div>
+<button class="text-center py-lg rounded-xl hover:bg-secondary-container transition-all border border-transparent font-medium" onclick="selectDate(4)">4</button>
+<button class="text-center py-lg rounded-xl hover:bg-secondary-container transition-all border border-transparent font-medium" onclick="selectDate(5)">5</button>
+<button class="text-center py-lg rounded-xl bg-primary text-on-primary shadow-md font-bold ring-4 ring-primary-fixed" id="date-selected-6" onclick="selectDate(6)">6</button>
+<button class="text-center py-lg rounded-xl hover:bg-secondary-container transition-all border border-transparent font-medium" onclick="selectDate(7)">7</button>
+<button class="text-center py-lg rounded-xl hover:bg-secondary-container transition-all border border-transparent font-medium" onclick="selectDate(8)">8</button>
+<div class="text-center py-lg rounded-lg text-outline-variant">9</div>
+<div class="text-center py-lg rounded-lg text-outline-variant">10</div>
+<button class="text-center py-lg rounded-xl hover:bg-secondary-container transition-all border border-transparent font-medium" onclick="selectDate(11)">11</button>
+<button class="text-center py-lg rounded-xl hover:bg-secondary-container transition-all border border-transparent font-medium" onclick="selectDate(12)">12</button>
+<button class="text-center py-lg rounded-xl hover:bg-secondary-container transition-all border border-transparent font-medium" onclick="selectDate(13)">13</button>
+<button class="text-center py-lg rounded-xl hover:bg-secondary-container transition-all border border-transparent font-medium" onclick="selectDate(14)">14</button>
+<button class="text-center py-lg rounded-xl hover:bg-secondary-container transition-all border border-transparent font-medium" onclick="selectDate(15)">15</button>
+<div class="text-center py-lg rounded-lg text-outline-variant">16</div>
+</div>
+<div class="flex items-center justify-between pt-lg border-t border-outline-variant">
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-xs">
+<div class="w-4 h-4 rounded bg-primary"></div>
+<span class="font-label-md text-label-md">Selected</span>
+</div>
+<div class="flex items-center gap-xs">
+<div class="w-4 h-4 rounded border border-outline"></div>
+<span class="font-label-md text-label-md">Available</span>
+</div>
+</div>
+<button class="px-xl py-md bg-primary text-on-primary rounded-xl font-headline-sm hover:bg-on-primary-fixed transition-colors" onclick="completeStep2()">
+                            Continue to Review
+                        </button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Bottom Nav (Mobile Only) -->
+<div class="md:hidden fixed bottom-0 w-full flex justify-around items-center py-sm bg-surface dark:bg-surface-dim z-50 shadow-[0_-4px_20px_rgba(0,128,128,0.05)] rounded-t-xl">
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary-fixed text-on-primary-container dark:text-on-primary-fixed rounded-full px-4 py-1 scale-105">
+<span class="material-symbols-outlined" data-icon="calendar_month" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+<span class="font-label-md text-label-md">Book</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-md text-label-md">Packages</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-label-md">Profile</span>
+</div>
+</div>
+<script>
+        function selectClinic(clinic) {
+            const step1 = document.getElementById('step-1-content');
+            const step2 = document.getElementById('step-2-content');
+            const progressBar = document.getElementById('step-progress-bar');
+            const step2Indicator = document.getElementById('step-2-indicator');
+            const clinicNameSpan = document.getElementById('selected-clinic-name');
+
+            clinicNameSpan.innerText = clinic === 'A' ? 'Clinic A - Downtown Wellness Hub' : 'Clinic B - Riverside Healing Centre';
+
+            // Animation transition
+            step1.classList.add('opacity-0', '-translate-x-full');
+            setTimeout(() => {
+                step1.classList.add('hidden');
+                step2.classList.remove('hidden');
+                step2.classList.remove('absolute');
+                
+                // Trigger reflow for animation
+                void step2.offsetWidth;
+                
+                step2.classList.remove('opacity-0', 'translate-x-full');
+                step2.classList.add('opacity-100', 'translate-x-0');
+                
+                progressBar.style.width = '66.66%';
+                step2Indicator.classList.replace('bg-surface-container-highest', 'bg-primary-container');
+                step2Indicator.classList.replace('text-on-surface-variant', 'text-on-primary-container');
+            }, 400);
+        }
+
+        function goBackToStep1() {
+            const step1 = document.getElementById('step-1-content');
+            const step2 = document.getElementById('step-2-content');
+            const progressBar = document.getElementById('step-progress-bar');
+            const step2Indicator = document.getElementById('step-2-indicator');
+
+            step2.classList.add('opacity-0', 'translate-x-full');
+            setTimeout(() => {
+                step2.classList.add('hidden', 'absolute');
+                step1.classList.remove('hidden');
+                
+                void step1.offsetWidth;
+                
+                step1.classList.remove('opacity-0', '-translate-x-full');
+                step1.classList.add('opacity-100', 'translate-x-0');
+                
+                progressBar.style.width = '33.33%';
+                step2Indicator.classList.replace('bg-primary-container', 'bg-surface-container-highest');
+                step2Indicator.classList.replace('text-on-primary-container', 'text-on-surface-variant');
+            }, 400);
+        }
+
+        function selectDate(day) {
+            // Unselect all
+            document.querySelectorAll('.calendar-grid button').forEach(btn => {
+                btn.className = "text-center py-lg rounded-xl hover:bg-secondary-container transition-all border border-transparent font-medium";
+            });
+            
+            // Select current
+            const selectedBtn = event.currentTarget;
+            selectedBtn.className = "text-center py-lg rounded-xl bg-primary text-on-primary shadow-md font-bold ring-4 ring-primary-fixed";
+        }
+
+        function completeStep2() {
+            // Animation for step 3
+            const progressBar = document.getElementById('step-progress-bar');
+            const step3Indicator = document.getElementById('step-3-indicator');
+            progressBar.style.width = '100%';
+            step3Indicator.classList.replace('bg-surface-container-highest', 'bg-primary-container');
+            step3Indicator.classList.replace('text-on-surface-variant', 'text-on-primary-container');
+            
+            alert('Step 2 Complete! Navigating to Review Section...');
+        }
+    </script>
+</body></html>

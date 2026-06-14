@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-tab-indicator {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#002020",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#587979",
+                        "surface-container": "#f0edec",
+                        "secondary-fixed": "#d9e6da",
+                        "on-primary-fixed-variant": "#004f4f",
+                        "primary-fixed": "#93f2f2",
+                        "on-secondary": "#ffffff",
+                        "outline": "#6e7979",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f3f0ef",
+                        "on-secondary-fixed": "#131e17",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#e5e2e1",
+                        "secondary": "#556158",
+                        "secondary-container": "#d9e6da",
+                        "surface-dim": "#dcd9d9",
+                        "primary-container": "#008080",
+                        "on-tertiary-fixed": "#002020",
+                        "on-surface": "#1c1b1b",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#bdcabe",
+                        "on-tertiary-container": "#e6fffe",
+                        "surface-container-high": "#ebe7e7",
+                        "outline-variant": "#bdc9c8",
+                        "inverse-surface": "#313030",
+                        "surface-container-low": "#f6f3f2",
+                        "tertiary": "#406060",
+                        "on-primary-container": "#e3fffe",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1c1b1b",
+                        "on-primary": "#ffffff",
+                        "background": "#fcf9f8",
+                        "on-error": "#ffffff",
+                        "primary-fixed-dim": "#76d6d5",
+                        "on-tertiary-fixed-variant": "#2c4c4c",
+                        "on-secondary-fixed-variant": "#3e4a41",
+                        "on-secondary-container": "#5b675e",
+                        "tertiary-fixed": "#c6e9e9",
+                        "surface": "#fcf9f8",
+                        "primary": "#006565",
+                        "surface-tint": "#006a6a",
+                        "surface-variant": "#e5e2e1",
+                        "tertiary-fixed-dim": "#abcdcd",
+                        "inverse-primary": "#76d6d5",
+                        "surface-bright": "#fcf9f8",
+                        "on-surface-variant": "#3e4949"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "64px",
+                        "sm": "12px",
+                        "base": "8px",
+                        "margin-desktop": "120px",
+                        "md": "24px",
+                        "xs": "4px",
+                        "lg": "40px",
+                        "gutter": "24px",
+                        "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "label-lg": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="w-full top-0 sticky z-40 bg-surface dark:bg-surface-dim flex justify-between items-center px-margin-mobile md:px-margin-desktop py-base w-full">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a friendly middle-aged female patient with a kind smile, set against a softly blurred clinic interior. The lighting is bright and warm, reflecting a professional medical environment. The image uses high-key tones and a soft focus on the background to maintain the Calm Clinical brand's serene and reliable atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuByCgJhl-UrEjlWMH1f4RSiw47izCLG9k7uTOwC2hB8mCUM06ahCBYZ27FWH_o2sKhB3GG67PXMsr3yhq7nD3dPufNLoz0GVNq2Qf_e0a-lqcgUWaUK95M7mvDunPDLv1NTVrnypLzxZkzit4bj2Xr8i8MjD7mfy11bqgdY1BAsEc7gQcadL-Y2kXZyhxEvXIPtQ4zpp7n2tjVRyg2_zJIZNNLs4OOrbLiCmF8NI3tmSdmL67NdQEXARtdPR_ReDpdqljHRnuDcTCE"/>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">Calm Clinical</h1>
+</div>
+<button class="material-symbols-outlined text-primary p-xs hover:bg-surface-container-high transition-colors rounded-full active:opacity-80">
+            notifications
+        </button>
+</header>
+<main class="max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop mt-lg">
+<!-- Page Title & Header -->
+<section class="mb-lg">
+<h2 class="font-headline-lg text-headline-lg text-primary mb-xs">My Appointments</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage your physical therapy and chiropractic sessions.</p>
+</section>
+<!-- Segmented Control (Tabs) -->
+<nav class="flex p-xs bg-surface-container-low rounded-xl mb-lg w-full max-w-md mx-auto md:mx-0 shadow-sm border border-outline-variant/30">
+<button class="flex-1 py-sm px-md rounded-lg font-label-lg text-label-lg transition-all duration-300 bg-primary-container text-on-primary-container shadow-sm" id="tab-upcoming" onclick="switchTab('upcoming')">
+                Upcoming
+            </button>
+<button class="flex-1 py-sm px-md rounded-lg font-label-lg text-label-lg transition-all duration-300 text-on-surface-variant hover:bg-surface-container-highest" id="tab-completed" onclick="switchTab('completed')">
+                Completed
+            </button>
+<button class="flex-1 py-sm px-md rounded-lg font-label-lg text-label-lg transition-all duration-300 text-on-surface-variant hover:bg-surface-container-highest" id="tab-cancelled" onclick="switchTab('cancelled')">
+                Cancelled
+            </button>
+</nav>
+<!-- Appointments Canvas -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter" id="appointments-grid">
+<!-- Card 1: Upcoming Chiropractic -->
+<div class="appointment-card upcoming relative flex flex-col p-md bg-white rounded-xl shadow-[0_4px_20px_rgba(0,128,128,0.05)] border-l-4 border-primary transition-all hover:scale-[1.02]">
+<div class="flex justify-between items-start mb-md">
+<div>
+<span class="inline-block px-sm py-xs bg-secondary-container text-on-secondary-container text-label-md rounded-full font-label-md mb-base">Chiropractic</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Spinal Alignment</h3>
+</div>
+<div class="text-right">
+<p class="font-label-lg text-label-lg text-primary">OCT 14</p>
+<p class="font-body-md text-body-md text-on-surface-variant">10:30 AM</p>
+</div>
+</div>
+<div class="flex items-center gap-sm mb-lg text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">location_on</span>
+<p class="font-body-md text-body-md">Clinic A - Downtown Serenity</p>
+</div>
+<div class="mt-auto flex gap-base pt-md border-t border-outline-variant/20">
+<button class="flex-1 py-sm px-md border-2 border-primary text-primary font-label-lg rounded-lg hover:bg-primary-fixed-dim/20 transition-colors active:scale-95">
+                        Reschedule
+                    </button>
+<button class="flex-1 py-sm px-md text-error font-label-lg rounded-lg hover:bg-error-container/50 transition-colors active:scale-95">
+                        Cancel
+                    </button>
+</div>
+</div>
+<!-- Card 2: Upcoming Physiotherapy -->
+<div class="appointment-card upcoming relative flex flex-col p-md bg-white rounded-xl shadow-[0_4px_20px_rgba(0,128,128,0.05)] border-l-4 border-tertiary-container transition-all hover:scale-[1.02]">
+<div class="flex justify-between items-start mb-md">
+<div>
+<span class="inline-block px-sm py-xs bg-tertiary-fixed text-on-tertiary-fixed-variant text-label-md rounded-full font-label-md mb-base">Physiotherapy</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Knee Rehabilitation</h3>
+</div>
+<div class="text-right">
+<p class="font-label-lg text-label-lg text-primary">OCT 18</p>
+<p class="font-body-md text-body-md text-on-surface-variant">02:15 PM</p>
+</div>
+</div>
+<div class="flex items-center gap-sm mb-lg text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">location_on</span>
+<p class="font-body-md text-body-md">Clinic B - Healing Leaf North</p>
+</div>
+<div class="mt-auto flex gap-base pt-md border-t border-outline-variant/20">
+<button class="flex-1 py-sm px-md border-2 border-primary text-primary font-label-lg rounded-lg hover:bg-primary-fixed-dim/20 transition-colors active:scale-95">
+                        Reschedule
+                    </button>
+<button class="flex-1 py-sm px-md text-error font-label-lg rounded-lg hover:bg-error-container/50 transition-colors active:scale-95">
+                        Cancel
+                    </button>
+</div>
+</div>
+<!-- Empty State Illustration Placeholder (Only shows when switching to empty tabs) -->
+<div class="hidden col-span-full flex-col items-center justify-center py-xl text-center opacity-60" id="empty-state">
+<span class="material-symbols-outlined text-[64px] mb-md text-outline-variant" data-weight="fill">calendar_today</span>
+<p class="font-headline-sm text-headline-sm">No records found</p>
+<p class="font-body-md text-body-md">Your history will appear here once updated.</p>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface dark:bg-surface-dim shadow-[0_-4px_20px_rgba(0,128,128,0.05)] md:hidden">
+<div class="flex justify-around items-center py-sm">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-md text-label-md mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+<span class="font-label-md text-label-md mt-1">Book</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md mt-1">Packages</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-label-md mt-1">Profile</span>
+</a>
+</div>
+</nav>
+<!-- FAB (Floating Action Button) - Only for Home/Booking focus -->
+<button class="fixed bottom-24 right-margin-mobile md:bottom-12 md:right-margin-desktop bg-primary text-on-primary w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-primary-fixed-dim hover:text-on-primary-fixed transition-all active:scale-90 z-50">
+<span class="material-symbols-outlined">add</span>
+</button>
+<script>
+        function switchTab(tab) {
+            const tabs = ['upcoming', 'completed', 'cancelled'];
+            const container = document.getElementById('appointments-grid');
+            const emptyState = document.getElementById('empty-state');
+            const cards = document.querySelectorAll('.appointment-card');
+
+            // Update UI State for buttons
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === tab) {
+                    btn.classList.add('bg-primary-container', 'text-on-primary-container', 'shadow-sm');
+                    btn.classList.remove('text-on-surface-variant', 'hover:bg-surface-container-highest');
+                } else {
+                    btn.classList.remove('bg-primary-container', 'text-on-primary-container', 'shadow-sm');
+                    btn.classList.add('text-on-surface-variant', 'hover:bg-surface-container-highest');
+                }
+            });
+
+            // Logical filtering (Simulated data display)
+            if (tab === 'upcoming') {
+                cards.forEach(c => c.style.display = 'flex');
+                emptyState.classList.add('hidden');
+            } else {
+                cards.forEach(c => c.style.display = 'none');
+                emptyState.classList.remove('hidden');
+                
+                // Content change for empty state
+                if(tab === 'completed') {
+                    emptyState.querySelector('p').innerText = "No completed appointments yet.";
+                    emptyState.querySelector('span').innerText = "history";
+                } else {
+                    emptyState.querySelector('p').innerText = "No cancelled appointments.";
+                    emptyState.querySelector('span').innerText = "event_busy";
+                }
+            }
+        }
+
+        // Add some subtle parallax or micro-animations
+        document.addEventListener('mousemove', (e) => {
+            const cards = document.querySelectorAll('.appointment-card');
+            const x = (e.clientX / window.innerWidth - 0.5) * 5;
+            const y = (e.clientY / window.innerHeight - 0.5) * 5;
+            
+            cards.forEach(card => {
+                if(window.innerWidth > 768) {
+                    card.style.transform = `translate(${x}px, ${y}px)`;
+                }
+            });
+        });
+    </script>
+</body></html>

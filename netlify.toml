@@ -1,0 +1,11 @@
+# Netlify deploy config — Realief Expert (static Vite SPA)
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# App uses HashRouter, so deep links resolve client-side. This catch-all is a
+# harmless safety net (and future-proofs a switch to BrowserRouter).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

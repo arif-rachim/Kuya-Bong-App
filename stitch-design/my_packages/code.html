@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Packages | Calm Clinical</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .progress-ring {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#002020",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#587979",
+                        "surface-container": "#f0edec",
+                        "secondary-fixed": "#d9e6da",
+                        "on-primary-fixed-variant": "#004f4f",
+                        "primary-fixed": "#93f2f2",
+                        "on-secondary": "#ffffff",
+                        "outline": "#6e7979",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f3f0ef",
+                        "on-secondary-fixed": "#131e17",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#e5e2e1",
+                        "secondary": "#556158",
+                        "secondary-container": "#d9e6da",
+                        "surface-dim": "#dcd9d9",
+                        "primary-container": "#008080",
+                        "on-tertiary-fixed": "#002020",
+                        "on-surface": "#1c1b1b",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#bdcabe",
+                        "on-tertiary-container": "#e6fffe",
+                        "surface-container-high": "#ebe7e7",
+                        "outline-variant": "#bdc9c8",
+                        "inverse-surface": "#313030",
+                        "surface-container-low": "#f6f3f2",
+                        "tertiary": "#406060",
+                        "on-primary-container": "#e3fffe",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1c1b1b",
+                        "on-primary": "#ffffff",
+                        "background": "#fcf9f8",
+                        "on-error": "#ffffff",
+                        "primary-fixed-dim": "#76d6d5",
+                        "on-tertiary-fixed-variant": "#2c4c4c",
+                        "on-secondary-fixed-variant": "#3e4a41",
+                        "on-secondary-container": "#5b675e",
+                        "tertiary-fixed": "#c6e9e9",
+                        "surface": "#fcf9f8",
+                        "primary": "#006565",
+                        "surface-tint": "#006a6a",
+                        "surface-variant": "#e5e2e1",
+                        "tertiary-fixed-dim": "#abcdcd",
+                        "inverse-primary": "#76d6d5",
+                        "surface-bright": "#fcf9f8",
+                        "on-surface-variant": "#3e4949"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "64px",
+                        "sm": "12px",
+                        "base": "8px",
+                        "margin-desktop": "120px",
+                        "md": "24px",
+                        "xs": "4px",
+                        "lg": "40px",
+                        "gutter": "24px",
+                        "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "label-lg": ["14px", { "lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["12px", { "lineHeight": "1.2", "fontWeight": "500" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen pb-32">
+<!-- Top Navigation Bar -->
+<header class="bg-surface dark:bg-surface-dim w-full top-0 sticky z-40 transition-colors flex justify-between items-center px-margin-mobile md:px-margin-desktop py-base w-full">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container overflow-hidden">
+<img alt="user profile picture" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxBpHlR-3YKCxxuIRlY-73pz-euqHR9BX9qCqj_1m2kv4Er2B0B8Vj_Z-ebpHffViGk1Uk9Vsn-mzT-8j-qzy50Zg4JX9hgLGFAiGmPwF51umYidMrDrh9hBakdPmBAXKdIIDW2PBnjB5K5Qh9vc8DQ8c-RdUbvLCFCEQEHk64I7JD4ssAWebcgRIR0r3mrdkznj98aWMr_2C1UblNfDdVAXzAX-Gx9S87AIkrGM1nj56tjKA0G-UvCdPUKyHPKKmUqST7cGaSFHo"/>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">Calm Clinical</h1>
+</div>
+<button class="material-symbols-outlined text-primary dark:text-primary-fixed-dim active:opacity-80 transition-opacity p-2 rounded-full hover:bg-surface-container-high" data-icon="notifications">notifications</button>
+</header>
+<main class="px-margin-mobile md:px-margin-desktop py-lg max-w-7xl mx-auto">
+<!-- Header Section -->
+<div class="mb-lg">
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs">My Wellness Packages</h2>
+<p class="text-on-surface-variant font-body-lg">Manage your treatment credits and family usage history.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Active Packages (Bento Style) -->
+<div class="lg:col-span-8 space-y-gutter">
+<!-- Primary Active Package Card -->
+<section class="bg-surface-container-low rounded-xl p-md border-2 border-primary-container relative overflow-hidden shadow-[0_4px_20px_rgba(0,128,128,0.05)]">
+<div class="absolute top-0 right-0 p-md opacity-10">
+<span class="material-symbols-outlined text-[120px]" data-icon="clinical_notes">clinical_notes</span>
+</div>
+<div class="relative z-10 flex flex-col md:flex-row justify-between gap-md">
+<div class="flex-1">
+<span class="inline-block px-3 py-1 rounded-full bg-primary-container text-on-primary-container font-label-lg mb-sm">ACTIVE PACKAGE</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-base">Comprehensive Physio Bundle</h3>
+<div class="flex items-center gap-sm text-on-surface-variant mb-md">
+<span class="material-symbols-outlined text-primary" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-lg">Expires on Sept 24, 2024</span>
+</div>
+<div class="grid grid-cols-2 gap-md mt-lg">
+<div class="bg-surface p-sm rounded-lg border border-outline-variant">
+<p class="font-label-md text-on-surface-variant uppercase">Remaining</p>
+<p class="font-headline-lg text-headline-lg text-primary">05</p>
+</div>
+<div class="bg-surface p-sm rounded-lg border border-outline-variant">
+<p class="font-label-md text-on-surface-variant uppercase">Total Sessions</p>
+<p class="font-headline-lg text-headline-lg text-on-surface">10</p>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center md:w-48 bg-white rounded-xl p-md shadow-sm border border-outline-variant">
+<!-- Circular Progress -->
+<div class="relative flex items-center justify-center mb-base">
+<svg class="w-32 h-32">
+<circle class="text-secondary-fixed" cx="64" cy="64" fill="transparent" r="56" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-primary-container progress-ring" cx="64" cy="64" fill="transparent" r="56" stroke="currentColor" stroke-dasharray="351.85" stroke-dashoffset="175.92" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<span class="absolute font-headline-md text-headline-md">50%</span>
+</div>
+<p class="font-label-lg text-on-surface text-center">Sessions Remaining</p>
+</div>
+</div>
+<div class="mt-lg flex flex-wrap gap-sm">
+<button class="bg-primary-container text-on-primary-container px-md py-sm rounded-lg font-label-lg hover:brightness-110 active:scale-95 transition-all flex items-center gap-base">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+                            Book Session
+                        </button>
+<button class="border-2 border-primary-container text-primary px-md py-sm rounded-lg font-label-lg hover:bg-primary-container/10 active:scale-95 transition-all">
+                            View Bundle Details
+                        </button>
+</div>
+</section>
+<!-- Usage History Log -->
+<section class="bg-surface-container-lowest rounded-xl p-md border border-outline-variant">
+<div class="flex justify-between items-center mb-lg">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Usage History</h3>
+<button class="text-primary font-label-lg flex items-center gap-xs">
+                            Export Log
+                            <span class="material-symbols-outlined text-sm" data-icon="download">download</span>
+</button>
+</div>
+<div class="space-y-sm">
+<!-- History Item 1 -->
+<div class="flex items-center justify-between p-sm hover:bg-surface-container-low rounded-lg transition-colors border-l-4 border-primary-container">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-lg bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</div>
+<div>
+<p class="font-label-lg text-on-surface">John Doe (Main Holder)</p>
+<p class="text-label-md text-on-surface-variant">Deep Tissue Massage • 60 mins</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-lg text-on-surface">Aug 12, 2024</p>
+<p class="text-label-md text-primary">-1 Session</p>
+</div>
+</div>
+<!-- History Item 2 -->
+<div class="flex items-center justify-between p-sm hover:bg-surface-container-low rounded-lg transition-colors border-l-4 border-outline-variant">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="family_restroom">family_restroom</span>
+</div>
+<div>
+<p class="font-label-lg text-on-surface">Sarah Doe (Spouse)</p>
+<p class="text-label-md text-on-surface-variant">Post-Op Adjustment</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-lg text-on-surface">Aug 05, 2024</p>
+<p class="text-label-md text-primary">-1 Session</p>
+</div>
+</div>
+<!-- History Item 3 -->
+<div class="flex items-center justify-between p-sm hover:bg-surface-container-low rounded-lg transition-colors border-l-4 border-outline-variant">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</div>
+<div>
+<p class="font-label-lg text-on-surface">John Doe (Main Holder)</p>
+<p class="text-label-md text-on-surface-variant">Initial Consultation</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-lg text-on-surface">Jul 28, 2024</p>
+<p class="text-label-md text-primary">-1 Session</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Side Cards: Secondary Info & Promotion -->
+<aside class="lg:col-span-4 space-y-gutter">
+<!-- Family Members Access -->
+<div class="bg-surface-container-low rounded-xl p-md border border-outline-variant">
+<h4 class="font-headline-sm text-headline-sm mb-md flex items-center gap-base">
+<span class="material-symbols-outlined text-primary" data-icon="group">group</span>
+                        Shared With
+                    </h4>
+<div class="space-y-sm">
+<div class="flex items-center gap-sm">
+<img alt="Sarah profile" class="w-8 h-8 rounded-full border border-primary-container" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnoiEF4zAHv-z4NUEKZ2joQ_s7FnYOwfJRP_lH1glHnMz9Td8tyuqwnG-qCj1S0ifI00fkPzKMSvqtf3xERanigIYIAPriCgNnlSSX3vP1iekcPgQc-mGMZUUWYVOUBYAmxnQ6MBKCadoJPvlUuAu31FGs7TB-bLc7FGJeSNuqUgz04UN57GTPgkJFD6tO47C1SCMCpkP19a44oX7g81ys-wEvIBx5tXNNUJuYAz7hbN2HS61jQWvrRma3BQWLeNY7yyU0ADpkO3w"/>
+<span class="font-label-lg text-on-surface">Sarah Doe</span>
+<span class="ml-auto px-2 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed text-[10px] font-bold">SPOUSE</span>
+</div>
+<div class="flex items-center gap-sm">
+<img alt="Mike profile" class="w-8 h-8 rounded-full border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC61Ry2rnjrkXpDDyHnFdxCtlDnIEiPFfR8hbCGbws5G9N6gFAHshCEAjfngmxEEdP3QZ_ivxB2NJI1tWsPGq2ykmjP9nlmr6ABvjOi8apIJ8YjYJBKCzhF03CNjgGUwK6PbvQCQf1QRcnCYzpgpYsb4e-1LtRvHxXGvfgAN5F4NFsTxze9IB_0-llMmq66uo6MH9_BSJHQvCK6UfztC5J0PuN4mlGs9ouVhPYkdVyBNVaPR4nVO004YM7EJiAvLt5wj18Fjs3gK7M"/>
+<span class="font-label-lg text-on-surface">Mike Doe</span>
+<span class="ml-auto px-2 py-0.5 rounded bg-surface-container-highest text-on-surface-variant text-[10px] font-bold">CHILD</span>
+</div>
+</div>
+<button class="w-full mt-lg py-sm border border-dashed border-outline text-on-surface-variant rounded-lg font-label-lg hover:bg-white transition-colors flex items-center justify-center gap-base">
+<span class="material-symbols-outlined" data-icon="person_add">person_add</span>
+                        Manage Access
+                    </button>
+</div>
+<!-- Expired/Past Packages -->
+<div class="bg-surface rounded-xl p-md border border-outline-variant/30">
+<h4 class="font-label-lg text-on-surface-variant uppercase mb-sm">Recently Expired</h4>
+<div class="opacity-60 grayscale hover:grayscale-0 transition-all cursor-not-allowed">
+<p class="font-label-lg text-on-surface">Introductory Chiropractic 3-Pack</p>
+<p class="text-label-md text-error">Expired: Jan 15, 2024</p>
+</div>
+</div>
+<!-- Upsell Card -->
+<div class="relative rounded-xl overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-br from-primary to-primary-container opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<img alt="treatment room" class="absolute inset-0 w-full h-full object-cover mix-blend-overlay" data-alt="A serene and professional clinical treatment room with a minimalist aesthetic. High-contrast lighting focuses on a clean wooden physiotherapy table with soft green linens. The background features clinical-grade equipment in a modern, light-mode setting. Soft daylight filters through sheer curtains, creating a sense of expert relief and calm clinical stability. The overall tone is medical yet warmly approachable, emphasizing professional healthcare." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDY_HZo4jIdXRp3npsXZYe4zrIUiRXhXPqf0CnLoiwMr_jqxu_dPG2QnSKHlVCGtIZWxY2e-r2cpRlvT0G_X2sdOv8u6JRrF7ldIrtovcf4ASNoZbZTQNxhKadX1efLyPEEz8-gboi21ZtbjDuaJICd4ura_n5EuKEvt23tOBUkpwSTfD0l-s5cREIwvNAWkI0k_BUsCBDUKTY3BFOG2jH7wVuXdCYy68kZecYf7y0dxlTl-1V8BLs8kxC8BqWfUUfUbHELsPFfIac"/>
+<div class="relative p-md text-on-primary-container">
+<h4 class="font-headline-sm text-headline-sm mb-xs">Run Out of Sessions?</h4>
+<p class="text-label-md mb-lg">Renew your bundle now and save 15% on your next 10 visits.</p>
+<button class="bg-white text-primary w-full py-sm rounded-lg font-label-lg shadow-md hover:translate-y-[-2px] transition-transform">
+                            Renew Now
+                        </button>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Mobile only) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 rounded-t-xl bg-surface dark:bg-surface-dim shadow-[0_-4px_20px_rgba(0,128,128,0.05)] flex justify-around items-center py-sm">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
+<span class="font-label-md text-label-md">Book</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-md text-label-md">Packages</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-label-md">Profile</span>
+</a>
+</nav>
+<!-- Navigation Drawer (Desktop only) -->
+<nav class="hidden lg:flex flex-col h-screen p-md gap-base border-r border-outline-variant fixed left-0 top-0 w-64 bg-surface-container-low">
+<div class="mb-xl px-md py-sm">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary">Admin Portal</h1>
+<p class="text-label-md text-on-surface-variant">Clinic Management</p>
+</div>
+<div class="space-y-sm">
+<a class="flex items-center gap-base text-on-surface-variant px-md py-sm hover:bg-surface-container-highest transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-lg">Dashboard</span>
+</a>
+<a class="flex items-center gap-base text-on-surface-variant px-md py-sm hover:bg-surface-container-highest transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span class="font-label-lg">Appointments</span>
+</a>
+<a class="flex items-center gap-base bg-secondary-container text-on-secondary-container rounded-lg px-md py-sm active:translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-lg">Packages</span>
+</a>
+<a class="flex items-center gap-base text-on-surface-variant px-md py-sm hover:bg-surface-container-highest transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-lg">Patients</span>
+</a>
+<div class="mt-xl pt-xl border-t border-outline-variant">
+<a class="flex items-center gap-base text-on-surface-variant px-md py-sm hover:bg-surface-container-highest transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-lg">Settings</span>
+</a>
+</div>
+</div>
+</nav>
+<!-- Success Feedback Overlay (Hidden by default) -->
+<div class="fixed top-8 left-1/2 transform -translate-x-1/2 z-[60] bg-inverse-surface text-inverse-on-surface px-lg py-sm rounded-full shadow-lg flex items-center gap-base opacity-0 transition-opacity pointer-events-none" id="toast">
+<span class="material-symbols-outlined text-green-400" data-icon="check_circle">check_circle</span>
+<span class="font-label-lg">Session successfully booked!</span>
+</div>
+<script>
+        // Simple micro-interaction for the "Book Session" button
+        const bookBtn = document.querySelector('button:has(.material-symbols-outlined[data-icon="add_circle"])');
+        const toast = document.getElementById('toast');
+
+        if (bookBtn) {
+            bookBtn.addEventListener('click', () => {
+                toast.classList.remove('opacity-0');
+                toast.classList.add('opacity-100');
+                setTimeout(() => {
+                    toast.classList.remove('opacity-100');
+                    toast.classList.add('opacity-0');
+                }, 3000);
+            });
+        }
+
+        // Circular progress animation logic
+        const circle = document.querySelector('.progress-ring');
+        if (circle) {
+            const radius = circle.r.baseVal.value;
+            const circumference = radius * 2 * Math.PI;
+            circle.style.strokeDasharray = `${circumference} ${circumference}`;
+            
+            // Set progress to 50%
+            const offset = circumference - (50 / 100 * circumference);
+            circle.style.strokeDashoffset = offset;
+        }
+    </script>
+</body></html>

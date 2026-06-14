@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Patient Profile &amp; Settings | Calm Clinical</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed": "#002020",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#587979",
+                    "surface-container": "#f0edec",
+                    "secondary-fixed": "#d9e6da",
+                    "on-primary-fixed-variant": "#004f4f",
+                    "primary-fixed": "#93f2f2",
+                    "on-secondary": "#ffffff",
+                    "outline": "#6e7979",
+                    "on-tertiary": "#ffffff",
+                    "inverse-on-surface": "#f3f0ef",
+                    "on-secondary-fixed": "#131e17",
+                    "error": "#ba1a1a",
+                    "surface-container-highest": "#e5e2e1",
+                    "secondary": "#556158",
+                    "secondary-container": "#d9e6da",
+                    "surface-dim": "#dcd9d9",
+                    "primary-container": "#008080",
+                    "on-tertiary-fixed": "#002020",
+                    "on-surface": "#1c1b1b",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed-dim": "#bdcabe",
+                    "on-tertiary-container": "#e6fffe",
+                    "surface-container-high": "#ebe7e7",
+                    "outline-variant": "#bdc9c8",
+                    "inverse-surface": "#313030",
+                    "surface-container-low": "#f6f3f2",
+                    "tertiary": "#406060",
+                    "on-primary-container": "#e3fffe",
+                    "error-container": "#ffdad6",
+                    "on-background": "#1c1b1b",
+                    "on-primary": "#ffffff",
+                    "background": "#fcf9f8",
+                    "on-error": "#ffffff",
+                    "primary-fixed-dim": "#76d6d5",
+                    "on-tertiary-fixed-variant": "#2c4c4c",
+                    "on-secondary-fixed-variant": "#3e4a41",
+                    "on-secondary-container": "#5b675e",
+                    "tertiary-fixed": "#c6e9e9",
+                    "surface": "#fcf9f8",
+                    "primary": "#006565",
+                    "surface-tint": "#006a6a",
+                    "surface-variant": "#e5e2e1",
+                    "tertiary-fixed-dim": "#abcdcd",
+                    "inverse-primary": "#76d6d5",
+                    "surface-bright": "#fcf9f8",
+                    "on-surface-variant": "#3e4949"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "64px",
+                    "sm": "12px",
+                    "base": "8px",
+                    "margin-desktop": "120px",
+                    "md": "24px",
+                    "xs": "4px",
+                    "lg": "40px",
+                    "gutter": "24px",
+                    "margin-mobile": "20px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "label-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "label-lg": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #00808033;
+            border-radius: 10px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen pb-32 md:pb-0 md:pl-64">
+<!-- Navigation Drawer (Desktop) -->
+<aside class="hidden lg:flex flex-col h-screen p-md gap-base border-r border-outline-variant bg-surface-container-low fixed left-0 top-0 w-64 z-40">
+<div class="flex flex-col gap-xs mb-lg">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary">Admin Portal</h1>
+<p class="text-on-surface-variant font-label-md text-label-md">Clinic Management</p>
+</div>
+<nav class="flex flex-col gap-base">
+<a class="flex items-center gap-base text-on-surface-variant hover:bg-surface-container-high transition-colors px-md py-sm rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-lg text-label-lg">Dashboard</span>
+</a>
+<a class="flex items-center gap-base text-on-surface-variant hover:bg-surface-container-high transition-colors px-md py-sm rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span class="font-label-lg text-label-lg">Appointments</span>
+</a>
+<a class="flex items-center gap-base text-on-surface-variant hover:bg-surface-container-high transition-colors px-md py-sm rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-lg text-label-lg">Schedule</span>
+</a>
+<a class="flex items-center gap-base text-on-surface-variant hover:bg-surface-container-high transition-colors px-md py-sm rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-lg text-label-lg">Patients</span>
+</a>
+<a class="flex items-center gap-base bg-secondary-container text-on-secondary-container px-md py-sm rounded-lg active:translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-lg text-label-lg">Settings</span>
+</a>
+</nav>
+</aside>
+<!-- Top App Bar -->
+<header class="w-full top-0 sticky z-30 bg-surface flex justify-between items-center px-margin-mobile md:px-margin-desktop py-base">
+<div class="flex items-center gap-base">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center overflow-hidden border-2 border-primary-container">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional studio portrait of a mid-career healthcare professional with a warm, empathetic expression. The lighting is soft and diffused, characteristic of a high-end clinical environment. The background is a clean, minimalist off-white, emphasizing a sense of calm and expertise. The aesthetic is modern and corporate, aligning with a premium physiotherapy brand's visual identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmH84EornV_Y8ZEEdg8sTzQDFsleoIkalp6nRT7qBE6q5HErjmHyC5YfgiEQH5aCkK4HG6tHbPgg2odfkMNmomArWYVGTG2foiO7dinvoCrfgmnDJPCctMPW71u9-ENN1ADFgt7ZpshVgFdilYEuHjpAcVolU0d3D42cmdjdCtkj6WdpwilU16W4T9WELzvBCEcDOUJLxdv86GC4ogQPNOzHZJVbjWqylfg_deQxelUqXQPeNDi6ZIMv3SMbL73LESgxsPoZvCtaM"/>
+</div>
+<span class="font-headline-md text-headline-md font-bold text-primary">Calm Clinical</span>
+</div>
+<div class="flex items-center gap-md">
+<button class="w-10 h-10 flex items-center justify-center text-primary hover:bg-surface-container-high rounded-full transition-colors active:opacity-80">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="max-w-4xl mx-auto px-margin-mobile py-lg md:px-gutter lg:py-xl">
+<div class="mb-lg">
+<h2 class="font-headline-lg text-headline-lg mb-xs text-on-surface">Account &amp; Settings</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage your clinical preferences and personal information.</p>
+</div>
+<div class="flex flex-col gap-md">
+<!-- User Identity Section -->
+<section class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_20px_rgba(0,128,128,0.05)]">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-md mb-md">
+<div class="flex items-center gap-md">
+<div class="relative group">
+<div class="w-20 h-20 rounded-full overflow-hidden border-4 border-secondary-fixed">
+<img alt="Profile Avatar" class="w-full h-full object-cover" data-alt="A serene, professional close-up portrait of a woman in her late 30s with a confident and trustworthy gaze. She is set against a blurred medical office background with soft teal and white tones. The lighting is bright and optimistic, reflecting a high-quality clinical setting focused on patient well-being and professional care." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCz0tqAgkn5VMepSnIUJ7K8VLJ7LvxUz0enVdHSuzfUpoXkRCRuyhCPQ1nQNKtJLGFIAdW9WtyVm-9DrbzIbil6arwIoD6awyJmgxDqHCkakuTUWmr7Jk2LjdISq0Rf8vvfa6NHREFnu9HstPlSy9L1eriTKX6chz3qvUaVpm8sNcO6IS0C869XRSjpvtz1FTRUaFk7DSk6C_auVHQt_kmb5USFPvAot_aAZnT0DY1oVOLYc9r3VVqtm7leZ2dQB6WXOEds96nfcAI"/>
+</div>
+<button class="absolute bottom-0 right-0 bg-primary text-on-primary w-8 h-8 rounded-full flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
+</button>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Elena Rodriguez</h3>
+<p class="font-label-lg text-label-lg text-on-surface-variant">Patient ID: #CC-88291</p>
+</div>
+</div>
+<button class="px-md py-sm border-2 border-primary text-primary font-label-lg text-label-lg rounded-lg hover:bg-primary-container hover:text-on-primary-container transition-colors active:scale-95">
+                        Edit Profile
+                    </button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter border-t border-outline-variant pt-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 bg-surface-container-high rounded-lg flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant">Email Address</p>
+<p class="font-body-md text-body-md font-medium">elena.rodriguez@example.com</p>
+</div>
+</div>
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 bg-surface-container-high rounded-lg flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="call">call</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant">Phone Number</p>
+<p class="font-body-md text-body-md font-medium">+1 (555) 234-5678</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Clinic Preferences -->
+<section class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_20px_rgba(0,128,128,0.05)]">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-md flex items-center gap-xs">
+<span class="material-symbols-outlined" data-icon="home_health">home_health</span>
+                    Clinic Preferences
+                </h3>
+<div class="flex flex-col gap-sm">
+<label class="flex items-center justify-between p-md bg-secondary-fixed/30 rounded-lg cursor-pointer border-2 border-transparent hover:border-primary-container transition-all group">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 bg-primary-container text-on-primary-container rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="location_on">location_on</span>
+</div>
+<div>
+<p class="font-body-lg text-body-lg font-semibold text-on-surface">Clinic A: North Shore Wellness</p>
+<p class="font-label-md text-label-md text-on-surface-variant">Preferred Primary Location</p>
+</div>
+</div>
+<input checked="" class="w-6 h-6 text-primary focus:ring-primary" name="clinic" type="radio"/>
+</label>
+<label class="flex items-center justify-between p-md bg-surface-container-low rounded-lg cursor-pointer border-2 border-transparent hover:border-primary-container transition-all group">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 bg-surface-container-high text-on-surface-variant rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="location_on">location_on</span>
+</div>
+<div>
+<p class="font-body-lg text-body-lg font-semibold text-on-surface">Clinic B: Riverside Therapy</p>
+<p class="font-label-md text-label-md text-on-surface-variant">Alternative Location</p>
+</div>
+</div>
+<input class="w-6 h-6 text-primary focus:ring-primary" name="clinic" type="radio"/>
+</label>
+</div>
+</section>
+<!-- Notifications & Privacy -->
+<section class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_20px_rgba(0,128,128,0.05)]">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-md">Communications</h3>
+<div class="divide-y divide-outline-variant">
+<div class="py-md flex items-center justify-between">
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">Email Notifications</p>
+<p class="font-label-md text-label-md text-on-surface-variant">Appointment reminders and health tips</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="py-md flex items-center justify-between">
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">SMS Alerts</p>
+<p class="font-label-md text-label-md text-on-surface-variant">Urgent schedule changes and check-ins</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="py-md flex items-center justify-between">
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">Marketing &amp; News</p>
+<p class="font-label-md text-label-md text-on-surface-variant">New service announcements and clinics</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Danger Zone -->
+<section class="mt-lg">
+<button class="w-full flex items-center justify-center gap-sm p-md bg-error-container text-on-error-container font-label-lg text-label-lg rounded-xl hover:opacity-90 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                    Logout from Calm Clinical
+                </button>
+<div class="mt-md text-center">
+<button class="text-error font-label-md text-label-md underline">Delete account and data</button>
+</div>
+</section>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 rounded-t-xl bg-surface shadow-[0_-4px_20px_rgba(0,128,128,0.05)] flex justify-around items-center py-sm">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
+<span class="font-label-md text-label-md">Book</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-md text-label-md">Packages</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-label-md">Profile</span>
+</a>
+</nav>
+<!-- Micro-interaction Script -->
+<script>
+        document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
+            toggle.addEventListener('change', (e) => {
+                const parent = e.target.closest('div');
+                if(e.target.checked) {
+                    console.log('Setting enabled');
+                }
+            });
+        });
+
+        // Add visual feedback to radio buttons
+        const clinicOptions = document.querySelectorAll('input[name="clinic"]');
+        clinicOptions.forEach(option => {
+            option.addEventListener('change', () => {
+                clinicOptions.forEach(opt => {
+                    const label = opt.closest('label');
+                    if(opt.checked) {
+                        label.classList.add('bg-secondary-fixed/30', 'border-primary-container');
+                        label.classList.remove('bg-surface-container-low', 'border-transparent');
+                    } else {
+                        label.classList.remove('bg-secondary-fixed/30', 'border-primary-container');
+                        label.classList.add('bg-surface-container-low', 'border-transparent');
+                    }
+                });
+            });
+        });
+    </script>
+</body></html>

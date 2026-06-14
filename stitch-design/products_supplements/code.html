@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Shop - Calm Clinical</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#002020",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#587979",
+                        "surface-container": "#f0edec",
+                        "secondary-fixed": "#d9e6da",
+                        "on-primary-fixed-variant": "#004f4f",
+                        "primary-fixed": "#93f2f2",
+                        "on-secondary": "#ffffff",
+                        "outline": "#6e7979",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f3f0ef",
+                        "on-secondary-fixed": "#131e17",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#e5e2e1",
+                        "secondary": "#556158",
+                        "secondary-container": "#d9e6da",
+                        "surface-dim": "#dcd9d9",
+                        "primary-container": "#008080",
+                        "on-tertiary-fixed": "#002020",
+                        "on-surface": "#1c1b1b",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#bdcabe",
+                        "on-tertiary-container": "#e6fffe",
+                        "surface-container-high": "#ebe7e7",
+                        "outline-variant": "#bdc9c8",
+                        "inverse-surface": "#313030",
+                        "surface-container-low": "#f6f3f2",
+                        "tertiary": "#406060",
+                        "on-primary-container": "#e3fffe",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1c1b1b",
+                        "on-primary": "#ffffff",
+                        "background": "#fcf9f8",
+                        "on-error": "#ffffff",
+                        "primary-fixed-dim": "#76d6d5",
+                        "on-tertiary-fixed-variant": "#2c4c4c",
+                        "on-secondary-fixed-variant": "#3e4a41",
+                        "on-secondary-container": "#5b675e",
+                        "tertiary-fixed": "#c6e9e9",
+                        "surface": "#fcf9f8",
+                        "primary": "#006565",
+                        "surface-tint": "#006a6a",
+                        "surface-variant": "#e5e2e1",
+                        "tertiary-fixed-dim": "#abcdcd",
+                        "inverse-primary": "#76d6d5",
+                        "surface-bright": "#fcf9f8",
+                        "on-surface-variant": "#3e4949"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "64px",
+                        "sm": "12px",
+                        "base": "8px",
+                        "margin-desktop": "120px",
+                        "md": "24px",
+                        "xs": "4px",
+                        "lg": "40px",
+                        "gutter": "24px",
+                        "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "label-lg": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #bdc9c8; border-radius: 10px; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen">
+<!-- Navigation Drawer (Shared Component) -->
+<aside class="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 p-md gap-base border-r border-outline-variant bg-surface-container-low z-50">
+<div class="flex items-center gap-base mb-lg px-md">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="medical_services">medical_services</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary">Calm Clinical</span>
+</div>
+<nav class="flex flex-col gap-xs flex-1">
+<a class="flex items-center gap-base text-on-surface-variant px-md py-sm hover:bg-surface-container-highest transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-lg text-label-lg">Dashboard</span>
+</a>
+<a class="flex items-center gap-base text-on-surface-variant px-md py-sm hover:bg-surface-container-highest transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span class="font-label-lg text-label-lg">Appointments</span>
+</a>
+<a class="flex items-center gap-base bg-secondary-container text-on-secondary-container px-md py-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-lg text-label-lg">Patients</span>
+</a>
+<a class="flex items-center gap-base text-on-surface-variant px-md py-sm hover:bg-surface-container-highest transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-lg text-label-lg">Schedule</span>
+</a>
+<a class="flex items-center gap-base text-on-surface-variant px-md py-sm hover:bg-surface-container-highest transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-lg text-label-lg">Settings</span>
+</a>
+</nav>
+<div class="mt-auto px-md py-sm border-t border-outline-variant pt-md">
+<div class="flex items-center gap-base">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-white font-bold">A</div>
+<div>
+<p class="font-label-lg text-label-lg text-on-surface">Admin User</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-wider">Clinic Management</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:ml-64 min-h-screen pb-xl">
+<!-- Top App Bar (Shared Component Logic) -->
+<header class="sticky top-0 z-40 w-full flex justify-between items-center px-margin-mobile md:px-margin-desktop py-base bg-surface border-b border-outline-variant/30 backdrop-blur-md">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Clinic Shop</h1>
+<div class="flex items-center gap-md">
+<button class="p-base rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<button class="p-base rounded-full hover:bg-surface-container-high transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+</div>
+</header>
+<div class="px-margin-mobile md:px-margin-desktop py-lg max-w-7xl mx-auto">
+<!-- Quick Stats & Refill Alerts Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-xl">
+<!-- Action Card: New Purchase -->
+<div class="md:col-span-2 relative overflow-hidden rounded-xl bg-primary-container p-lg text-on-primary-container flex flex-col justify-between group cursor-pointer transition-transform hover:scale-[1.01]">
+<div class="relative z-10">
+<h2 class="font-headline-lg text-headline-lg mb-sm">Record New Purchase</h2>
+<p class="font-body-md text-body-md opacity-90 max-w-md">Efficiently process patient supplement orders and update local inventory in real-time.</p>
+</div>
+<div class="mt-lg flex items-center gap-base relative z-10">
+<button class="bg-surface text-primary px-lg py-sm rounded-full font-label-lg hover:bg-on-primary-container transition-colors shadow-lg" onclick="document.getElementById('purchase-modal').classList.remove('hidden')">
+                            Open Checkout Flow
+                        </button>
+</div>
+<div class="absolute right-[-20px] bottom-[-20px] opacity-10 group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-[180px]" data-icon="shopping_basket">shopping_basket</span>
+</div>
+</div>
+<!-- Refill Alerts Column -->
+<div class="rounded-xl bg-surface-container-low p-md border border-outline-variant">
+<div class="flex items-center justify-between mb-md">
+<h3 class="font-headline-sm text-headline-sm flex items-center gap-xs">
+<span class="material-symbols-outlined text-error" data-icon="priority_high">priority_high</span>
+                            Refill Alerts
+                        </h3>
+<span class="bg-error text-white text-[10px] px-2 py-0.5 rounded-full font-bold">4 DUE</span>
+</div>
+<div class="space-y-sm max-h-[220px] overflow-y-auto custom-scrollbar">
+<div class="p-sm bg-surface rounded-lg border-l-4 border-error flex justify-between items-center">
+<div>
+<p class="font-label-lg text-label-lg">Sarah Jenkins</p>
+<p class="text-xs text-on-surface-variant">Magnesium Glycinate</p>
+</div>
+<button class="text-primary hover:underline text-xs font-semibold">Call</button>
+</div>
+<div class="p-sm bg-surface rounded-lg border-l-4 border-error flex justify-between items-center">
+<div>
+<p class="font-label-lg text-label-lg">Robert Chen</p>
+<p class="text-xs text-on-surface-variant">Vitamin D3 5000IU</p>
+</div>
+<button class="text-primary hover:underline text-xs font-semibold">Call</button>
+</div>
+<div class="p-sm bg-surface rounded-lg border-l-4 border-outline-variant flex justify-between items-center opacity-60">
+<div>
+<p class="font-label-lg text-label-lg">Emma Wilson</p>
+<p class="text-xs text-on-surface-variant">Curcumin Complex</p>
+</div>
+<span class="text-[10px] text-on-surface-variant">Tomorrow</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Inventory Catalogue -->
+<section>
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-md mb-lg">
+<div>
+<h2 class="font-headline-md text-headline-md mb-xs">Product Inventory</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage herbal supplements and clinical stock levels.</p>
+</div>
+<div class="flex gap-sm">
+<select class="rounded-lg border-outline-variant bg-surface text-on-surface-variant font-label-lg focus:ring-primary focus:border-primary">
+<option>All Categories</option>
+<option>Herbal Tinctures</option>
+<option>Nutraceuticals</option>
+<option>Topicals</option>
+</select>
+<button class="flex items-center gap-xs bg-primary text-white px-md py-sm rounded-lg font-label-lg hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                            Add Product
+                        </button>
+</div>
+</div>
+<!-- Product Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-gutter">
+<!-- Product Card 1 -->
+<div class="group bg-surface rounded-xl overflow-hidden border border-outline-variant hover:shadow-xl transition-all duration-300">
+<div class="h-48 bg-surface-container-highest relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A professional studio photograph of a glass amber bottle of herbal supplement, set against a soft sage green background with clean, minimalist aesthetics. The lighting is bright and airy, emphasizing the pharmaceutical-grade quality of the clinical product. A small sprig of fresh lavender sits beside the bottle to suggest natural ingredients and calm clinical relief." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU2D3dyGNL_q5PBCdjkf7awzXOf_0qEfCRvv6mMSsJ586xcC8EH9G2q6yLvEQVj3ZyFyIYFLBDVxSpjPrVoqzASA1I1x0ZfWjZ5fJ21-FdXTWXtcj_VohhuqkvuVQa2dfBHKNLXDDalMyySECKeQ6zayK7GEZgnI3PVec2m1ueS55fzYW_8xCAqpqNEF4SiDUxi5N_GRM43jIdJoS8r9Jyxir2SuZ5YMgVpHV8pn1ALBwJXPlVJjFiQySCMh1XpEBEIYVqfXYbmD4"/>
+<div class="absolute top-sm right-sm bg-surface/90 px-sm py-xs rounded-full shadow-sm">
+<p class="text-xs font-bold text-primary">$42.00</p>
+</div>
+</div>
+<div class="p-md">
+<div class="flex justify-between items-start mb-xs">
+<h4 class="font-label-lg text-label-lg text-on-surface">Ashwagandha Extract</h4>
+<span class="bg-secondary-container text-on-secondary-container text-[10px] px-2 py-0.5 rounded uppercase font-bold">Herbal</span>
+</div>
+<p class="text-xs text-on-surface-variant mb-md">60 Vegan Capsules • 500mg</p>
+<div class="flex items-center justify-between border-t border-outline-variant/30 pt-md">
+<div class="flex flex-col">
+<span class="text-[10px] text-on-surface-variant uppercase">In Stock</span>
+<span class="font-bold text-on-surface">24 units</span>
+</div>
+<button class="p-sm bg-surface-container-low rounded-lg hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product Card 2 (Low Stock) -->
+<div class="group bg-surface rounded-xl overflow-hidden border border-outline-variant hover:shadow-xl transition-all duration-300">
+<div class="h-48 bg-surface-container-highest relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A close-up shot of a white professional supplement container with a minimalist label, placed on a marble surface in a high-end wellness clinic. The environment is serene and modern, featuring soft-focus architectural lines in the background. High-key lighting highlights the precision and reliability of the medical-grade product, aligned with a corporate minimalist design language." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbZcxf5G_iS-UmKHlP3tE4xzJel2Nb1ux9_AHPrrUr-a6YAG0c8dAa8FmdXf024ekXg8nueO8vQzlQbr2JE_mLT-N440fhozZXDro_Ln0erPAtZ6cQ2E8K5cDmVaaXqBQKA9gRJbTDY0NCJeARKnk2L5v4sZdBFEaLKcO94ZVoZj-qWiocwekFJ0oKILlLnDfq3iGFB2rHg5B_Z7HjC3y-bRdUYG2gRY61zbc2oukJG-8yWI71J3Rw9IirsZWyQJ-GziRdxIHv7EY"/>
+<div class="absolute top-sm right-sm bg-surface/90 px-sm py-xs rounded-full shadow-sm">
+<p class="text-xs font-bold text-primary">$35.50</p>
+</div>
+<div class="absolute top-sm left-sm bg-error text-white px-sm py-xs rounded-full text-[10px] font-bold">LOW STOCK</div>
+</div>
+<div class="p-md">
+<div class="flex justify-between items-start mb-xs">
+<h4 class="font-label-lg text-label-lg text-on-surface">Magnesium Glycinate</h4>
+<span class="bg-secondary-container text-on-secondary-container text-[10px] px-2 py-0.5 rounded uppercase font-bold">Nutra</span>
+</div>
+<p class="text-xs text-on-surface-variant mb-md">120 Tablets • 200mg</p>
+<div class="flex items-center justify-between border-t border-outline-variant/30 pt-md">
+<div class="flex flex-col">
+<span class="text-[10px] text-error uppercase">In Stock</span>
+<span class="font-bold text-error">4 units</span>
+</div>
+<button class="p-sm bg-surface-container-low rounded-lg hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product Card 3 -->
+<div class="group bg-surface rounded-xl overflow-hidden border border-outline-variant hover:shadow-xl transition-all duration-300">
+<div class="h-48 bg-surface-container-highest relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A top-down aesthetic photo of clinical topical ointments in minimalist tubes, arranged neatly on a textured light grey surface. The scene is bright and clinical, using a palette of soft teal and charcoal to convey professional care. Shadows are soft and diffused, creating a floating effect that emphasizes the modern minimalist style of the Calm Clinical brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzZ15gmh4Qug9uve2BvMzwAYTDDNT_aiZPpbZMUh9NCiThNSwiFomoHYtElrst_ZuqWfAr8BROZLVxAJutMKLpyXQvDeYmxK4f4PoPa8PcZ3tgJWhifTMKUEKlgUIZBLg2KqCeCuNLzwrYRDkJLGy9fTATxRuHpEfhgMfo29RhsKe7p9VPI9mO3OjtVgNU8zrFYqQBnUF10H0SMTQSC5drfJV0OU7JV1DBKG_xRj_xWi_MusLcrvmSiu34XXz8NW9Ylt9mGchjuP0"/>
+<div class="absolute top-sm right-sm bg-surface/90 px-sm py-xs rounded-full shadow-sm">
+<p class="text-xs font-bold text-primary">$28.00</p>
+</div>
+</div>
+<div class="p-md">
+<div class="flex justify-between items-start mb-xs">
+<h4 class="font-label-lg text-label-lg text-on-surface">Arnica Recovery Gel</h4>
+<span class="bg-secondary-container text-on-secondary-container text-[10px] px-2 py-0.5 rounded uppercase font-bold">Topical</span>
+</div>
+<p class="text-xs text-on-surface-variant mb-md">100ml • 10% Strength</p>
+<div class="flex items-center justify-between border-t border-outline-variant/30 pt-md">
+<div class="flex flex-col">
+<span class="text-[10px] text-on-surface-variant uppercase">In Stock</span>
+<span class="font-bold text-on-surface">18 units</span>
+</div>
+<button class="p-sm bg-surface-container-low rounded-lg hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product Card 4 -->
+<div class="group bg-surface rounded-xl overflow-hidden border border-outline-variant hover:shadow-xl transition-all duration-300">
+<div class="h-48 bg-surface-container-highest relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A clean, medical-grade photograph of vitamin capsules spilling slightly out of a white pharmaceutical bottle. The scene is set in a sterile, modern laboratory environment with soft, ambient lighting. The color palette is composed of crisp whites and teal accents, suggesting a high standard of health care and reliability suitable for a professional clinical shop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBx2flsREHy8BzYWPdh-zc14yBvQaKsWwog4eYZgDqHw0JIYUsrUqQ8SlIlOHq9uNZfq9RgzaFItKggrAMKqFOv9ozJe_H5DlZfjYTeXZIZcGsv50E5gqlvZtZkYOu_3wdIjntLpQHZClrE_E2Ukvy4OScx8pmG1pqsh5Rm4YSagJOlsEs1IKTdCznoz6TsTbjZW9L7ZtTOiimO3Qn57kmYWqE7ODi3PllG_f154taS91MFhqIe6kpATpNInu0uCj6w7nsRqEYLlow"/>
+<div class="absolute top-sm right-sm bg-surface/90 px-sm py-xs rounded-full shadow-sm">
+<p class="text-xs font-bold text-primary">$55.00</p>
+</div>
+</div>
+<div class="p-md">
+<div class="flex justify-between items-start mb-xs">
+<h4 class="font-label-lg text-label-lg text-on-surface">Probiotic Complex</h4>
+<span class="bg-secondary-container text-on-secondary-container text-[10px] px-2 py-0.5 rounded uppercase font-bold">Nutra</span>
+</div>
+<p class="text-xs text-on-surface-variant mb-md">30 Billion CFU • 60 Caps</p>
+<div class="flex items-center justify-between border-t border-outline-variant/30 pt-md">
+<div class="flex flex-col">
+<span class="text-[10px] text-on-surface-variant uppercase">In Stock</span>
+<span class="font-bold text-on-surface">52 units</span>
+</div>
+<button class="p-sm bg-surface-container-low rounded-lg hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Modal: New Purchase Flow (Initial Hidden State) -->
+<div class="hidden fixed inset-0 z-[100] flex items-center justify-center p-margin-mobile" id="purchase-modal">
+<div class="absolute inset-0 bg-on-surface/40 backdrop-blur-sm" onclick="this.parentElement.classList.add('hidden')"></div>
+<div class="relative bg-surface w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[795px]">
+<!-- Modal Header -->
+<div class="p-md border-b border-outline-variant flex justify-between items-center bg-surface">
+<div class="flex items-center gap-sm">
+<span class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm">1</span>
+<h3 class="font-headline-sm text-headline-sm">Record Purchase</h3>
+</div>
+<button class="p-xs hover:bg-surface-container-high rounded-full" onclick="document.getElementById('purchase-modal').classList.add('hidden')">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<!-- Progress Stepper -->
+<div class="px-md pt-sm">
+<div class="h-2 w-full bg-surface-container-highest rounded-full flex overflow-hidden">
+<div class="w-1/3 bg-primary transition-all duration-500"></div>
+<div class="w-2/3 bg-transparent"></div>
+</div>
+<div class="flex justify-between mt-xs px-1">
+<span class="text-[10px] font-bold text-primary uppercase">Patient</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase">Products</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase">Payment</span>
+</div>
+</div>
+<!-- Modal Body -->
+<div class="p-lg overflow-y-auto custom-scrollbar flex-1">
+<div class="space-y-lg">
+<!-- Search Patient -->
+<div>
+<label class="block font-label-lg text-label-lg mb-xs">Select Patient</label>
+<div class="relative">
+<span class="absolute left-md top-1/2 -translate-y-1/2 material-symbols-outlined text-outline" data-icon="person_search">person_search</span>
+<input class="w-full pl-xl pr-md py-md rounded-xl border-2 border-outline-variant focus:border-primary focus:ring-0 text-body-md bg-surface-container-low transition-all" placeholder="Search by name or ID..." type="text"/>
+</div>
+<div class="mt-md space-y-sm">
+<div class="flex items-center gap-md p-md bg-secondary-container/30 rounded-xl border border-secondary-container cursor-pointer hover:bg-secondary-container/50 transition-colors">
+<div class="w-10 h-10 rounded-full bg-secondary text-white flex items-center justify-center font-bold">SJ</div>
+<div class="flex-1">
+<p class="font-label-lg text-label-lg">Sarah Jenkins</p>
+<p class="text-xs text-on-surface-variant">ID: CC-48291 • Last Visit: 3 days ago</p>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+</div>
+<!-- Quick Add Product -->
+<div>
+<label class="block font-label-lg text-label-lg mb-xs">Add Items</label>
+<div class="flex gap-sm overflow-x-auto pb-sm custom-scrollbar">
+<button class="flex-shrink-0 flex items-center gap-xs px-md py-sm bg-surface border border-outline-variant rounded-full text-xs font-semibold hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="history">history</span>
+                                Re-order Magnesium
+                            </button>
+<button class="flex-shrink-0 flex items-center gap-xs px-md py-sm bg-surface border border-outline-variant rounded-full text-xs font-semibold hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="history">history</span>
+                                Re-order Ashwagandha
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="p-md bg-surface-container-low border-t border-outline-variant flex justify-between items-center">
+<div class="flex flex-col">
+<span class="text-[10px] text-on-surface-variant uppercase">Subtotal</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">$0.00</span>
+</div>
+<button class="bg-primary text-white px-xl py-sm rounded-full font-label-lg shadow-md hover:opacity-90 active:scale-95 transition-all">
+                    Next Step
+                </button>
+</div>
+</div>
+</div>
+<!-- Mobile Navigation Bar (Shared Component) -->
+<nav class="md:hidden fixed bottom-0 w-full flex justify-around items-center py-sm bg-surface shadow-[0_-4px_20px_rgba(0,128,128,0.05)] z-50 border-t border-outline-variant/30">
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-md text-label-md">Shop</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1">
+<span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
+<span class="font-label-md text-label-md">Book</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-label-md">Profile</span>
+</div>
+</nav>
+<script>
+        // Simple Interaction Logic
+        function toggleModal(id) {
+            const modal = document.getElementById(id);
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        // Close on escape key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.getElementById('purchase-modal').classList.add('hidden');
+            }
+        });
+    </script>
+</body></html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Patient Dashboard - Calm Clinical</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed": "#002020",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#587979",
+                    "surface-container": "#f0edec",
+                    "secondary-fixed": "#d9e6da",
+                    "on-primary-fixed-variant": "#004f4f",
+                    "primary-fixed": "#93f2f2",
+                    "on-secondary": "#ffffff",
+                    "outline": "#6e7979",
+                    "on-tertiary": "#ffffff",
+                    "inverse-on-surface": "#f3f0ef",
+                    "on-secondary-fixed": "#131e17",
+                    "error": "#ba1a1a",
+                    "surface-container-highest": "#e5e2e1",
+                    "secondary": "#556158",
+                    "secondary-container": "#d9e6da",
+                    "surface-dim": "#dcd9d9",
+                    "primary-container": "#008080",
+                    "on-tertiary-fixed": "#002020",
+                    "on-surface": "#1c1b1b",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed-dim": "#bdcabe",
+                    "on-tertiary-container": "#e6fffe",
+                    "surface-container-high": "#ebe7e7",
+                    "outline-variant": "#bdc9c8",
+                    "inverse-surface": "#313030",
+                    "surface-container-low": "#f6f3f2",
+                    "tertiary": "#406060",
+                    "on-primary-container": "#e3fffe",
+                    "error-container": "#ffdad6",
+                    "on-background": "#1c1b1b",
+                    "on-primary": "#ffffff",
+                    "background": "#fcf9f8",
+                    "on-error": "#ffffff",
+                    "primary-fixed-dim": "#76d6d5",
+                    "on-tertiary-fixed-variant": "#2c4c4c",
+                    "on-secondary-fixed-variant": "#3e4a41",
+                    "on-secondary-container": "#5b675e",
+                    "tertiary-fixed": "#c6e9e9",
+                    "surface": "#fcf9f8",
+                    "primary": "#006565",
+                    "surface-tint": "#006a6a",
+                    "surface-variant": "#e5e2e1",
+                    "tertiary-fixed-dim": "#abcdcd",
+                    "inverse-primary": "#76d6d5",
+                    "surface-bright": "#fcf9f8",
+                    "on-surface-variant": "#3e4949"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "64px",
+                    "sm": "12px",
+                    "base": "8px",
+                    "margin-desktop": "120px",
+                    "md": "24px",
+                    "xs": "4px",
+                    "lg": "40px",
+                    "gutter": "24px",
+                    "margin-mobile": "20px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "label-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "label-lg": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .clinic-a-accent { border-left: 6px solid #008080; }
+        .clinic-b-accent { border-left: 6px solid #406060; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="w-full top-0 sticky z-50 bg-surface dark:bg-surface-dim flex justify-between items-center px-margin-mobile md:px-margin-desktop py-base w-full">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden border-2 border-primary">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional close-up portrait of a middle-aged man with a friendly and calm expression, representing a healthcare patient. The lighting is soft and natural, emphasizing a bright and serene clinical atmosphere. The background is a clean, blurred medical office setting with soft teal and white tones, matching the Calm Clinical brand identity. High-quality photography with a focus on reliability and warmth." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9xJCLulLXHZnIEn-CE7bN-VCalebpftNqHc2KXWA6cBc4dAYJxQfDpe7V5kUJwGb4Zv2gc_rl5PTFJPJ87Q3smhofdbpZ3rgfheyX3ICMLkwCWXiiUMX_qO9KoGXBZL2iPmjd8QdkDelY6SA5D1HzOLJhpGfyRvVgBD0R8TjTq6IAWRAPW5fymuxDK7-7JLAUHT1Y_R57Mcmlih3NrzpkyhR76ciyLiGL2_ucbNQqKhhk8SKnzAxJJh7vPzyytTWXR6hzx58rQB8"/>
+</div>
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">Calm Clinical</span>
+</div>
+<button class="material-symbols-outlined text-primary p-xs rounded-full hover:bg-surface-container-high transition-colors" data-icon="notifications">notifications</button>
+</header>
+<main class="max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop mt-lg space-y-lg">
+<!-- Welcome Header -->
+<section class="animate-in fade-in slide-in-from-bottom duration-700">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Welcome, Kuya Bong</h1>
+<p class="text-on-surface-variant font-body-lg">How are you feeling today?</p>
+</section>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Book Now Shortcut (Large) -->
+<div class="md:col-span-8 group relative overflow-hidden rounded-xl bg-primary-container p-lg flex flex-col justify-between min-h-[240px] cursor-pointer transition-all hover:shadow-xl active:scale-[0.98]">
+<div class="relative z-10">
+<h2 class="font-headline-md text-headline-md text-on-primary-container">Ready for your next session?</h2>
+<p class="text-on-primary-container opacity-90 mt-xs font-body-md">Book a chiropractic or physiotherapy appointment in seconds.</p>
+</div>
+<div class="relative z-10 mt-md">
+<span class="inline-flex items-center gap-xs bg-surface text-primary px-lg py-sm rounded-full font-label-lg shadow-sm group-hover:bg-primary-fixed transition-colors">
+                        Book Now
+                        <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</span>
+</div>
+<!-- Abstract decorative element -->
+<div class="absolute -right-12 -bottom-12 w-64 h-64 bg-primary rounded-full opacity-20 blur-3xl group-hover:scale-110 transition-transform"></div>
+</div>
+<!-- Package Balance Card -->
+<div class="md:col-span-4 rounded-xl bg-secondary-container p-lg flex flex-col justify-between shadow-[0_4px_20px_rgba(0,128,128,0.05)] border border-outline-variant">
+<div>
+<div class="flex items-center justify-between">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="inventory_2">inventory_2</span>
+<span class="text-label-md font-label-md text-on-secondary-container px-base py-xs bg-white/40 rounded-full">Recovery Pack</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-secondary-container mt-md">Package Balance</h3>
+<div class="flex items-baseline gap-xs mt-sm">
+<span class="text-headline-lg font-headline-lg text-primary">3</span>
+<span class="text-on-surface-variant font-body-md">Sessions left</span>
+</div>
+</div>
+<div class="mt-md pt-md border-t border-on-secondary-container/10">
+<div class="w-full bg-white/30 h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[60%] rounded-full"></div>
+</div>
+<p class="text-label-md text-on-secondary-container mt-xs">60% of your pack completed</p>
+</div>
+</div>
+<!-- Next Appointment Card -->
+<div class="md:col-span-6 rounded-xl bg-white p-lg shadow-[0_4px_20px_rgba(0,128,128,0.05)] clinic-a-accent flex flex-col md:flex-row gap-lg">
+<div class="flex-1 space-y-md">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="event">event</span>
+<span class="font-label-lg text-label-lg text-primary uppercase tracking-wider">Next Appointment</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm">Physiotherapy - Clinic A</h4>
+<p class="text-on-surface-variant font-body-md">with Dr. Sarah Mitchell</p>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex flex-col">
+<span class="font-label-md text-on-surface-variant">Date</span>
+<span class="font-label-lg text-primary">Oct 24, 2023</span>
+</div>
+<div class="flex flex-col border-l border-outline-variant pl-md">
+<span class="font-label-md text-on-surface-variant">Time</span>
+<span class="font-label-lg text-primary">10:30 AM</span>
+</div>
+</div>
+</div>
+<div class="md:w-32 h-32 rounded-lg overflow-hidden bg-surface-container shrink-0">
+<img alt="Clinic A" class="w-full h-full object-cover" data-alt="A wide-angle professional photograph of a modern, high-end physiotherapy clinic interior. The space is filled with soft natural light, featuring minimalist furniture in white and teal tones. Large windows show greenery outside, creating a serene and healing environment. The aesthetic is clean, medical-grade, yet welcoming and warm, perfectly capturing the Calm Clinical brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfafN9-GaCQoe4gbTfJoKrr-F7NPADhZbki2ErtcWTqvo9e2yLjKs-nlV1TDfEjP4pW1P7TDchtsspE48Izgb9dYF1bpPMMcP5qXj0AOEHsKu-dy3wNrKvMBYuGN3OO1-frbyLpaWr0uRUBZaOcbRqjeQUtP6hxEV8ZWzCn2UhrWSEsgTFnCX9OSn2Pnj5DVzQ4lfzepbmMpZEmsnW5Npw3DtxABQ59cpDQ1fhsFw4N9AuzUPDBrz91SOUF-eh4oRLAHqlPIirOZs"/>
+</div>
+</div>
+<!-- Health Reminders / Tips -->
+<div class="md:col-span-6 rounded-xl bg-surface-container-low p-lg border border-outline-variant">
+<div class="flex items-center justify-between mb-md">
+<h3 class="font-headline-sm text-headline-sm flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" data-icon="health_and_safety">health_and_safety</span>
+                        Health Reminders
+                    </h3>
+</div>
+<div class="space-y-sm">
+<div class="flex gap-md p-sm rounded-lg hover:bg-white transition-colors cursor-pointer group">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="water_drop">water_drop</span>
+</div>
+<div>
+<p class="font-label-lg text-on-surface group-hover:text-primary transition-colors">Daily Hydration</p>
+<p class="text-label-md text-on-surface-variant">Remember to drink at least 2L of water to aid recovery.</p>
+</div>
+</div>
+<div class="flex gap-md p-sm rounded-lg hover:bg-white transition-colors cursor-pointer group">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary text-sm" data-icon="fitness_center">fitness_center</span>
+</div>
+<div>
+<p class="font-label-lg text-on-surface group-hover:text-primary transition-colors">Lower Back Stretches</p>
+<p class="text-label-md text-on-surface-variant">Complete your 10-minute morning routine.</p>
+</div>
+</div>
+<div class="flex gap-md p-sm rounded-lg hover:bg-white transition-colors cursor-pointer group">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="pill">pill</span>
+</div>
+<div>
+<p class="font-label-lg text-on-surface group-hover:text-primary transition-colors">Supplement Check</p>
+<p class="text-label-md text-on-surface-variant">Take Vitamin D with your breakfast.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Activity / Timeline (Subtle Section) -->
+<section class="mt-xl">
+<div class="flex items-center justify-between mb-md">
+<h3 class="font-headline-sm text-headline-sm">Recent Activity</h3>
+<button class="text-primary font-label-lg hover:underline transition-all">View All</button>
+</div>
+<div class="space-y-base">
+<div class="flex items-center justify-between p-md bg-white rounded-lg shadow-sm border border-outline-variant/30">
+<div class="flex items-center gap-md">
+<div class="p-xs rounded bg-surface-container">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle">check_circle</span>
+</div>
+<div>
+<p class="font-label-lg">Adjustment Session Completed</p>
+<p class="text-label-md text-on-surface-variant">Clinic B • Oct 18, 2023</p>
+</div>
+</div>
+<span class="font-label-md text-primary bg-primary-fixed px-sm py-xs rounded-full">Finished</span>
+</div>
+<div class="flex items-center justify-between p-md bg-white rounded-lg shadow-sm border border-outline-variant/30 opacity-70">
+<div class="flex items-center gap-md">
+<div class="p-xs rounded bg-surface-container">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="receipt_long">receipt_long</span>
+</div>
+<div>
+<p class="font-label-lg">Invoice Paid</p>
+<p class="text-label-md text-on-surface-variant">Package Renewal • Oct 15, 2023</p>
+</div>
+</div>
+<span class="font-label-md text-on-surface-variant">$120.00</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full flex justify-around items-center py-sm bg-surface dark:bg-surface-dim shadow-[0_-4px_20px_rgba(0,128,128,0.05)] z-50 rounded-t-xl">
+<a class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary-fixed text-on-primary-container dark:text-on-primary-fixed rounded-full px-4 py-1 scale-95 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:text-primary transition-colors scale-95 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
+<span class="font-label-md text-label-md">Book</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:text-primary transition-colors scale-95 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-md text-label-md">Packages</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:text-primary transition-colors scale-95 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-label-md">Profile</span>
+</a>
+</nav>
+<!-- Simple Micro-interaction Script -->
+<script>
+        document.querySelectorAll('a, button, div.cursor-pointer').forEach(el => {
+            el.addEventListener('click', () => {
+                // Haptic feedback simulation or just a visual hint
+                console.log('Interacted with:', el.innerText || 'button');
+            });
+        });
+    </script>
+</body></html>

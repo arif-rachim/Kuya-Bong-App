@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Package Management | Calm Clinical Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f6f3f2;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #bdc9c8;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #008080;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#002020",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#587979",
+                        "surface-container": "#f0edec",
+                        "secondary-fixed": "#d9e6da",
+                        "on-primary-fixed-variant": "#004f4f",
+                        "primary-fixed": "#93f2f2",
+                        "on-secondary": "#ffffff",
+                        "outline": "#6e7979",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f3f0ef",
+                        "on-secondary-fixed": "#131e17",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#e5e2e1",
+                        "secondary": "#556158",
+                        "secondary-container": "#d9e6da",
+                        "surface-dim": "#dcd9d9",
+                        "primary-container": "#008080",
+                        "on-tertiary-fixed": "#002020",
+                        "on-surface": "#1c1b1b",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#bdcabe",
+                        "on-tertiary-container": "#e6fffe",
+                        "surface-container-high": "#ebe7e7",
+                        "outline-variant": "#bdc9c8",
+                        "inverse-surface": "#313030",
+                        "surface-container-low": "#f6f3f2",
+                        "tertiary": "#406060",
+                        "on-primary-container": "#e3fffe",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1c1b1b",
+                        "on-primary": "#ffffff",
+                        "background": "#fcf9f8",
+                        "on-error": "#ffffff",
+                        "primary-fixed-dim": "#76d6d5",
+                        "on-tertiary-fixed-variant": "#2c4c4c",
+                        "on-secondary-fixed-variant": "#3e4a41",
+                        "on-secondary-container": "#5b675e",
+                        "tertiary-fixed": "#c6e9e9",
+                        "surface": "#fcf9f8",
+                        "primary": "#006565",
+                        "surface-tint": "#006a6a",
+                        "surface-variant": "#e5e2e1",
+                        "tertiary-fixed-dim": "#abcdcd",
+                        "inverse-primary": "#76d6d5",
+                        "surface-bright": "#fcf9f8",
+                        "on-surface-variant": "#3e4949"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "64px",
+                        "sm": "12px",
+                        "base": "8px",
+                        "margin-desktop": "120px",
+                        "md": "24px",
+                        "xs": "4px",
+                        "lg": "40px",
+                        "gutter": "24px",
+                        "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "label-lg": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex overflow-x-hidden">
+<!-- Navigation Drawer (Shared Component) -->
+<aside class="h-full w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant hidden lg:flex flex-col p-md gap-base z-30">
+<div class="flex items-center gap-base mb-lg">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">medical_services</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary">Admin Portal</h2>
+<p class="font-label-md text-label-md text-on-surface-variant">Clinic Management</p>
+</div>
+</div>
+<nav class="flex flex-col gap-xs flex-grow">
+<a class="flex items-center gap-base text-on-surface-variant px-md py-sm hover:bg-surface-container-highest transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-lg text-label-lg">Dashboard</span>
+</a>
+<a class="flex items-center gap-base text-on-surface-variant px-md py-sm hover:bg-surface-container-highest transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span class="font-label-lg text-label-lg">Appointments</span>
+</a>
+<a class="flex items-center gap-base text-on-surface-variant px-md py-sm hover:bg-surface-container-highest transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-lg text-label-lg">Schedule</span>
+</a>
+<a class="flex items-center gap-base bg-secondary-container text-on-secondary-container px-md py-sm rounded-lg active:translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="font-label-lg text-label-lg">Packages</span>
+</a>
+<a class="flex items-center gap-base text-on-surface-variant px-md py-sm hover:bg-surface-container-highest transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-lg text-label-lg">Patients</span>
+</a>
+</nav>
+<div class="mt-auto pt-md border-t border-outline-variant">
+<a class="flex items-center gap-base text-on-surface-variant px-md py-sm hover:bg-surface-container-highest transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-lg text-label-lg">Settings</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-grow lg:ml-64 p-margin-mobile md:p-margin-desktop min-h-screen">
+<!-- Header Section -->
+<header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md mb-xl">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-primary mb-xs">Package Management</h1>
+<p class="font-body-md text-on-surface-variant">Create, manage, and track therapeutic service bundles.</p>
+</div>
+<div class="flex gap-sm w-full md:w-auto">
+<button class="flex-1 md:flex-none flex items-center justify-center gap-xs px-md h-[56px] border-2 border-primary text-primary font-label-lg rounded-xl hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined">person_add</span>
+                    Assign to Patient
+                </button>
+<button class="flex-1 md:flex-none flex items-center justify-center gap-xs px-md h-[56px] bg-primary-container text-on-primary-container font-label-lg rounded-xl shadow-md active:opacity-80 transition-all">
+<span class="material-symbols-outlined">add</span>
+                    Create Package
+                </button>
+</div>
+</header>
+<!-- Stats Overview (Bento Grid Style) -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-xl">
+<div class="md:col-span-1 bg-surface-container-low p-md rounded-xl shadow-[0_4px_20px_rgba(0,128,128,0.05)] border border-outline-variant/30">
+<div class="flex items-center gap-sm mb-base">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<span class="font-label-md text-on-surface-variant uppercase tracking-wider">Active Packages</span>
+</div>
+<div class="font-headline-lg text-headline-lg text-on-surface">142</div>
+<div class="font-label-md text-primary mt-xs">↑ 12% from last month</div>
+</div>
+<div class="md:col-span-1 bg-surface-container-low p-md rounded-xl shadow-[0_4px_20px_rgba(0,128,128,0.05)] border border-outline-variant/30">
+<div class="flex items-center gap-sm mb-base">
+<div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<span class="font-label-md text-on-surface-variant uppercase tracking-wider">Revenue (MTD)</span>
+</div>
+<div class="font-headline-lg text-headline-lg text-on-surface">$14,250</div>
+<div class="font-label-md text-on-surface-variant mt-xs">Projected: $18k</div>
+</div>
+<div class="md:col-span-2 relative overflow-hidden bg-primary-container text-on-primary-container p-md rounded-xl shadow-lg border border-primary">
+
+<div class="relative z-10">
+<div class="flex items-center gap-sm mb-base">
+<div class="w-10 h-10 rounded-full bg-on-primary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined">trending_up</span>
+</div>
+<span class="font-label-md uppercase tracking-wider opacity-90">Usage Trends</span>
+</div>
+<div class="flex items-end justify-between">
+<div class="font-headline-lg text-headline-lg">84% Engagement</div>
+<div class="text-right">
+<p class="font-label-md">Most Popular: 10-Session Physio</p>
+<p class="font-label-md opacity-80">Clinic A: 65% | Clinic B: 35%</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Workspace: Asymmetric Layout -->
+<div class="flex flex-col xl:flex-row gap-gutter">
+<!-- Available Packages List -->
+<section class="flex-grow order-2 xl:order-1">
+<div class="flex items-center justify-between mb-md">
+<h2 class="font-headline-sm text-headline-sm text-primary">Active Catalog</h2>
+<div class="flex gap-xs">
+<button class="p-xs hover:bg-surface-container-high rounded transition-colors"><span class="material-symbols-outlined">filter_list</span></button>
+<button class="p-xs hover:bg-surface-container-high rounded transition-colors"><span class="material-symbols-outlined">search</span></button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<!-- Package Card 1 -->
+<div class="bg-surface border-l-4 border-primary p-md rounded-xl shadow-[0_4px_20px_rgba(0,128,128,0.05)] hover:shadow-md transition-shadow group">
+<div class="flex justify-between items-start mb-md">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">10-Session Physio</h3>
+<span class="inline-block px-sm py-xs bg-secondary-container text-on-secondary-container font-label-md rounded-full mt-xs">Clinic A Exclusive</span>
+</div>
+<div class="font-headline-sm text-headline-sm text-primary">$850</div>
+</div>
+<ul class="space-y-sm mb-lg">
+<li class="flex items-center gap-sm font-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+                                10 Individual Sessions (60m)
+                            </li>
+<li class="flex items-center gap-sm font-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+                                Digital Care Plan Included
+                            </li>
+<li class="flex items-center gap-sm font-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+                                Priority Support Line
+                            </li>
+</ul>
+<div class="flex gap-sm border-t border-outline-variant pt-md">
+<button class="text-label-lg font-label-lg text-primary hover:underline">Edit Details</button>
+<button class="text-label-lg font-label-lg text-on-surface-variant hover:text-on-surface transition-colors ml-auto">Archive</button>
+</div>
+</div>
+<!-- Package Card 2 -->
+<div class="bg-surface relative overflow-hidden p-md rounded-xl shadow-[0_4px_20px_rgba(0,128,128,0.05)] hover:shadow-md transition-shadow border border-outline-variant/50">
+<div class="absolute inset-0 bg-gradient-to-br from-tertiary-container/5 to-transparent pointer-events-none"></div>
+<div class="flex justify-between items-start mb-md relative z-10">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Chiropractic Reset</h3>
+<span class="inline-block px-sm py-xs bg-tertiary-container text-on-tertiary-container font-label-md rounded-full mt-xs">Multi-Clinic</span>
+</div>
+<div class="font-headline-sm text-headline-sm text-primary">$420</div>
+</div>
+<ul class="space-y-sm mb-lg relative z-10">
+<li class="flex items-center gap-sm font-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_circle</span>
+                                5 Adjustment Sessions
+                            </li>
+<li class="flex items-center gap-sm font-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_circle</span>
+                                Initial Posture Analysis
+                            </li>
+<li class="flex items-center gap-sm font-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_circle</span>
+                                Wellness Tracking App
+                            </li>
+</ul>
+<div class="flex gap-sm border-t border-outline-variant pt-md relative z-10">
+<button class="text-label-lg font-label-lg text-primary hover:underline">Edit Details</button>
+<button class="text-label-lg font-label-lg text-on-surface-variant hover:text-on-surface transition-colors ml-auto">Archive</button>
+</div>
+</div>
+<!-- Package Card 3 (Empty State Placeholder) -->
+<div class="border-2 border-dashed border-outline-variant p-md rounded-xl flex flex-col items-center justify-center text-center opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
+<span class="material-symbols-outlined text-xl mb-base">add_circle</span>
+<h3 class="font-headline-sm text-headline-sm mb-xs">New Template</h3>
+<p class="font-label-md">Start from a blank canvas or clone existing</p>
+</div>
+</div>
+</section>
+<!-- Usage Tracking Sidebar -->
+<section class="w-full xl:w-96 order-1 xl:order-2 space-y-gutter">
+<div class="bg-surface-container-low p-md rounded-xl border border-outline-variant/30">
+<h3 class="font-label-lg text-label-lg text-primary uppercase tracking-widest mb-md">Expiring Soon</h3>
+<div class="space-y-md">
+<!-- Patient Usage Item -->
+<div class="flex items-center gap-sm">
+<img alt="Jane Doe" class="w-10 h-10 rounded-full object-cover" data-alt="A professional headshot of a middle-aged woman with a warm, friendly smile, set against a blurred medical clinic background. The lighting is soft and natural, emphasizing a high-end clinical aesthetic with clean white tones and a subtle teal color palette consistent with a modern healthcare administrative portal." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4nlD8iWsOEEWEWq4srfeFzvlOiKNAMUeAMmyL7WYhaTAY0W0qNHjoO1If-j2dFlnwVvvvCQPwu9VxiumxmKxwXVSQwrhcdp6Fg0u6jkVd1Bqq7Qff-wnVdNmROqmEDoMJmC0EQo_-F4qNlJ8OT8LQxQBKzIXwLVJsGz4rE6R6BmaPvlIePLHlka9_uEI5z-bQLXSzpJUFCDsBF1l3PaNSyEE2LHE475yimDiy5_kX4huD-4FdcYwOIV1yFjCll9jijiNf4noqyeY"/>
+<div class="flex-grow">
+<div class="font-label-lg text-on-surface">Jane Doe</div>
+<div class="w-full bg-outline-variant h-1.5 rounded-full mt-xs overflow-hidden">
+<div class="bg-error w-11/12 h-full"></div>
+</div>
+</div>
+<div class="text-right">
+<div class="font-label-md text-error">9/10</div>
+<div class="font-label-md text-on-surface-variant">Sessions</div>
+</div>
+</div>
+<!-- Patient Usage Item -->
+<div class="flex items-center gap-sm">
+<img alt="Robert Smith" class="w-10 h-10 rounded-full object-cover" data-alt="A close-up portrait of a senior man with grey hair, looking calm and reassured. The background is a minimalist physiotherapy room with soft green and teal accents. High-key lighting creates a serene, medical-grade environment. The style is modern minimalist with a focus on trust and reliable care." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCC62pEWNfckHsW-TFeCNvsjXSIvZGZ7dHVVUVbLMjoz_9wKZHNYYomAsyK2PHczgIZXlN5lDED9rR7pfTMxsPtsH_FFjfj8OYugOZxUeYuqkDCX-aEe9LR18f-YOvyJMbrvvPrj1DW3d0cQvhX9oom6EbcT9L1Yve4LOyED3LzxYxywkBuQ2BwG7ayj_DZzdAN1th7XisOd4xhoEhpFZCghpyqLu29FokdNIrZwe64TXn5_5WtUYADnDjkFLLd1x4Ygc8YNHmmzd0"/>
+<div class="flex-grow">
+<div class="font-label-lg text-on-surface">Robert Smith</div>
+<div class="w-full bg-outline-variant h-1.5 rounded-full mt-xs overflow-hidden">
+<div class="bg-primary-container w-3/4 h-full"></div>
+</div>
+</div>
+<div class="text-right">
+<div class="font-label-md text-on-surface">3/4</div>
+<div class="font-label-md text-on-surface-variant">Sessions</div>
+</div>
+</div>
+</div>
+<button class="w-full mt-lg text-primary font-label-lg border border-primary/20 py-sm rounded-lg hover:bg-primary/5 transition-colors">
+                        View All Active Plans
+                    </button>
+</div>
+<div class="bg-surface p-md rounded-xl shadow-[0_4px_20px_rgba(0,128,128,0.05)] border border-outline-variant/30">
+<h3 class="font-label-lg text-label-lg text-primary uppercase tracking-widest mb-md">Clinic Distribution</h3>
+<div class="flex flex-col gap-sm">
+<div class="flex justify-between items-center">
+<span class="font-body-md text-on-surface-variant">Clinic A (Main)</span>
+<span class="font-label-lg text-on-surface">62%</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 62%"></div>
+</div>
+<div class="flex justify-between items-center mt-xs">
+<span class="font-body-md text-on-surface-variant">Clinic B (South)</span>
+<span class="font-label-lg text-on-surface">38%</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+<div class="bg-tertiary h-full" style="width: 38%"></div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Floating Action Button (Contextual) -->
+<button class="fixed bottom-xl right-margin-mobile md:right-margin-desktop bg-primary text-on-primary w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform z-50">
+<span class="material-symbols-outlined text-[28px]">insights</span>
+</button>
+<script>
+        // Simple micro-interaction for active states
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                // In a real app, this would handle routing
+                if (link.textContent.trim() === 'Packages') return;
+                console.log('Navigating to:', link.textContent.trim());
+            });
+        });
+
+        // Add smooth hover effect for cards
+        document.querySelectorAll('.group').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.classList.add('translate-y-[-2px]');
+            });
+            card.addEventListener('mouseleave', () => {
+                card.classList.remove('translate-y-[-2px]');
+            });
+        });
+    </script>
+</body></html>

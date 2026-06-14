@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Calm Clinical | Booking Confirmation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#002020",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#587979",
+                        "surface-container": "#f0edec",
+                        "secondary-fixed": "#d9e6da",
+                        "on-primary-fixed-variant": "#004f4f",
+                        "primary-fixed": "#93f2f2",
+                        "on-secondary": "#ffffff",
+                        "outline": "#6e7979",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f3f0ef",
+                        "on-secondary-fixed": "#131e17",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#e5e2e1",
+                        "secondary": "#556158",
+                        "secondary-container": "#d9e6da",
+                        "surface-dim": "#dcd9d9",
+                        "primary-container": "#008080",
+                        "on-tertiary-fixed": "#002020",
+                        "on-surface": "#1c1b1b",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#bdcabe",
+                        "on-tertiary-container": "#e6fffe",
+                        "surface-container-high": "#ebe7e7",
+                        "outline-variant": "#bdc9c8",
+                        "inverse-surface": "#313030",
+                        "surface-container-low": "#f6f3f2",
+                        "tertiary": "#406060",
+                        "on-primary-container": "#e3fffe",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1c1b1b",
+                        "on-primary": "#ffffff",
+                        "background": "#fcf9f8",
+                        "on-error": "#ffffff",
+                        "primary-fixed-dim": "#76d6d5",
+                        "on-tertiary-fixed-variant": "#2c4c4c",
+                        "on-secondary-fixed-variant": "#3e4a41",
+                        "on-secondary-container": "#5b675e",
+                        "tertiary-fixed": "#c6e9e9",
+                        "surface": "#fcf9f8",
+                        "primary": "#006565",
+                        "surface-tint": "#006a6a",
+                        "surface-variant": "#e5e2e1",
+                        "tertiary-fixed-dim": "#abcdcd",
+                        "inverse-primary": "#76d6d5",
+                        "surface-bright": "#fcf9f8",
+                        "on-surface-variant": "#3e4949"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "64px",
+                        "sm": "12px",
+                        "base": "8px",
+                        "margin-desktop": "120px",
+                        "md": "24px",
+                        "xs": "4px",
+                        "lg": "40px",
+                        "gutter": "24px",
+                        "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "label-lg": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .step-transition {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .bento-card {
+            box-shadow: 0px 4px 20px rgba(0, 128, 128, 0.05);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md text-body-md">
+<!-- Top App Bar -->
+<header class="w-full top-0 sticky z-50 bg-surface dark:bg-surface-dim flex justify-between items-center px-margin-mobile md:px-margin-desktop py-base">
+<div class="flex items-center gap-sm">
+<button class="material-symbols-outlined text-primary p-xs active:opacity-80 transition-opacity" data-icon="arrow_back">arrow_back</button>
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">Calm Clinical</span>
+</div>
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</span>
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCIBDExuxHKZJW5cNWkqJXzjUHoouCZNN93WVTDMrqNU8tq_1_wz2Go_WV8-EgulvEl2bDmTeEABIi7sAZtLAMhhUAie1RvYXB--6Xd51dF1EMvLYkJCIt9ZZC2oKsMQ4QVS1Geo7eNc9gV1cJkgSxpraLqAcku4Tsnix7GKCpG9dJ5U6euJmSY4eNfSz6dNvWDMSzk1l88TkaensQi8dVdP5S6S4iB_1b0URM3tNEFFUjdIvCZynUlOkD74CowFuPXdD2gs-BiOVU"/>
+</div>
+</div>
+</header>
+<main class="flex-grow w-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop py-lg">
+<!-- Progress Stepper -->
+<div class="mb-xl">
+<div class="flex justify-between items-center mb-sm">
+<span class="font-label-lg text-label-lg text-primary">Step 3 of 4: Select Time</span>
+<span class="font-label-lg text-label-lg text-outline">75% Complete</span>
+</div>
+<div class="w-full h-2 bg-secondary-container rounded-full overflow-hidden flex gap-xs">
+<div class="h-full bg-primary flex-1 rounded-full"></div>
+<div class="h-full bg-primary flex-1 rounded-full"></div>
+<div class="h-full bg-primary flex-1 rounded-full"></div>
+<div class="h-full bg-outline-variant flex-1 rounded-full"></div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-lg items-start" id="booking-container">
+<!-- Step 3: Time Slot Selection (Canvas) -->
+<section class="lg:col-span-8 space-y-lg step-transition" id="step-3-content">
+<div class="space-y-base">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Choose your time</h1>
+<p class="text-on-surface-variant">Available slots for Thursday, Oct 24th at City Central Clinic.</p>
+</div>
+<!-- Morning Slots -->
+<div class="space-y-sm">
+<div class="flex items-center gap-xs text-primary">
+<span class="material-symbols-outlined" data-icon="light_mode">light_mode</span>
+<h2 class="font-headline-sm text-headline-sm">Morning</h2>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-sm">
+<button class="h-[56px] border-2 border-outline-variant rounded-xl flex items-center justify-center hover:bg-surface-container-high transition-colors active:scale-95">08:30 AM</button>
+<button class="h-[56px] border-2 border-primary bg-primary-container text-on-primary-container rounded-xl flex items-center justify-center font-bold">09:15 AM</button>
+<button class="h-[56px] border-2 border-outline-variant rounded-xl flex items-center justify-center hover:bg-surface-container-high transition-colors active:scale-95">10:00 AM</button>
+<button class="h-[56px] border-2 border-outline-variant rounded-xl flex items-center justify-center hover:bg-surface-container-high transition-colors active:scale-95">11:15 AM</button>
+</div>
+</div>
+<!-- Afternoon Slots -->
+<div class="space-y-sm">
+<div class="flex items-center gap-xs text-primary">
+<span class="material-symbols-outlined" data-icon="sunny">sunny</span>
+<h2 class="font-headline-sm text-headline-sm">Afternoon</h2>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-sm">
+<button class="h-[56px] border-2 border-outline-variant rounded-xl flex items-center justify-center hover:bg-surface-container-high transition-colors active:scale-95">01:00 PM</button>
+<button class="h-[56px] border-2 border-outline-variant rounded-xl flex items-center justify-center hover:bg-surface-container-high transition-colors active:scale-95">02:30 PM</button>
+<button class="h-[56px] border-2 border-outline-variant rounded-xl flex items-center justify-center hover:bg-surface-container-high transition-colors active:scale-95">03:45 PM</button>
+<button class="h-[56px] border-2 border-outline-variant rounded-xl flex items-center justify-center opacity-50 cursor-not-allowed bg-surface-container text-outline" disabled="">04:30 PM</button>
+</div>
+</div>
+<!-- Evening Slots -->
+<div class="space-y-sm">
+<div class="flex items-center gap-xs text-primary">
+<span class="material-symbols-outlined" data-icon="dark_mode">dark_mode</span>
+<h2 class="font-headline-sm text-headline-sm">Evening</h2>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-sm">
+<button class="h-[56px] border-2 border-outline-variant rounded-xl flex items-center justify-center hover:bg-surface-container-high transition-colors active:scale-95">05:15 PM</button>
+<button class="h-[56px] border-2 border-outline-variant rounded-xl flex items-center justify-center hover:bg-surface-container-high transition-colors active:scale-95">06:00 PM</button>
+</div>
+</div>
+<div class="pt-md flex justify-end">
+<button class="px-xl py-md bg-primary text-on-primary rounded-xl font-headline-sm hover:opacity-90 transition-opacity active:scale-95 flex items-center gap-sm" onclick="goToStep4()">
+                        Next: Review
+                        <span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- Step 4: Summary Card (Visible Sidebar or Main) -->
+<aside class="lg:col-span-4 sticky top-24" id="summary-section">
+<div class="bg-surface-container-low p-md rounded-xl bento-card border border-outline-variant/30 space-y-md">
+<h3 class="font-headline-sm text-headline-sm text-primary">Booking Summary</h3>
+<div class="space-y-sm">
+<!-- Location Detail -->
+<div class="flex items-start gap-base">
+<div class="p-xs bg-primary-fixed rounded-lg text-on-primary-fixed">
+<span class="material-symbols-outlined" data-icon="location_on">location_on</span>
+</div>
+<div>
+<p class="font-label-lg text-label-lg text-outline">Clinic</p>
+<p class="font-headline-sm text-headline-sm text-on-surface">City Central Clinic</p>
+<p class="text-on-surface-variant text-label-md">Clinic A • 123 Healthcare Ave, Metro</p>
+</div>
+</div>
+<!-- Date Detail -->
+<div class="flex items-start gap-base">
+<div class="p-xs bg-secondary-fixed rounded-lg text-on-secondary-fixed">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+</div>
+<div>
+<p class="font-label-lg text-label-lg text-outline">Date</p>
+<p class="font-headline-sm text-headline-sm text-on-surface">Thursday, Oct 24</p>
+</div>
+</div>
+<!-- Time Detail -->
+<div class="flex items-start gap-base">
+<div class="p-xs bg-tertiary-fixed rounded-lg text-on-tertiary-fixed">
+<span class="material-symbols-outlined" data-icon="schedule">schedule</span>
+</div>
+<div>
+<p class="font-label-lg text-label-lg text-outline">Time Slot</p>
+<p class="font-headline-sm text-headline-sm text-on-surface" id="summary-time">09:15 AM</p>
+</div>
+</div>
+</div>
+<div class="pt-sm border-t border-outline-variant">
+<div class="flex justify-between mb-xs">
+<span class="text-on-surface-variant">Consultation Fee</span>
+<span class="font-bold">$85.00</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">Booking Deposit</span>
+<span class="text-primary font-bold">Free</span>
+</div>
+</div>
+<!-- Confirm Button for Mobile/Step 4 -->
+<button class="hidden w-full py-md bg-primary text-on-primary rounded-xl font-headline-sm shadow-lg hover:bg-primary/90 transition-all active:scale-[0.98] mt-md" id="final-confirm-btn" onclick="showSuccess()">
+                        Confirm Booking
+                    </button>
+</div>
+<!-- Clinic Aesthetic Visual -->
+<div class="mt-md rounded-xl overflow-hidden h-40 relative group">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="A serene and modern physiotherapy clinic interior with soft natural lighting, minimalist furniture in teal and white tones, and professional medical equipment in the background. The atmosphere is peaceful and professional, featuring clean lines and a sense of healing luxury." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAipzQKJAbgSLs5m89cJueaDu86Qgym-lf6UcQM-arb1cMIluPOSoDE8BfzFIE-riUIQh0ZCf-mk6FKpC2xy6Psato-rRDgjviHht4_jyVm7aX8vdUsJDELJkUIWAIbBG45ON5v8cpuJ2c6j2hNc7rMZJt8JcxmUuuxwnjCj7mt4yfND3NC1Ei6yR1VFAE8aodCcnZfdn-tJhsTjElKNb-UQEL9TEZ0o53Meo8mLCrYMBg96ur2Vay2_BQsApu8zD_AOJ9K3YQzxRg"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-sm">
+<p class="text-white font-label-lg">Expert Care in a Calm Environment</p>
+</div>
+</div>
+</aside>
+</div>
+<!-- Hidden Step 4 Content (Revealed via JS) -->
+<section class="hidden lg:col-span-8 space-y-lg step-transition" id="step-4-content">
+<div class="space-y-base">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Review Details</h1>
+<p class="text-on-surface-variant">Please confirm your appointment information below.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div class="p-md bg-surface-container-highest rounded-xl space-y-sm">
+<h4 class="font-label-lg text-label-lg text-primary uppercase tracking-wider">Patient Details</h4>
+<div>
+<p class="font-headline-sm text-headline-sm">Alex Johnson</p>
+<p class="text-on-surface-variant">alex.j@example.com</p>
+<p class="text-on-surface-variant">+1 (555) 012-3456</p>
+</div>
+<button class="text-primary font-label-lg underline">Edit Details</button>
+</div>
+<div class="p-md bg-surface-container-highest rounded-xl space-y-sm">
+<h4 class="font-label-lg text-label-lg text-primary uppercase tracking-wider">Service Type</h4>
+<div>
+<p class="font-headline-sm text-headline-sm">Initial Chiropractic Consult</p>
+<p class="text-on-surface-variant">Duration: 45 Minutes</p>
+<p class="text-on-surface-variant">Practitioner: Dr. Sarah Chen</p>
+</div>
+<button class="text-primary font-label-lg underline">Change Service</button>
+</div>
+</div>
+<div class="bg-primary-container/10 p-md rounded-xl border border-primary/20 flex items-start gap-md">
+<span class="material-symbols-outlined text-primary" data-icon="info">info</span>
+<div>
+<h4 class="font-label-lg text-label-lg text-primary">Cancellation Policy</h4>
+<p class="text-label-md text-on-surface-variant mt-xs">Cancellations must be made at least 24 hours in advance to avoid a service fee. By confirming, you agree to our terms of service.</p>
+</div>
+</div>
+<div class="flex items-center gap-sm py-base">
+<input class="w-6 h-6 rounded border-primary text-primary focus:ring-primary cursor-pointer" id="terms" type="checkbox"/>
+<label class="text-on-surface-variant text-label-lg cursor-pointer" for="terms">I agree to the clinic's terms and medical privacy policy.</label>
+</div>
+</section>
+</main>
+<!-- Success Overlay -->
+<div class="fixed inset-0 bg-surface/90 backdrop-blur-md z-[100] flex items-center justify-center p-md opacity-0 pointer-events-none transition-opacity duration-500" id="success-overlay">
+<div class="max-w-md w-full bg-surface text-center p-xl rounded-3xl shadow-2xl space-y-lg scale-90 transition-transform duration-500">
+<div class="w-24 h-24 bg-primary text-on-primary rounded-full mx-auto flex items-center justify-center animate-bounce">
+<span class="material-symbols-outlined !text-5xl" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<h2 class="font-headline-lg text-headline-lg text-primary">Booking Confirmed!</h2>
+<p class="text-on-surface-variant mt-sm">Your appointment is scheduled. A confirmation email has been sent to alex.j@example.com.</p>
+</div>
+<button class="w-full py-md bg-secondary-container text-on-secondary-container rounded-xl font-bold hover:bg-secondary-fixed transition-colors" onclick="location.reload()">
+                Return to Dashboard
+            </button>
+</div>
+</div>
+<!-- Bottom Navigation -->
+<nav class="md:hidden fixed bottom-0 w-full flex justify-around items-center py-sm bg-surface dark:bg-surface-dim shadow-[0_-4px_20px_rgba(0,128,128,0.05)] z-40 rounded-t-xl">
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary-fixed text-on-primary-container dark:text-on-primary-fixed rounded-full px-4 py-1 scale-95 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined" data-icon="calendar_month" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+<span class="font-label-md text-label-md">Book</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-md text-label-md">Packages</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-label-md">Profile</span>
+</div>
+</nav>
+<script>
+        function goToStep4() {
+            // Hide Step 3
+            const s3 = document.getElementById('step-3-content');
+            s3.classList.add('opacity-0', 'translate-x-[-20px]');
+            setTimeout(() => {
+                s3.classList.add('hidden');
+                
+                // Show Step 4
+                const s4 = document.getElementById('step-4-content');
+                s4.classList.remove('hidden');
+                setTimeout(() => {
+                    s4.classList.remove('opacity-0', 'translate-x-[-20px]');
+                }, 50);
+
+                // Update Progress UI
+                const progressText = document.querySelector('.text-primary');
+                progressText.innerText = "Step 4 of 4: Review & Confirm";
+                const progressPercentage = document.querySelector('.text-outline');
+                progressPercentage.innerText = "95% Complete";
+                document.querySelectorAll('.h-full')[3].classList.replace('bg-outline-variant', 'bg-primary');
+
+                // Reveal Confirm Button in Summary
+                document.getElementById('final-confirm-btn').classList.remove('hidden');
+            }, 400);
+        }
+
+        function showSuccess() {
+            const terms = document.getElementById('terms');
+            if (!terms.checked) {
+                alert("Please agree to the terms and conditions before confirming.");
+                return;
+            }
+
+            const overlay = document.getElementById('success-overlay');
+            const card = overlay.querySelector('.max-w-md');
+            
+            overlay.classList.remove('pointer-events-none', 'opacity-0');
+            setTimeout(() => {
+                card.classList.remove('scale-90');
+                card.classList.add('scale-100');
+            }, 100);
+        }
+
+        // Simple Time Selector Simulation
+        const timeButtons = document.querySelectorAll('#step-3-content button[class*="border-outline-variant"]');
+        timeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Clear others
+                document.querySelectorAll('#step-3-content button').forEach(b => {
+                    b.classList.remove('bg-primary-container', 'text-on-primary-container', 'border-primary', 'font-bold');
+                    if (!b.disabled) b.classList.add('border-outline-variant');
+                });
+                
+                // Select this
+                btn.classList.remove('border-outline-variant');
+                btn.classList.add('bg-primary-container', 'text-on-primary-container', 'border-primary', 'font-bold');
+                
+                // Update Summary
+                document.getElementById('summary-time').innerText = btn.innerText;
+            });
+        });
+    </script>
+</body></html>

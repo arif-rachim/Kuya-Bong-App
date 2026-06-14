@@ -1,0 +1,216 @@
+import { useState } from 'react'
+import { TopBar } from '../../components/TopBar'
+import { Banner, Button, Card, EmptyState, Field, Input, SectionTitle } from '../../components/ui'
+import { Icon } from '../../components/Icon'
+import { Modal } from '../../components/Modal'
+import { PageIntro } from '../../components/PageIntro'
+import { toast } from '../../components/Toast'
+import { confirm } from '../../components/Confirm'
+import { useApp } from '../../store/appStore'
+import { useCurrentProfile, useCurrentUser } from '../../store/selectors'
+
+function initials(name: string) {
+  return name
+    .split(' ')
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+}
+
+export function Family() {
+  const user = useCurrentUser()
+  const profile = useCurrentProfile()
+  const allFamily = useApp((s) => s.family)
+  const profiles = useApp((s) => s.profiles)
+  const users = useApp((s) => s.users)
+  const members = allFamily.filter((m) => m.familyGroupId === profile?.familyGroupId)
+  // Link requests where I'm the invited adult and haven't accepted yet.
+  const incoming = allFamily.filter((m) => m.linkedUserId === user?.id && m.status === 'pending')
+  const addChild = useApp((s) => s.addChild)
+  const linkAdult = useApp((s) => s.linkAdult)
+  const acceptLink = useApp((s) => s.acceptLink)
+  const declineLink = useApp((s) => s.declineLink)
+
+  function inviterName(familyGroupId: string) {
+    const inviter = profiles.find((p) => p.familyGroupId === familyGroupId)
+    return users.find((u) => u.id === inviter?.userId)?.name ?? 'A patient'
+  }
+
+  async function acceptRequest(memberId: string, fromGroup: string) {
+    const from = inviterName(fromGroup)
+    const ok = await confirm({
+      title: 'Accept link request?',
+      message: `Link with ${from} and share their treatment packages?`,
+      confirmLabel: 'Accept',
+    })
+    if (!ok) return
+    acceptLink(memberId)
+    toast.success(`You're now linked with ${from}.`)
+  }
+
+  async function declineRequest(memberId: string, fromGroup: string) {
+    const ok = await confirm({
+      title: 'Decline request?',
+      message: `Decline the link request from ${inviterName(fromGroup)}?`,
+      confirmLabel: 'Decline',
+      danger: true,
+    })
+    if (!ok) return
+    declineLink(memberId)
+    toast.info('Request declined.')
+  }
+
+  const [modal, setModal] = useState<'child' | 'adult' | null>(null)
+  const [name, setName] = useState('')
+  const [contact, setContact] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  function submitChild() {
+    const err = addChild(user!.id, name)
+    if (err) return setError(err)
+    reset('Child added successfully.')
+  }
+  function submitAdult() {
+    const err = linkAdult(user!.id, contact)
+    if (err) return setError(err)
+    reset('Link request sent. Awaiting approval.')
+  }
+  function reset(message: string) {
+    setModal(null)
+    setName('')
+    setContact('')
+    setError(null)
+    toast.success(message)
+  }
+
+  return (
+    <div>
+      <TopBar title="Family" />
+      <div className="px-margin-mobile pt-md">
+        <PageIntro>
+          Share your treatment packages with family. Add a child (no separate login needed) or link a spouse by their
+          registered email/mobile — they confirm from their own account. Incoming link requests appear here too.
+        </PageIntro>
+      </div>
+
+      <div className="space-y-md px-margin-mobile py-md">
+        {incoming.length > 0 && (
+          <div>
+            <SectionTitle>Incoming Requests</SectionTitle>
+            <div className="space-y-sm">
+              {incoming.map((m) => (
+                <Card key={m.id} className="border-primary/40 bg-primary-fixed/30">
+                  <p className="font-label-lg text-label-lg text-on-surface">
+                    <span className="font-semibold">{inviterName(m.familyGroupId)}</span> wants to link you as family
+                  </p>
+                  <p className="mt-xs text-label-md text-on-surface-variant">
+                    Accepting lets you share their treatment packages.
+                  </p>
+                  <div className="mt-sm grid grid-cols-2 gap-sm">
+                    <Button size="sm" onClick={() => acceptRequest(m.id, m.familyGroupId)}>
+                      <Icon name="check" size={16} /> Accept
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={() => declineRequest(m.id, m.familyGroupId)}>
+                      <Icon name="close" size={16} /> Decline
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-sm">
+          <Button variant="secondary" onClick={() => { setModal('adult'); setError(null) }}>
+            <Icon name="person_add" size={20} /> Link Adult
+          </Button>
+          <Button variant="secondary" onClick={() => { setModal('child'); setError(null) }}>
+            <Icon name="child_care" size={20} /> Add Child
+          </Button>
+        </div>
+
+        <div>
+          <SectionTitle
+            action={
+              members.length > 0 ? (
+                <span className="rounded-full bg-secondary-container px-sm py-xs font-label-md text-label-md text-on-secondary-container">
+                  {members.length} Members
+                </span>
+              ) : undefined
+            }
+          >
+            Family Members
+          </SectionTitle>
+
+          {members.length === 0 ? (
+            <EmptyState
+              icon="groups"
+              title="No family members yet"
+              subtitle="Link a spouse or add a child to share packages."
+            />
+          ) : (
+            <div className="space-y-sm">
+              {members.map((m) => {
+                const pending = m.status === 'pending'
+                const role = m.isChild ? 'Child' : m.relationship === 'spouse' ? 'Spouse' : 'Family'
+                return (
+                  <Card key={m.id} className={pending ? 'opacity-80' : undefined}>
+                    <div className="flex items-center justify-between gap-sm">
+                      <div className="flex items-center gap-sm">
+                        <div
+                          className={
+                            'flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-headline-sm text-headline-sm ' +
+                            (m.isChild
+                              ? 'bg-secondary-fixed text-on-secondary-fixed'
+                              : 'bg-primary-fixed text-on-primary-fixed')
+                          }
+                        >
+                          {initials(m.name)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-headline-sm text-headline-sm text-on-surface">{m.name}</p>
+                          <p className="text-label-md text-on-surface-variant">{role}</p>
+                        </div>
+                      </div>
+                      {pending ? (
+                        <span className="inline-flex items-center gap-xs rounded-full bg-tertiary-fixed px-sm py-xs font-label-md text-label-md text-on-tertiary-fixed-variant">
+                          <Icon name="schedule" size={16} /> Pending
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-xs font-label-lg text-label-lg text-primary">
+                          <Icon name="check_circle" size={18} fill /> Active
+                        </span>
+                      )}
+                    </div>
+                  </Card>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        <p className="px-xs text-label-md text-on-surface-variant">
+          Linked, active family members can use your treatment packages.
+        </p>
+      </div>
+
+      <Modal open={modal === 'child'} onClose={() => setModal(null)} title="Add Child">
+        {error && <div className="mb-sm"><Banner kind="error">{error}</Banner></div>}
+        <Field label="Child's name" hint="Children don't need a separate login.">
+          <Input value={name} onChange={(e) => setName(e.target.value)} />
+        </Field>
+        <Button size="lg" className="mt-md" onClick={submitChild}>Add</Button>
+      </Modal>
+
+      <Modal open={modal === 'adult'} onClose={() => setModal(null)} title="Link an Adult Member">
+        {error && <div className="mb-sm"><Banner kind="error">{error}</Banner></div>}
+        <Field label="Email or mobile number" hint="This person must already be registered and accept the link.">
+          <Input value={contact} onChange={(e) => setContact(e.target.value)} placeholder="email / +971..." />
+        </Field>
+        <Button size="lg" className="mt-md" onClick={submitAdult}>Send Request</Button>
+      </Modal>
+    </div>
+  )
+}
