@@ -1,4 +1,4 @@
-/** Hook turunan (derived selectors) di atas useApp. */
+/** Derived selector hooks on top of useApp. */
 import { useApp } from './appStore'
 import { todayISO } from '../lib/date'
 import type { Appointment, FamilyMember, PatientPackage } from '../data/types'
@@ -19,7 +19,7 @@ export function useClinicName(clinicId: string | undefined) {
   return useApp((s) => s.clinics.find((c) => c.id === clinicId)?.name ?? '—')
 }
 
-/** Paket aktif & valid milik user (saldo > 0, belum expired). */
+/** User's active & valid package (balance > 0, not yet expired). */
 export function activePackageOf(packages: PatientPackage[], userId: string): PatientPackage | null {
   return (
     packages.find(
@@ -32,7 +32,7 @@ export function useActivePackage(userId: string | null | undefined) {
   return useApp((s) => (userId ? activePackageOf(s.patientPackages, userId) : null))
 }
 
-/** Appointment yang akan datang (Confirmed/Rescheduled, belum lewat). */
+/** Upcoming appointment (Confirmed/Rescheduled, not yet past). */
 export function isUpcoming(a: Appointment): boolean {
   return (a.status === 'Confirmed' || a.status === 'Rescheduled' || a.status === 'PendingApproval') && a.date >= todayISO()
 }

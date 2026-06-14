@@ -1,4 +1,4 @@
-/** Data awal (mock) untuk demo. Dipanggil saat store pertama kali diinisialisasi. */
+/** Initial (mock) data for the demo. Called when the store is first initialized. */
 import { addDays, addMonths, todayISO } from '../lib/date'
 import type {
   Appointment,
@@ -67,14 +67,14 @@ export const seedClinics: Clinic[] = [
 
 const SLOT_TIMES = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00']
 
-/** Generate slot 60 menit untuk 14 hari ke depan, kedua klinik. */
+/** Generate 60-minute slots for the next 14 days, both clinics. */
 export function generateSlots(): AppointmentSlot[] {
   const slots: AppointmentSlot[] = []
   const base = todayISO()
   for (let d = 0; d < 14; d++) {
     const date = addDays(base, d)
     for (const clinicId of ['clinic-a', 'clinic-b']) {
-      // klinik B buka jam berbeda agar terasa beda
+      // clinic B opens at different hours to feel distinct
       const times = clinicId === 'clinic-a' ? SLOT_TIMES : SLOT_TIMES.slice(2)
       for (const start of times) {
         const end = `${String(Number(start.slice(0, 2)) + 1).padStart(2, '0')}:00`

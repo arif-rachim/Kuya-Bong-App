@@ -1,57 +1,57 @@
 # Realief Expert App
 
-Prototype UI aplikasi booking & manajemen klinik **Realief Expert** — _Expert Care, Real Relief_ (fisioterapi & chiropractic, 2 klinik). Satu aplikasi untuk dua peran: **Pasien** dan **Admin**.
+Prototype UI for the **Realief Expert** clinic booking & management app — _Expert Care, Real Relief_ (physiotherapy & chiropractic, 2 clinics). A single app for two roles: **Patient** and **Admin**.
 
-Fase ini **client-only**: semua data berupa mock di [Zustand](https://github.com/pmndrs/zustand) + `localStorage`, belum terhubung backend. Nantinya akan diintegrasikan ke sebuah **backend/BaaS** (belum diputuskan) — semua mutasi sudah dirancang lewat action di store sebagai titik integrasi.
+This phase is **client-only**: all data is mock, held in [Zustand](https://github.com/pmndrs/zustand) + `localStorage`, with no backend yet. It will later be integrated with a **backend/BaaS** (not yet decided) — every mutation already goes through a store action, which serves as the integration seam.
 
 ## Stack
 
 - Vite + React 18 + TypeScript
-- Tailwind CSS (tema **"Calm Clinical"**, teal `#0E7C7B`) · ikon `lucide-react`
-- Zustand (`persist` → localStorage) untuk state & business rules
-- React Router (HashRouter, ramah static hosting & Capacitor)
-- Capacitor (config disiapkan untuk native build iOS/Android — bukan jalur demo awal)
+- Tailwind CSS ("Calm Clinical" design system, green `#1e9e3a` brand) · Material Symbols Outlined icons
+- Zustand (`persist` → localStorage) for state & business rules
+- React Router (HashRouter — friendly to static hosting & Capacitor)
+- Capacitor (config prepared for native iOS/Android builds — not the initial demo path)
 
-## Menjalankan
+## Running
 
 ```bash
 npm install
 npm run dev      # http://localhost:5173
 ```
 
-Build static untuk hosting:
+Static build for hosting:
 
 ```bash
-npm run build    # output ke dist/ (static files)
-npm run preview  # pratinjau hasil build
+npm run build    # outputs to dist/ (static files)
+npm run preview  # preview the build
 ```
 
-## Deploy demo (static)
+## Deploy the demo (static)
 
-`dist/` adalah file statis murni — host ke **GitHub Pages / Netlify / Vercel / Cloudflare Pages**. `base: './'` sudah diset di `vite.config.ts` agar path aset benar di sub-folder. Untuk Netlify/Vercel cukup arahkan ke perintah build `npm run build` dan publish dir `dist`.
+`dist/` is pure static output — host it on **GitHub Pages / Netlify / Vercel / Cloudflare Pages**. `base: './'` is already set in `vite.config.ts` so asset paths resolve correctly in a sub-folder. For Netlify/Vercel just point at build command `npm run build` and publish dir `dist`. A `netlify.toml` and a GitHub Pages workflow (`.github/workflows/deploy.yml`) are included.
 
-## Akun demo
+## Demo accounts
 
-| Peran | Email | Sandi |
-|-------|-------|-------|
-| Pasien | maria@example.com | patient123 |
+| Role | Email | Password |
+|------|-------|----------|
+| Patient | maria@example.com | patient123 |
 | Admin | admin@reliefexpert.app | admin123 |
 
-Atau pakai tombol **"Masuk sebagai Pasien / Admin"** di layar Welcome. Kode verifikasi/OTP mock: **123456**.
+Or use the **"Sign in as Patient / Admin"** buttons on the Welcome screen. Mock verification/OTP code: **123456**.
 
-Reset data demo: menu **Admin → Pengaturan → Reset Data Demo** (atau hapus key `kuya-bong-store` di localStorage).
+Reset demo data: **Admin → Settings → Reset Demo Data** (or delete the `kuya-bong-store` key from localStorage).
 
-## Cakupan layar
+## Screen coverage
 
-- **Pasien:** Welcome/Register/Verify/Login/Forgot · Home · Booking (klinik→tanggal→jam→review→konfirmasi) · Jadwal (upcoming/selesai/dibatalkan/dijadwal ulang) · Detail+reschedule/cancel · Paket+riwayat · Keluarga (link dewasa/tambah anak) · Klinik · Profil
-- **Admin:** Dashboard · Kalender ketersediaan · Manajemen janji (complete/cancel/no-show + potong paket) · Booking manual · Pasien+profil (assign paket, catat pembelian) · Paket (buat/assign) · Produk (CRUD+harga) · Follow-up · Pengaturan klinik
+- **Patient:** Welcome/Register/Verify/Login/Forgot · Home · Booking (clinic → date → time → review → confirm) · Visits (upcoming/completed/cancelled/rescheduled) · Details + reschedule/cancel · Packages + history · Family (link adult / add child) · Clinics · Profile
+- **Admin:** Dashboard · Availability calendar · Appointment management (complete/cancel/no-show + deduct package) · Manual booking · Patients + profile (assign package, record purchase) · Packages (create/assign) · Products (CRUD + price) · Follow-ups · Clinic settings
 
-## Business rules yang ditegakkan
+## Enforced business rules
 
-- Verifikasi wajib sebelum booking · cegah double booking · reschedule hanya ke slot tersedia
-- **Potong paket hanya saat sesi `Completed`** — cancel/reschedule tidak mengurangi saldo
-- Paket terblokir bila saldo 0 atau kedaluwarsa
-- Harga produk disimpan sebagai snapshot saat pembelian (update harga katalog tidak mengubah riwayat)
-- Cutoff cancel/reschedule pasien: 24 jam sebelum sesi
+- Verification required before booking · prevent double booking · reschedule only to available slots
+- **Deduct a package session only when a session is `Completed`** — cancel/reschedule never reduces the balance
+- Package usage blocked when the balance is 0 or the package has expired
+- Product price is stored as a snapshot at purchase time (updating the catalog price does not change history)
+- Patient cancel/reschedule cutoff: 24 hours before the session
 
-> Default untuk open questions klien (durasi 60', auto-confirm, OTP+email, dll) mengikuti rekomendasi blueprint dan mudah diubah di `src/store/appStore.ts` / `src/data/seed.ts`.
+> Defaults for the client's open questions (60-minute duration, auto-confirm, OTP + email, etc.) follow the blueprint's recommendations and are easy to change in `src/store/appStore.ts` / `src/data/seed.ts`.

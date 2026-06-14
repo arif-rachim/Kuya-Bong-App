@@ -28,7 +28,7 @@ export function PackageStatusBadge({ status }: { status: PackageStatus }) {
   return <span className={cn('rounded-full px-sm py-xs font-label-md text-label-md', s.cls)}>{s.label}</span>
 }
 
-/** Badge pembeda Clinic A vs Clinic B. */
+/** Badge distinguishing Clinic A vs Clinic B. */
 export function ClinicBadge({ clinicId, name }: { clinicId: string; name: string }) {
   const isA = clinicId === 'clinic-a'
   return (

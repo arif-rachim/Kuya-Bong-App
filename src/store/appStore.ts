@@ -1,11 +1,11 @@
 /**
- * Store tunggal Realief Expert (mock, client-only).
+ * Single Realief Expert store (mock, client-only).
  *
- * Semua mutasi data lewat action di sini — ini "seam" untuk integrasi backend nanti
- * (ganti isi action dengan SDK call + optimistic update). Komponen TIDAK boleh
- * memutasi state langsung.
+ * All data mutations go through actions here — this is the "seam" for future backend
+ * integration (replace action bodies with SDK calls + optimistic updates). Components
+ * must NOT mutate state directly.
  *
- * Action yang punya validasi mengembalikan `string` (pesan error) atau `null` (sukses).
+ * Actions with validation return a `string` (error message) or `null` (success).
  */
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
@@ -39,9 +39,9 @@ import type {
   User,
 } from '../data/types'
 
-/** Jam minimum sebelum sesi untuk boleh cancel/reschedule (Q-08 default). */
+/** Minimum hours before a session to allow cancel/reschedule (Q-08 default). */
 export const CANCEL_CUTOFF_HOURS = 24
-/** Kode verifikasi mock. */
+/** Mock verification code. */
 export const MOCK_OTP = '123456'
 
 type Result = string | null
@@ -132,7 +132,7 @@ interface AppState {
   setFollowUpStatus: (purchaseId: string, status: ProductPurchase['followUpStatus']) => void
 }
 
-/** Refresh status paket berdasarkan saldo & expiry (BR-13/zero balance). */
+/** Refresh package status based on balance & expiry (BR-13/zero balance). */
 function recomputePackage(p: PatientPackage): PatientPackage {
   let status: PatientPackage['status'] = 'active'
   if (p.remaining <= 0) status = 'used'
@@ -205,7 +205,7 @@ export const useApp = create<AppState>()(
       },
 
       resendCode: () => {
-        /* mock: kode tetap MOCK_OTP */
+        /* mock: code stays MOCK_OTP */
       },
 
       logout: () => set({ currentUserId: null }),
@@ -303,14 +303,14 @@ export const useApp = create<AppState>()(
         if (!userId) return 'No active session.'
         const user = state.users.find((u) => u.id === userId)
         if (!user) return 'Patient not found.'
-        // BR-01: harus terverifikasi sebelum booking (untuk booking via App)
+        // BR-01: must be verified before booking (for bookings via App)
         if (source === 'App' && user.verification !== 'verified')
           return 'Your account must be verified before booking.'
         const slot = state.slots.find((sl) => sl.id === slotId)
         if (!slot) return 'Slot unavailable.'
-        // BR-03: cegah double booking
+        // BR-03: prevent double booking
         if (slot.status === 'booked') return 'That slot was just booked by someone else. Please choose another.'
-        // tidak boleh slot yang sudah lewat
+        // a past slot is not allowed
         if (hoursUntil(slot.date, slot.start) < 0) return 'That slot has passed — please choose a valid time.'
 
         const apt: Appointment = {
@@ -341,15 +341,15 @@ export const useApp = create<AppState>()(
         const state = get()
         const apt = state.appointments.find((a) => a.id === appointmentId)
         if (!apt) return 'Appointment not found.'
-        // BR-05: cutoff (hanya untuk pasien)
+        // BR-05: cutoff (patients only)
         if (by === 'patient' && hoursUntil(apt.date, apt.start) < CANCEL_CUTOFF_HOURS)
           return `Rescheduling must be more than ${CANCEL_CUTOFF_HOURS} hours before the session.`
         const newSlot = state.slots.find((sl) => sl.id === newSlotId)
         if (!newSlot) return 'Target slot not found.'
-        // BR-04: hanya ke slot available
+        // BR-04: only to an available slot
         if (newSlot.status !== 'available') return 'Target slot is unavailable.'
         if (hoursUntil(newSlot.date, newSlot.start) < 0) return 'Target slot has passed.'
-        // catatan: tidak ada deduksi paket — saldo tetap (BR-14)
+        // note: no package deduction — balance unchanged (BR-14)
         set((s) => ({
           slots: s.slots.map((sl) => {
             if (sl.id === apt.slotId) return { ...sl, status: 'available' }
@@ -379,7 +379,7 @@ export const useApp = create<AppState>()(
         if (!apt) return 'Appointment not found.'
         if (by === 'patient' && hoursUntil(apt.date, apt.start) < CANCEL_CUTOFF_HOURS)
           return `Cancellation must be more than ${CANCEL_CUTOFF_HOURS} hours before the session.`
-        // tidak ada deduksi paket saat cancel (BR-14)
+        // no package deduction on cancel (BR-14)
         set((s) => ({
           slots: s.slots.map((sl) => (sl.id === apt.slotId ? { ...sl, status: 'available' } : sl)),
           appointments: s.appointments.map((a) =>
@@ -397,7 +397,7 @@ export const useApp = create<AppState>()(
         if (!apt) return 'Appointment not found.'
         const admin = state.users.find((u) => u.id === state.currentUserId)
 
-        // jika ada paket dipilih, validasi & deduksi (BR-13/14)
+        // if a package is selected, validate & deduct (BR-13/14)
         if (patientPackageId) {
           const pkg = state.patientPackages.find((p) => p.id === patientPackageId)
           if (!pkg) return 'Package not found.'
@@ -518,7 +518,7 @@ export const useApp = create<AppState>()(
           relationship: 'spouse',
           isChild: false,
           linkedUserId: target.id,
-          status: 'pending', // butuh persetujuan (BR-17)
+          status: 'pending', // needs approval (BR-17)
         }
         set((s) => ({ family: [...s.family, member] }))
         return null
@@ -574,7 +574,7 @@ export const useApp = create<AppState>()(
           patientUserId,
           productId,
           productName: product.name,
-          unitPriceAtSale: product.price, // snapshot harga (BR-19)
+          unitPriceAtSale: product.price, // price snapshot (BR-19)
           quantity,
           purchaseDate: todayISO(),
           estimatedFollowUpDate: followUpDays ? addDays(todayISO(), followUpDays) : undefined,
@@ -597,7 +597,7 @@ export const useApp = create<AppState>()(
   ),
 )
 
-// --- helper seed: tandai slot yang sudah ada appointment-nya sebagai booked ---
+// --- seed helper: mark slots that already have an appointment as booked ---
 function mergeSeedSlots(): AppointmentSlot[] {
   const slots = generateSlots()
   const apts = seedAppointments()

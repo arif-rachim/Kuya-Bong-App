@@ -1,6 +1,6 @@
 /**
- * Tipe domain Realief Expert (Section 15 blueprint).
- * Dipisah dari logika mock agar bisa dipakai ulang sebagai tipe SDK backend nanti.
+ * Realief Expert domain types (Section 15 blueprint).
+ * Kept separate from the mock logic so they can be reused as backend SDK types later.
  */
 
 export type Role = 'patient' | 'admin'
@@ -13,7 +13,7 @@ export interface User {
   name: string
   mobile: string
   email: string
-  password: string // mock saja — JANGAN dipakai untuk produksi
+  password: string // mock only — DO NOT use in production
   verification: VerificationStatus
 }
 
@@ -35,10 +35,10 @@ export interface FamilyMember {
   familyGroupId: string
   name: string
   relationship: RelationshipType
-  /** Untuk anak: tidak punya login sendiri. */
+  /** For a child: has no login of their own. */
   isChild: boolean
-  linkedUserId?: string // jika dewasa terdaftar
-  parentUserId?: string // jika anak
+  linkedUserId?: string // if a registered adult
+  parentUserId?: string // if a child
   status: FamilyLinkStatus
 }
 
@@ -79,7 +79,7 @@ export interface Appointment {
   start: string
   end: string
   patientUserId: string
-  /** Siapa yang akan dirawat (pasien sendiri atau anggota keluarga). */
+  /** Who will be treated (the patient themselves or a family member). */
   forMemberId?: string
   forMemberName: string
   status: AppointmentStatus
@@ -136,7 +136,7 @@ export interface ProductPurchase {
   patientUserId: string
   productId: string
   productName: string
-  unitPriceAtSale: number // snapshot harga (BR: tidak berubah saat harga katalog diupdate)
+  unitPriceAtSale: number // price snapshot (BR: unchanged when the catalog price is updated)
   quantity: number
   purchaseDate: string
   estimatedFollowUpDate?: string

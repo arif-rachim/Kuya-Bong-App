@@ -6,7 +6,7 @@ import './theme/global.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    {/* HashRouter supaya deep-link berfungsi di static hosting & Capacitor WebView */}
+    {/* HashRouter so deep-links work on static hosting & in the Capacitor WebView */}
     <HashRouter>
       <App />
     </HashRouter>

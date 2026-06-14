@@ -30,7 +30,7 @@ export function Welcome() {
           schedule across two clinics — all in a few taps.
         </p>
 
-        {/* Lokasi klinik */}
+        {/* Clinic locations */}
         <div className="mt-lg grid grid-cols-2 gap-sm border-t border-outline-variant pt-md">
           <div className="flex items-center gap-sm">
             <div className="h-12 w-2 rounded-full bg-clinic-a" />

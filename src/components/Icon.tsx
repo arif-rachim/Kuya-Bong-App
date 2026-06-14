@@ -1,6 +1,6 @@
 import { cn } from '../lib/cn'
 
-/** Ikon Material Symbols Outlined. `name` = nama ikon Google (mis. "calendar_month"). */
+/** Material Symbols Outlined icon. `name` = Google icon name (e.g. "calendar_month"). */
 export function Icon({
   name,
   className,

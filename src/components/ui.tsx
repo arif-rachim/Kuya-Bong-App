@@ -1,4 +1,4 @@
-/** Komponen UI dasar — sistem desain "Calm Clinical" (Stitch). */
+/** Basic UI components — "Calm Clinical" design system (Stitch). */
 import {
   type ButtonHTMLAttributes,
   type InputHTMLAttributes,

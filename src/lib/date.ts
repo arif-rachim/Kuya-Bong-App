@@ -1,4 +1,4 @@
-/** Util tanggal sederhana (string ISO `YYYY-MM-DD` dan jam `HH:mm`). */
+/** Simple date utilities (ISO strings `YYYY-MM-DD` and times `HH:mm`). */
 
 export function todayISO(): string {
   return new Date().toISOString().slice(0, 10)
@@ -44,12 +44,12 @@ export function dayOfMonth(iso: string): number {
   return isoToDate(iso).getDate()
 }
 
-/** Apakah `iso` (tanggal) sudah lewat dibanding hari ini. */
+/** Whether `iso` (a date) is in the past relative to today. */
 export function isPastDate(iso: string): boolean {
   return iso < todayISO()
 }
 
-/** Selisih jam antara sekarang dan slot (date + time). Negatif jika sudah lewat. */
+/** Hours between now and a slot (date + time). Negative if already past. */
 export function hoursUntil(dateISO: string, timeHHmm: string): number {
   const target = new Date(`${dateISO}T${timeHHmm}:00`).getTime()
   return (target - Date.now()) / 36e5

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Icon } from './Icon'
 
-/** Header halaman admin (token Calm Clinical). */
+/** Admin page header (Calm Clinical tokens). */
 export function PageHeader({
   title,
   subtitle,

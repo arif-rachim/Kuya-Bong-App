@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-// Token "Calm Clinical" — disalin dari stitch-design/calm_clinical/DESIGN.md
+// "Calm Clinical" tokens — adapted from stitch-design/calm_clinical/DESIGN.md (re-colored green)
 export default {
   darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],
@@ -53,7 +53,7 @@ export default {
         'inverse-primary': '#8fe0a0',
         'surface-bright': '#fcf9f8',
         'on-surface-variant': '#3e4949',
-        // aksen pembeda klinik
+        // clinic-distinguishing accents
         'clinic-a': '#1e9e3a',
         'clinic-b': '#406060',
         success: '#2e8b57',
