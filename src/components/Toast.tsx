@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { create } from 'zustand'
 import { cn } from '../lib/cn'
 import { Icon } from './Icon'
@@ -54,8 +55,13 @@ function ToastRow({ item, onDismiss }: { item: ToastItem; onDismiss: (id: number
   }, [item.id, onDismiss])
 
   return (
-    <button
+    <motion.button
+      layout
       onClick={() => onDismiss(item.id)}
+      initial={{ opacity: 0, y: 24, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
+      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
       className={cn(
         'pointer-events-auto flex w-full max-w-[440px] items-center gap-sm rounded-xl px-md py-sm text-left text-body-md font-medium shadow-soft-up',
         styles[item.kind],
@@ -63,7 +69,7 @@ function ToastRow({ item, onDismiss }: { item: ToastItem; onDismiss: (id: number
     >
       <Icon name={icons[item.kind]} size={20} fill />
       <span className="flex-1">{item.message}</span>
-    </button>
+    </motion.button>
   )
 }
 
@@ -74,15 +80,16 @@ function ToastRow({ item, onDismiss }: { item: ToastItem; onDismiss: (id: number
 export function Toaster() {
   const toasts = useToastStore((s) => s.toasts)
   const dismiss = useToastStore((s) => s.dismiss)
-  if (toasts.length === 0) return null
   return (
     <div
       className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] mx-auto flex w-full max-w-[480px] flex-col items-center gap-sm px-margin-mobile"
       style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 84px)' }}
     >
-      {toasts.map((t) => (
-        <ToastRow key={t.id} item={t} onDismiss={dismiss} />
-      ))}
+      <AnimatePresence>
+        {toasts.map((t) => (
+          <ToastRow key={t.id} item={t} onDismiss={dismiss} />
+        ))}
+      </AnimatePresence>
     </div>
   )
 }

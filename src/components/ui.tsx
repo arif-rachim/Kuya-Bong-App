@@ -6,8 +6,15 @@ import {
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from 'react'
+import { motion, type HTMLMotionProps } from 'framer-motion'
 import { cn } from '../lib/cn'
 import { Icon } from './Icon'
+
+// Drop the handful of DOM handlers whose names collide with Framer's props.
+type NativeButtonProps = Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  'onAnimationStart' | 'onAnimationEnd' | 'onAnimationIteration' | 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onTransitionEnd'
+>
 
 export function Button({
   variant = 'primary',
@@ -15,12 +22,12 @@ export function Button({
   className,
   children,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & {
+}: NativeButtonProps & {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
   size?: 'md' | 'lg' | 'sm'
 }) {
   const base =
-    'inline-flex items-center justify-center gap-1.5 font-label-lg text-label-lg rounded-lg transition active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none'
+    'inline-flex items-center justify-center gap-1.5 font-label-lg text-label-lg rounded-lg transition-colors disabled:opacity-40 disabled:pointer-events-none'
   const sizes = {
     sm: 'px-3 py-2 text-label-lg',
     md: 'px-md h-12',
@@ -33,9 +40,14 @@ export function Button({
     danger: 'bg-error text-on-error hover:opacity-90',
   }
   return (
-    <button className={cn(base, sizes[size], variants[variant], className)} {...props}>
+    <motion.button
+      whileTap={{ scale: 0.96 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+      className={cn(base, sizes[size], variants[variant], className)}
+      {...(props as HTMLMotionProps<'button'>)}
+    >
       {children}
-    </button>
+    </motion.button>
   )
 }
 
@@ -51,18 +63,20 @@ export function Card({
   accent?: 'a' | 'b'
 }) {
   return (
-    <div
+    <motion.div
       onClick={onClick}
+      whileTap={onClick ? { scale: 0.985 } : undefined}
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       className={cn(
         'rounded-xl bg-surface-container-lowest p-md shadow-soft border border-outline-variant/30',
         accent === 'a' && 'clinic-a-accent',
         accent === 'b' && 'clinic-b-accent',
-        onClick && 'cursor-pointer transition hover:shadow-xl active:scale-[0.99]',
+        onClick && 'cursor-pointer transition-shadow hover:shadow-xl',
         className,
       )}
     >
       {children}
-    </div>
+    </motion.div>
   )
 }
 

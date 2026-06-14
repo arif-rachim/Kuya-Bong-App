@@ -23,7 +23,7 @@ export function PatientHome() {
     <div className="bg-background">
       {/* Top app bar */}
       <header className="safe-top sticky top-0 z-40 flex items-center justify-between bg-surface px-margin-mobile pb-base">
-        <Logo className="text-xl" />
+        <Logo className="text-xl" tagline />
         <button className="rounded-full p-xs text-primary hover:bg-surface-container-high" aria-label="Notifications">
           <Icon name="notifications" />
         </button>

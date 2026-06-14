@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { MotionConfig } from 'framer-motion'
 import type { ReactNode } from 'react'
 import { useApp } from './store/appStore'
 import { useCurrentUser } from './store/selectors'
@@ -50,7 +51,7 @@ export default function App() {
   const hasSession = useApp((s) => s.currentUserId !== null)
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <Routes>
       <Route path="/" element={<Splash />} />
       <Route path="/welcome" element={hasSession ? <Navigate to="/" replace /> : <Welcome />} />
@@ -107,6 +108,6 @@ export default function App() {
       </Routes>
       <Toaster />
       <ConfirmHost />
-    </>
+    </MotionConfig>
   )
 }

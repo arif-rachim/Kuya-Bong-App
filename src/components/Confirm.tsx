@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { create } from 'zustand'
 import { Button } from './ui'
 
@@ -48,26 +49,42 @@ export function ConfirmHost() {
     return () => document.removeEventListener('keydown', onKey)
   }, [current, settle])
 
-  if (!current) return null
   return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center p-4 sm:items-center" role="dialog" aria-modal>
-      <div className="absolute inset-0 bg-inverse-surface/40" onClick={() => settle(false)} />
-      <div className="relative z-10 w-full max-w-[420px] rounded-2xl bg-surface p-md shadow-xl">
-        <h3 className="font-headline-sm text-headline-sm text-on-surface">{current.title ?? 'Please confirm'}</h3>
-        <div className="mt-sm text-body-md text-on-surface-variant">{current.message}</div>
-        <div className="mt-md flex gap-sm">
-          <Button variant="secondary" className="flex-1" onClick={() => settle(false)}>
-            {current.cancelLabel ?? 'Cancel'}
-          </Button>
-          <Button
-            variant={current.danger ? 'danger' : 'primary'}
-            className="flex-1"
-            onClick={() => settle(true)}
+    <AnimatePresence>
+      {current && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center p-4 sm:items-center" role="dialog" aria-modal>
+          <motion.div
+            className="absolute inset-0 bg-inverse-surface/40"
+            onClick={() => settle(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          />
+          <motion.div
+            className="relative z-10 w-full max-w-[420px] rounded-2xl bg-surface p-md shadow-xl"
+            initial={{ opacity: 0, scale: 0.94, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 30 }}
           >
-            {current.confirmLabel ?? 'Confirm'}
-          </Button>
+            <h3 className="font-headline-sm text-headline-sm text-on-surface">{current.title ?? 'Please confirm'}</h3>
+            <div className="mt-sm text-body-md text-on-surface-variant">{current.message}</div>
+            <div className="mt-md flex gap-sm">
+              <Button variant="secondary" className="flex-1" onClick={() => settle(false)}>
+                {current.cancelLabel ?? 'Cancel'}
+              </Button>
+              <Button
+                variant={current.danger ? 'danger' : 'primary'}
+                className="flex-1"
+                onClick={() => settle(true)}
+              >
+                {current.confirmLabel ?? 'Confirm'}
+              </Button>
+            </div>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   )
 }

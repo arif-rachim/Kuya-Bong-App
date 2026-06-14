@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { cn } from '../lib/cn'
 import { Icon } from './Icon'
 
@@ -18,13 +19,17 @@ export function BottomNav({ items }: { items: NavItem[] }) {
       className="fixed bottom-0 left-1/2 z-40 w-full max-w-[480px] -translate-x-1/2 border-t border-outline-variant/40 bg-surface shadow-soft-up"
       style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}
     >
-      <div className="flex items-stretch pt-2">
+      <div className="flex items-stretch">
         {items.map(({ to, label, icon }) => (
-          <NavLink key={to} to={to} className="relative flex flex-1 flex-col items-center gap-1 px-1 pb-1.5">
+          <NavLink key={to} to={to} className="relative flex flex-1 flex-col items-center gap-1 px-1 pt-3 pb-1.5">
             {({ isActive }) => (
               <>
                 {isActive && (
-                  <span className="absolute top-0 h-[3px] w-7 rounded-full bg-primary" />
+                  <motion.span
+                    layoutId="bottomNavIndicator"
+                    className="absolute inset-x-0 top-0 mx-auto h-[3px] w-7 rounded-full bg-primary"
+                    transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+                  />
                 )}
                 <Icon
                   name={icon}

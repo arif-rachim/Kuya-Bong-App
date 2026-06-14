@@ -18,7 +18,7 @@ export function Welcome() {
     <AuthShell>
       <div className="flex flex-1 flex-col px-margin-mobile pb-lg pt-xl">
       <header>
-        <Logo className="text-2xl" />
+        <Logo className="text-2xl" tagline />
       </header>
 
       <div className="flex flex-1 flex-col justify-center py-lg">

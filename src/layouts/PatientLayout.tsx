@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { cn } from '../lib/cn'
 import { Icon } from '../components/Icon'
 import { Logo } from '../components/Logo'
@@ -25,6 +26,7 @@ const mobileTabs: NavItem[] = [
 ]
 
 export function PatientLayout() {
+  const location = useLocation()
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[1100px] bg-background">
       {/* Sidebar (desktop) */}
@@ -54,9 +56,15 @@ export function PatientLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Content column — centered & width-capped on wide screens, full-width on mobile. */}
         <main className="flex-1 pb-28 md:pb-md">
-          <div className="mx-auto w-full max-w-[640px]">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            className="mx-auto w-full max-w-[640px]"
+          >
             <Outlet />
-          </div>
+          </motion.div>
         </main>
         <div className="md:hidden">
           <BottomNav items={mobileTabs} />
