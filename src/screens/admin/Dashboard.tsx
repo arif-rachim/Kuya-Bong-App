@@ -129,6 +129,8 @@ export function AdminDashboard() {
 
         <section className="grid grid-cols-2 gap-sm">
           <QuickAction icon="event_available" label="Manual Booking" onClick={() => navigate('/admin/manual-booking')} />
+          <QuickAction icon="medical_services" label="Service Types" onClick={() => navigate('/admin/services')} />
+          <QuickAction icon="person_4" label="Therapists" onClick={() => navigate('/admin/therapists')} />
           <QuickAction icon="medication" label="Follow-up List" onClick={() => navigate('/admin/follow-ups')} />
           <QuickAction icon="inventory_2" label="Packages" onClick={() => navigate('/admin/packages')} />
           <QuickAction icon="groups" label="Patients" onClick={() => navigate('/admin/patients')} />
