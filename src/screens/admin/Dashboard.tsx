@@ -15,6 +15,8 @@ export function AdminDashboard() {
   const appointments = useApp((s) => s.appointments)
   const purchases = useApp((s) => s.purchases)
   const users = useApp((s) => s.users)
+  const services = useApp((s) => s.services)
+  const therapists = useApp((s) => s.therapists)
   const approve = useApp((s) => s.approveAppointment)
   const reject = useApp((s) => s.rejectAppointment)
 
@@ -26,6 +28,8 @@ export function AdminDashboard() {
 
   const clinicName = (id: string) => clinics.find((c) => c.id === id)?.name ?? ''
   const patientName = (id: string) => users.find((u) => u.id === id)?.name ?? '—'
+  const serviceName = (id: string) => services.find((sv) => sv.id === id)?.name ?? '—'
+  const therapistName = (id: string) => therapists.find((t) => t.id === id)?.name ?? '—'
 
   async function doApprove(id: string, who: string, when: string) {
     const ok = await confirm({
@@ -75,6 +79,9 @@ export function AdminDashboard() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <h4 className="truncate font-label-lg text-label-lg text-on-surface">{a.forMemberName}</h4>
+                      <p className="truncate font-label-md text-label-md text-on-surface-variant">
+                        {serviceName(a.serviceTypeId)} · {therapistName(a.therapistId)}
+                      </p>
                       <div className="mt-xs"><ClinicBadge clinicId={a.clinicId} name={clinicName(a.clinicId)} /></div>
                     </div>
                     <Icon name="chevron_right" className="text-outline" />

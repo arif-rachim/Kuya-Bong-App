@@ -38,6 +38,7 @@ export function AdminAppointments() {
 
   const [clinicFilter, setClinicFilter] = useState('all')
   const [therapistFilter, setTherapistFilter] = useState('all')
+  const [serviceFilter, setServiceFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [dateFilter, setDateFilter] = useState('')
   const [completing, setCompleting] = useState<Appointment | null>(null)
@@ -51,6 +52,7 @@ export function AdminAppointments() {
   const list = appointments
     .filter((a) => (clinicFilter === 'all' ? true : a.clinicId === clinicFilter))
     .filter((a) => (therapistFilter === 'all' ? true : a.therapistId === therapistFilter))
+    .filter((a) => (serviceFilter === 'all' ? true : a.serviceTypeId === serviceFilter))
     .filter((a) => (statusFilter === 'all' ? true : a.status === (statusFilter as AppointmentStatus)))
     .filter((a) => (dateFilter ? a.date === dateFilter : true))
     .sort((a, b) => (b.date + b.start).localeCompare(a.date + a.start))
@@ -59,6 +61,7 @@ export function AdminAppointments() {
   const patientName = (id: string) => users.find((u) => u.id === id)?.name ?? '—'
   const serviceName = (id: string) => services.find((sv) => sv.id === id)?.name ?? '—'
   const therapistName = (id: string) => therapists.find((t) => t.id === id)?.name ?? '—'
+  const reasonLabel = (id: string) => cancellationReasons.find((r) => r.id === id)?.label ?? 'Cancelled'
   const activeReasons = cancellationReasons.filter((r) => r.active)
   const isOtherReason = activeReasons.find((r) => r.id === cancelReasonId)?.label.toLowerCase() === 'other'
 
@@ -178,6 +181,14 @@ export function AdminAppointments() {
               </Select>
             </Field>
           </div>
+          <Field label="Service">
+            <Select value={serviceFilter} onChange={(e) => setServiceFilter(e.target.value)}>
+              <option value="all">All services</option>
+              {services.map((sv) => (
+                <option key={sv.id} value={sv.id}>{sv.name}</option>
+              ))}
+            </Select>
+          </Field>
           <div className="grid grid-cols-2 gap-sm">
             <Field label="Status">
               <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
@@ -223,6 +234,13 @@ export function AdminAppointments() {
                           </span>
                         )}
                       </div>
+                      {a.cancellationReasonId && (
+                        <p className="mt-sm font-label-md text-label-md text-on-surface-variant">
+                          <Icon name="info" size={14} /> {reasonLabel(a.cancellationReasonId)}
+                          {a.cancelledBy ? ` · by ${a.cancelledBy}` : ''}
+                          {a.cancellationNote ? ` — “${a.cancellationNote}”` : ''}
+                        </p>
+                      )}
                     </div>
                   </div>
                   {actionable && (

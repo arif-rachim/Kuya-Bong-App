@@ -130,6 +130,15 @@ export function AppointmentDetails() {
           <DetailRow icon="calendar_month" label="Date" value={formatDate(apt.date)} />
           <DetailRow icon="schedule" label="Time" value={`${apt.start} – ${apt.end}`} />
           <DetailRow icon="person" label="For" value={apt.forMemberName} />
+          {apt.cancellationReasonId && (
+            <DetailRow
+              icon="info"
+              label="Cancelled"
+              value={activeReasons.find((r) => r.id === apt.cancellationReasonId)?.label
+                ?? cancellationReasons.find((r) => r.id === apt.cancellationReasonId)?.label
+                ?? 'Cancelled'}
+            />
+          )}
         </Card>
 
         {canModify ? (
