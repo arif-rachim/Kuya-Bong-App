@@ -38,6 +38,9 @@ import { AdminPackages } from './screens/admin/Packages'
 import { AdminProducts } from './screens/admin/Products'
 import { AdminFollowUps } from './screens/admin/FollowUps'
 import { ClinicSettings } from './screens/admin/ClinicSettings'
+import { AdminServiceTypes } from './screens/admin/ServiceTypes'
+import { AdminTherapists } from './screens/admin/Therapists'
+import { AdminCancellationReasons } from './screens/admin/CancellationReasons'
 import { AdminSettings } from './screens/admin/Settings'
 
 function RequireRole({ role, children }: { role: 'patient' | 'admin'; children: ReactNode }) {
@@ -101,6 +104,9 @@ export default function App() {
         <Route path="products" element={<AdminProducts />} />
         <Route path="follow-ups" element={<AdminFollowUps />} />
         <Route path="clinic-settings" element={<ClinicSettings />} />
+        <Route path="services" element={<AdminServiceTypes />} />
+        <Route path="therapists" element={<AdminTherapists />} />
+        <Route path="cancellation-reasons" element={<AdminCancellationReasons />} />
         <Route path="settings" element={<AdminSettings />} />
       </Route>
 

@@ -49,15 +49,45 @@ export interface Clinic {
   active: boolean
 }
 
-export type SlotStatus = 'available' | 'booked'
-
-export interface AppointmentSlot {
+/**
+ * A bookable service offered by the clinic (blueprint Section 25.1).
+ * Each appointment is linked to one service, and the service duration drives
+ * the appointment end time and the available booking start times.
+ */
+export interface ServiceType {
   id: string
+  name: string
+  durationMinutes: number
+  active: boolean
+  notes?: string
+}
+
+/** A therapist who can be assigned to appointments (blueprint Section 25.3). */
+export interface Therapist {
+  id: string
+  name: string
+  active: boolean
+}
+
+/** A reason a patient or admin can pick when cancelling (blueprint Section 25.5). */
+export interface CancellationReason {
+  id: string
+  label: string
+  active: boolean
+}
+
+/**
+ * A therapist's working window for a clinic on a date (blueprint Section 25.2).
+ * Bookable start times are derived from these windows + the selected service
+ * duration, rather than from pre-cut fixed slots.
+ */
+export interface TherapistAvailability {
+  id: string
+  therapistId: string
   clinicId: string
   date: string // YYYY-MM-DD
   start: string // HH:mm
   end: string // HH:mm
-  status: SlotStatus
 }
 
 export type AppointmentStatus =
@@ -69,15 +99,16 @@ export type AppointmentStatus =
   | 'Completed'
   | 'NoShow'
 
-export type BookingSource = 'App' | 'Manual'
+export type BookingSource = 'App' | 'Manual' | 'Phone' | 'Other'
 
 export interface Appointment {
   id: string
-  slotId: string
   clinicId: string
+  serviceTypeId: string
+  therapistId: string
   date: string
   start: string
-  end: string
+  end: string // calculated from the service duration
   patientUserId: string
   /** Who will be treated (the patient themselves or a family member). */
   forMemberId?: string
@@ -86,6 +117,10 @@ export interface Appointment {
   source: BookingSource
   note?: string
   createdAt: string
+  // ---- cancellation (Section 25.5/25.6) ----
+  cancelledBy?: 'patient' | 'admin'
+  cancellationReasonId?: string
+  cancellationNote?: string
 }
 
 export interface PackageDefinition {

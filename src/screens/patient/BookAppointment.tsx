@@ -8,10 +8,11 @@ import { ClinicBadge } from '../../components/StatusBadge'
 import { cn } from '../../lib/cn'
 import { useApp } from '../../store/appStore'
 import { useCurrentProfile, useCurrentUser } from '../../store/selectors'
-import { formatDate, formatDateShort, hoursUntil, weekdayLabel } from '../../lib/date'
+import { addDays, formatDate, formatDateShort, todayISO, nowMinutes, weekdayLabel } from '../../lib/date'
+import { computeBookingOptions, uniqueStarts, type BookingOption } from '../../lib/booking'
 
-type Step = 'clinic' | 'date' | 'time' | 'review' | 'done'
-const STEP_INDEX: Record<Step, number> = { clinic: 0, date: 1, time: 2, review: 2, done: 3 }
+type Step = 'service' | 'clinic' | 'date' | 'time' | 'review' | 'done'
+const STEP_INDEX: Record<Step, number> = { service: 0, clinic: 1, date: 2, time: 3, review: 3, done: 4 }
 
 function slotPeriod(start: string): 'Morning' | 'Afternoon' | 'Evening' {
   const h = Number(start.slice(0, 2))
@@ -21,74 +22,101 @@ function slotPeriod(start: string): 'Morning' | 'Afternoon' | 'Evening' {
 }
 const PERIOD_ICON = { Morning: 'light_mode', Afternoon: 'sunny', Evening: 'dark_mode' } as const
 
+function formatDuration(minutes: number): string {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  if (h && m) return `${h}h ${m}m`
+  if (h) return `${h}h`
+  return `${m}m`
+}
+
 export function BookAppointment() {
   const navigate = useNavigate()
   const user = useCurrentUser()
   const profile = useCurrentProfile()
   const allClinics = useApp((s) => s.clinics)
-  const slots = useApp((s) => s.slots)
+  const allServices = useApp((s) => s.services)
+  const therapists = useApp((s) => s.therapists)
+  const availability = useApp((s) => s.availability)
+  const appointments = useApp((s) => s.appointments)
   const allFamily = useApp((s) => s.family)
   const book = useApp((s) => s.bookAppointment)
 
   const clinics = allClinics.filter((c) => c.active)
+  const services = allServices.filter((sv) => sv.active)
   const family = allFamily.filter((m) => m.familyGroupId === profile?.familyGroupId && m.status === 'active')
 
-  const [step, setStep] = useState<Step>('clinic')
+  const [step, setStep] = useState<Step>('service')
+  const [serviceId, setServiceId] = useState('')
   const [clinicId, setClinicId] = useState('')
   const [date, setDate] = useState('')
-  const [slotId, setSlotId] = useState('')
+  const [picked, setPicked] = useState<BookingOption | null>(null)
   const [forMember, setForMember] = useState('self')
   const [error, setError] = useState<string | null>(null)
 
   const clinic = clinics.find((c) => c.id === clinicId)
+  const service = services.find((sv) => sv.id === serviceId)
+  const therapistName = (id: string) => therapists.find((t) => t.id === id)?.name ?? '—'
+
+  const baseArgs = useMemo(
+    () => ({ availability, appointments, therapists, clinicId, durationMinutes: service?.durationMinutes ?? 0, patientUserId: user?.id }),
+    [availability, appointments, therapists, clinicId, service?.durationMinutes, user?.id],
+  )
 
   const availableDates = useMemo(() => {
-    const set = new Set<string>()
-    slots.forEach((s) => {
-      if (s.clinicId === clinicId && s.status === 'available' && hoursUntil(s.date, s.start) > 0) set.add(s.date)
-    })
-    return Array.from(set).sort()
-  }, [slots, clinicId])
+    if (!service || !clinicId) return []
+    const out: string[] = []
+    for (let d = 0; d < 14; d++) {
+      const day = addDays(todayISO(), d)
+      const opts = computeBookingOptions({ ...baseArgs, date: day, minStartMin: day === todayISO() ? nowMinutes() : null })
+      if (opts.length) out.push(day)
+    }
+    return out
+  }, [baseArgs, service, clinicId])
 
-  const timeSlots = useMemo(
-    () =>
-      slots
-        .filter((s) => s.clinicId === clinicId && s.date === date && s.status === 'available' && hoursUntil(s.date, s.start) > 0)
-        .sort((a, b) => a.start.localeCompare(b.start)),
-    [slots, clinicId, date],
-  )
-  const periods = (['Morning', 'Afternoon', 'Evening'] as const).map((p) => ({
-    period: p,
-    items: timeSlots.filter((s) => slotPeriod(s.start) === p),
-  })).filter((g) => g.items.length)
+  const timeOptions = useMemo(() => {
+    if (!service || !date) return []
+    return uniqueStarts(computeBookingOptions({ ...baseArgs, date, minStartMin: date === todayISO() ? nowMinutes() : null }))
+  }, [baseArgs, service, date])
 
-  const slot = slots.find((s) => s.id === slotId)
+  const periods = (['Morning', 'Afternoon', 'Evening'] as const)
+    .map((p) => ({ period: p, items: timeOptions.filter((o) => slotPeriod(o.start) === p) }))
+    .filter((g) => g.items.length)
 
   function confirm() {
     setError(null)
+    if (!picked) return
     const member = family.find((m) => m.id === forMember)
-    const err = book({ slotId, forMemberId: member?.id, forMemberName: member?.name ?? user?.name ?? 'Patient' })
+    const err = book({
+      serviceTypeId: serviceId,
+      therapistId: picked.therapistId,
+      clinicId,
+      date,
+      start: picked.start,
+      forMemberId: member?.id,
+      forMemberName: member?.name ?? user?.name ?? 'Patient',
+    })
     if (err) return setError(err)
     setStep('done')
   }
 
   const titles: Record<Step, string> = {
-    clinic: 'Choose Clinic', date: 'Select Date', time: 'Choose Time', review: 'Review Booking', done: 'Booking Confirmed',
+    service: 'Choose Service', clinic: 'Choose Clinic', date: 'Select Date', time: 'Choose Time', review: 'Review Booking', done: 'Booking Confirmed',
   }
-  const steps = ['Clinic', 'Date', 'Review']
+  const steps = ['Service', 'Clinic', 'Date', 'Review']
 
   return (
     <div className="min-h-screen bg-background pb-28">
-      <TopBar title={titles[step]} back={step === 'clinic'} />
+      <TopBar title={titles[step]} back={step === 'service'} />
       <div className="px-margin-mobile py-md">
         {/* Stepper */}
         {step !== 'done' && (
           <div className="mb-lg">
             <div className="mb-sm flex justify-between">
               <span className="font-label-lg text-label-lg text-primary">
-                Step {Math.min(STEP_INDEX[step] + 1, 3)} of 3
+                Step {Math.min(STEP_INDEX[step] + 1, 4)} of 4
               </span>
-              <span className="font-label-lg text-label-lg text-outline">{steps[Math.min(STEP_INDEX[step], 2)]}</span>
+              <span className="font-label-lg text-label-lg text-outline">{steps[Math.min(STEP_INDEX[step], 3)]}</span>
             </div>
             <div className="flex gap-xs">
               {steps.map((_, i) => (
@@ -103,19 +131,47 @@ export function BookAppointment() {
         {step !== 'done' && (
           <div className="mb-md">
             <PageIntro>
-              Book in three quick steps — pick a clinic, choose a date, then tap an open time. You'll review everything
-              before it's confirmed.
+              Pick a service, choose a clinic and date, then tap an open time. Available times already account for the
+              service duration and therapist availability — you'll review everything before confirming.
             </PageIntro>
+          </div>
+        )}
+
+        {step === 'service' && (
+          <div className="space-y-md">
+            <p className="text-body-lg text-on-surface-variant">What treatment do you need?</p>
+            {services.length === 0 ? (
+              <EmptyState icon="medical_services" title="No services available" subtitle="Please check back later." />
+            ) : (
+              services.map((sv) => (
+                <button
+                  key={sv.id}
+                  onClick={() => { setServiceId(sv.id); setClinicId(''); setDate(''); setPicked(null); setStep('clinic') }}
+                  className="flex w-full items-center justify-between gap-sm rounded-xl border-2 border-transparent bg-surface-container-lowest p-md text-left shadow-soft transition hover:border-primary"
+                >
+                  <div className="min-w-0">
+                    <h3 className="font-headline-sm text-headline-sm text-on-surface">{sv.name}</h3>
+                    <p className="text-body-md text-on-surface-variant">
+                      <Icon name="schedule" size={16} /> {formatDuration(sv.durationMinutes)}
+                    </p>
+                  </div>
+                  <Icon name="chevron_right" className="text-on-surface-variant" />
+                </button>
+              ))
+            )}
           </div>
         )}
 
         {step === 'clinic' && (
           <div className="space-y-md">
+            <button onClick={() => setStep('service')} className="inline-flex items-center gap-xs font-label-lg text-primary">
+              <Icon name="arrow_back" size={18} /> Change service
+            </button>
             <p className="text-body-lg text-on-surface-variant">Choose the clinic most convenient for you.</p>
             {clinics.map((c) => (
               <button
                 key={c.id}
-                onClick={() => { setClinicId(c.id); setStep('date') }}
+                onClick={() => { setClinicId(c.id); setDate(''); setPicked(null); setStep('date') }}
                 className="w-full rounded-xl border-2 border-transparent bg-surface-container-lowest p-md text-left shadow-soft transition hover:border-primary"
               >
                 <div className="mb-sm flex items-center justify-between">
@@ -136,9 +192,16 @@ export function BookAppointment() {
             <button onClick={() => setStep('clinic')} className="mb-md inline-flex items-center gap-xs font-label-lg text-primary">
               <Icon name="arrow_back" size={18} /> Change clinic
             </button>
-            <div className="mb-md"><ClinicBadge clinicId={clinicId} name={clinic?.name ?? ''} /></div>
+            <div className="mb-md flex flex-wrap items-center gap-xs">
+              <ClinicBadge clinicId={clinicId} name={clinic?.name ?? ''} />
+              {service && (
+                <span className="inline-flex items-center gap-xs rounded-full bg-secondary-container px-sm py-xs font-label-md text-label-md text-on-secondary-container">
+                  <Icon name="medical_services" size={14} /> {service.name} · {formatDuration(service.durationMinutes)}
+                </span>
+              )}
+            </div>
             {availableDates.length === 0 ? (
-              <EmptyState icon="event_busy" title="No slots available" subtitle="Try another clinic or period." />
+              <EmptyState icon="event_busy" title="No openings" subtitle="Try another clinic or service." />
             ) : (
               <div className="grid grid-cols-4 gap-sm">
                 {availableDates.map((d) => (
@@ -164,7 +227,7 @@ export function BookAppointment() {
             </button>
             <p className="font-headline-sm text-headline-sm text-on-surface">{formatDate(date)}</p>
             {periods.length === 0 ? (
-              <EmptyState icon="schedule" title="No slots left for this date" subtitle="Choose another date." />
+              <EmptyState icon="schedule" title="No times left for this date" subtitle="Choose another date." />
             ) : (
               periods.map(({ period, items }) => (
                 <div key={period} className="space-y-sm">
@@ -173,13 +236,14 @@ export function BookAppointment() {
                     <h2 className="font-headline-sm text-headline-sm">{period}</h2>
                   </div>
                   <div className="grid grid-cols-3 gap-sm">
-                    {items.map((s) => (
+                    {items.map((o) => (
                       <button
-                        key={s.id}
-                        onClick={() => { setSlotId(s.id); setStep('review') }}
-                        className="flex h-14 items-center justify-center rounded-xl border-2 border-outline-variant font-label-lg text-on-surface transition hover:bg-surface-container-high active:scale-95"
+                        key={o.start}
+                        onClick={() => { setPicked(o); setStep('review') }}
+                        className="flex h-16 flex-col items-center justify-center rounded-xl border-2 border-outline-variant font-label-lg text-on-surface transition hover:bg-surface-container-high active:scale-95"
                       >
-                        {s.start}
+                        <span className="font-headline-sm text-headline-sm">{o.start}</span>
+                        <span className="font-label-md text-label-md text-on-surface-variant">– {o.end}</span>
                       </button>
                     ))}
                   </div>
@@ -189,13 +253,15 @@ export function BookAppointment() {
           </div>
         )}
 
-        {step === 'review' && slot && (
+        {step === 'review' && picked && (
           <div className="space-y-md">
             <div className="space-y-sm rounded-xl border border-outline-variant/30 bg-surface-container-low p-md">
               <h3 className="font-headline-sm text-headline-sm text-primary">Booking Summary</h3>
+              <SummaryRow icon="medical_services" tint="bg-secondary-fixed text-on-secondary-fixed" label="Service" value={service?.name ?? ''} />
+              <SummaryRow icon="person" tint="bg-tertiary-fixed text-on-tertiary-fixed" label="Therapist" value={therapistName(picked.therapistId)} />
               <SummaryRow icon="location_on" tint="bg-primary-fixed text-on-primary-fixed" label="Clinic" value={clinic?.name ?? ''} />
-              <SummaryRow icon="calendar_today" tint="bg-secondary-fixed text-on-secondary-fixed" label="Date" value={formatDate(slot.date)} />
-              <SummaryRow icon="schedule" tint="bg-tertiary-fixed text-on-tertiary-fixed" label="Time" value={`${slot.start} – ${slot.end}`} />
+              <SummaryRow icon="calendar_today" tint="bg-secondary-fixed text-on-secondary-fixed" label="Date" value={formatDate(date)} />
+              <SummaryRow icon="schedule" tint="bg-tertiary-fixed text-on-tertiary-fixed" label="Time" value={`${picked.start} – ${picked.end}`} />
             </div>
 
             {family.length > 0 && (
@@ -213,7 +279,7 @@ export function BookAppointment() {
           </div>
         )}
 
-        {step === 'done' && slot && (
+        {step === 'done' && picked && (
           <div className="flex flex-col items-center py-lg text-center">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary-fixed text-primary">
               <Icon name="check_circle" className="text-5xl" fill />
@@ -221,9 +287,11 @@ export function BookAppointment() {
             <h2 className="mt-md font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Booking Confirmed!</h2>
             <p className="mt-xs text-body-md text-on-surface-variant">See you at the clinic.</p>
             <div className="mt-lg w-full space-y-sm rounded-xl border border-outline-variant/30 bg-surface-container-low p-md text-left">
+              <SummaryRow icon="medical_services" tint="bg-secondary-fixed text-on-secondary-fixed" label="Service" value={service?.name ?? ''} />
+              <SummaryRow icon="person" tint="bg-tertiary-fixed text-on-tertiary-fixed" label="Therapist" value={therapistName(picked.therapistId)} />
               <SummaryRow icon="location_on" tint="bg-primary-fixed text-on-primary-fixed" label="Clinic" value={clinic?.name ?? ''} />
-              <SummaryRow icon="calendar_today" tint="bg-secondary-fixed text-on-secondary-fixed" label="Date" value={formatDate(slot.date)} />
-              <SummaryRow icon="schedule" tint="bg-tertiary-fixed text-on-tertiary-fixed" label="Time" value={`${slot.start} – ${slot.end}`} />
+              <SummaryRow icon="calendar_today" tint="bg-secondary-fixed text-on-secondary-fixed" label="Date" value={formatDate(date)} />
+              <SummaryRow icon="schedule" tint="bg-tertiary-fixed text-on-tertiary-fixed" label="Time" value={`${picked.start} – ${picked.end}`} />
             </div>
             <div className="mt-lg w-full space-y-sm">
               <Button size="lg" onClick={() => navigate('/patient/appointments')}>View My Appointments</Button>

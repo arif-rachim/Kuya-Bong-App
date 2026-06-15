@@ -1,152 +1,151 @@
 import { useMemo, useState } from 'react'
 import { PageHeader } from '../../components/PageHeader'
-import { Card } from '../../components/ui'
+import { Button, Card, EmptyState, Field, Select } from '../../components/ui'
 import { Icon } from '../../components/Icon'
 import { toast } from '../../components/Toast'
 import { cn } from '../../lib/cn'
 import { useApp } from '../../store/appStore'
 import { addDays, formatDate, formatDateShort, todayISO, weekdayLabel } from '../../lib/date'
+import { timeToMin } from '../../lib/booking'
 
-const PRESET_TIMES = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00']
+// 08:00 → 19:00 in 30-minute steps for the start/end pickers.
+const TIME_OPTIONS = Array.from({ length: 23 }, (_, i) => {
+  const min = 8 * 60 + i * 30
+  return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`
+})
 
 export function AdminCalendar() {
   const clinics = useApp((s) => s.clinics)
-  const slots = useApp((s) => s.slots)
-  const publishSlot = useApp((s) => s.publishSlot)
-  const removeSlot = useApp((s) => s.removeSlot)
+  const allTherapists = useApp((s) => s.therapists)
+  const availability = useApp((s) => s.availability)
+  const publishAvailability = useApp((s) => s.publishAvailability)
+  const removeAvailability = useApp((s) => s.removeAvailability)
 
+  const therapists = allTherapists.filter((t) => t.active)
+  const [therapistId, setTherapistId] = useState(therapists[0]?.id ?? '')
   const [clinicId, setClinicId] = useState(clinics[0]?.id ?? 'clinic-a')
   const [date, setDate] = useState(todayISO())
+  const [start, setStart] = useState('09:00')
+  const [end, setEnd] = useState('17:00')
 
   const dates = useMemo(() => Array.from({ length: 14 }, (_, i) => addDays(todayISO(), i)), [])
 
-  const daySlots = slots
-    .filter((s) => s.clinicId === clinicId && s.date === date)
+  const windows = availability
+    .filter((w) => w.therapistId === therapistId && w.clinicId === clinicId && w.date === date)
     .sort((a, b) => a.start.localeCompare(b.start))
 
-  const publishedTimes = new Set(daySlots.map((s) => s.start))
+  function addWindow() {
+    if (!therapistId) return toast.error('Add a therapist first (Settings → Therapists).')
+    const err = publishAvailability({ therapistId, clinicId, date, start, end })
+    if (err) return toast.error(err)
+    toast.success(`Availability added (${start}–${end}).`)
+  }
 
-  function toggleTime(time: string) {
-    const existing = daySlots.find((s) => s.start === time)
-    if (existing) {
-      const err = removeSlot(existing.id)
-      if (err) return toast.error(err)
-      toast.success(`Slot removed (${time}).`)
-    } else {
-      const err = publishSlot(clinicId, date, time)
-      if (err) return toast.error(err)
-      toast.success(`Slot published (${time}).`)
-    }
+  function remove(id: string, label: string) {
+    const err = removeAvailability(id)
+    if (err) return toast.error(err)
+    toast.success(`Availability removed (${label}).`)
   }
 
   return (
     <div>
-      <PageHeader title="Availability Calendar" subtitle="Publish & manage slots" />
+      <PageHeader title="Availability Calendar" subtitle="Publish therapist working windows" />
       <div className="space-y-md p-md">
-        {/* Clinic selector */}
-        <div className="flex items-center gap-xs rounded-xl border border-outline-variant bg-surface-container-low p-xs">
-          {clinics.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setClinicId(c.id)}
-              className={cn(
-                'flex-1 rounded-lg px-md py-sm font-label-lg text-label-lg transition-all',
-                clinicId === c.id
-                  ? 'bg-primary-container text-on-primary'
-                  : 'text-on-surface-variant hover:bg-surface-container-high',
-              )}
-            >
-              {c.name}
-            </button>
-          ))}
-        </div>
+        {therapists.length === 0 ? (
+          <EmptyState icon="person_off" title="No active therapists" subtitle="Add a therapist in Settings → Therapists first." />
+        ) : (
+          <>
+            <Field label="Therapist">
+              <Select value={therapistId} onChange={(e) => setTherapistId(e.target.value)}>
+                {therapists.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </Select>
+            </Field>
 
-        {/* Date strip */}
-        <div className="no-scrollbar flex gap-sm overflow-x-auto pb-1">
-          {dates.map((d) => (
-            <button
-              key={d}
-              onClick={() => setDate(d)}
-              className={cn(
-                'min-w-[56px] rounded-xl py-sm text-center transition-colors',
-                date === d
-                  ? 'bg-primary text-on-primary'
-                  : 'bg-surface-container-lowest text-on-surface border border-outline-variant',
-              )}
-            >
-              <p className={cn('font-label-md text-label-md', date === d ? 'text-on-primary/80' : 'text-on-surface-variant')}>{weekdayLabel(d)}</p>
-              <p className="font-headline-sm text-headline-sm">{formatDateShort(d).split(' ')[0]}</p>
-            </button>
-          ))}
-        </div>
-
-        <Card className="overflow-hidden p-0">
-          <div className="flex items-center gap-sm border-b border-outline-variant/30 bg-surface-container-low p-md">
-            <Icon name="schedule" className="text-primary" />
-            <h3 className="font-headline-sm text-headline-sm text-on-surface">{formatDate(date)}</h3>
-          </div>
-          <div className="p-md">
-            <p className="mb-md font-label-md text-label-md text-on-surface-variant">
-              Tap a time to publish or remove a slot. Booked slots can't be removed.
-            </p>
-            <div className="grid grid-cols-2 gap-sm sm:grid-cols-3">
-              {PRESET_TIMES.map((t) => {
-                const slot = daySlots.find((s) => s.start === t)
-                const booked = slot?.status === 'booked'
-                const published = publishedTimes.has(t)
-                return (
-                  <button
-                    key={t}
-                    onClick={() =>
-                      booked
-                        ? toast.error('This slot is booked — cancel the appointment first to free it.')
-                        : toggleTime(t)
-                    }
-                    className={cn(
-                      'relative flex flex-col items-center justify-center gap-xs rounded-xl border-2 p-md transition-all',
-                      booked
-                        ? 'cursor-not-allowed border-outline-variant bg-surface-container-highest text-on-surface-variant'
-                        : published
-                          ? 'border-primary bg-primary-fixed text-on-primary-fixed-variant shadow-sm'
-                          : 'cursor-pointer border-outline-variant bg-surface-container-lowest text-on-surface hover:border-primary',
-                    )}
-                  >
-                    <span className="font-headline-sm text-headline-sm">{t}</span>
-                    {booked ? (
-                      <span className="rounded bg-outline px-2 py-0.5 font-label-md text-label-md text-surface">Booked</span>
-                    ) : published ? (
-                      <span className="rounded bg-primary px-2 py-0.5 font-label-md text-label-md text-on-primary">Available</span>
-                    ) : (
-                      <span className="rounded bg-secondary-container px-2 py-0.5 font-label-md text-label-md text-on-secondary-container">Add</span>
-                    )}
-                    {!booked && (
-                      <Icon
-                        name={published ? 'check_circle' : 'add'}
-                        size={18}
-                        className={cn('absolute right-2 top-2 text-primary')}
-                      />
-                    )}
-                  </button>
-                )
-              })}
+            {/* Clinic selector */}
+            <div className="flex items-center gap-xs rounded-xl border border-outline-variant bg-surface-container-low p-xs">
+              {clinics.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setClinicId(c.id)}
+                  className={cn(
+                    'flex-1 rounded-lg px-md py-sm font-label-lg text-label-lg transition-all',
+                    clinicId === c.id ? 'bg-primary-container text-on-primary' : 'text-on-surface-variant hover:bg-surface-container-high',
+                  )}
+                >
+                  {c.name}
+                </button>
+              ))}
             </div>
-          </div>
-        </Card>
 
-        <div className="flex flex-wrap gap-md font-label-md text-label-md text-on-surface-variant">
-          <Legend className="border-outline-variant bg-surface-container-lowest" label="Not published" />
-          <Legend className="border-primary bg-primary-fixed" label="Available" />
-          <Legend className="border-outline-variant bg-surface-container-highest" label="Booked" />
-        </div>
+            {/* Date strip */}
+            <div className="no-scrollbar flex gap-sm overflow-x-auto pb-1">
+              {dates.map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setDate(d)}
+                  className={cn(
+                    'min-w-[56px] rounded-xl py-sm text-center transition-colors',
+                    date === d ? 'bg-primary text-on-primary' : 'bg-surface-container-lowest text-on-surface border border-outline-variant',
+                  )}
+                >
+                  <p className={cn('font-label-md text-label-md', date === d ? 'text-on-primary/80' : 'text-on-surface-variant')}>{weekdayLabel(d)}</p>
+                  <p className="font-headline-sm text-headline-sm">{formatDateShort(d).split(' ')[0]}</p>
+                </button>
+              ))}
+            </div>
+
+            <Card className="overflow-hidden p-0">
+              <div className="flex items-center gap-sm border-b border-outline-variant/30 bg-surface-container-low p-md">
+                <Icon name="schedule" className="text-primary" />
+                <h3 className="font-headline-sm text-headline-sm text-on-surface">{formatDate(date)}</h3>
+              </div>
+              <div className="space-y-sm p-md">
+                {windows.length === 0 ? (
+                  <p className="font-label-md text-label-md text-on-surface-variant">No working window yet for this day.</p>
+                ) : (
+                  windows.map((w) => (
+                    <div key={w.id} className="flex items-center justify-between gap-sm rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-md py-sm">
+                      <span className="inline-flex items-center gap-xs font-label-lg text-label-lg text-on-surface">
+                        <Icon name="check_circle" size={18} fill className="text-primary" /> {w.start} – {w.end}
+                      </span>
+                      <button
+                        onClick={() => remove(w.id, `${w.start}–${w.end}`)}
+                        aria-label="Remove window"
+                        className="rounded-full p-xs text-on-surface-variant transition-colors hover:bg-error-container hover:text-error"
+                      >
+                        <Icon name="delete" size={20} />
+                      </button>
+                    </div>
+                  ))
+                )}
+
+                <div className="grid grid-cols-2 gap-sm pt-sm">
+                  <Field label="From">
+                    <Select value={start} onChange={(e) => setStart(e.target.value)}>
+                      {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </Select>
+                  </Field>
+                  <Field label="To">
+                    <Select value={end} onChange={(e) => setEnd(e.target.value)}>
+                      {TIME_OPTIONS.filter((t) => timeToMin(t) > timeToMin(start)).map((t) => <option key={t} value={t}>{t}</option>)}
+                    </Select>
+                  </Field>
+                </div>
+                <Button size="sm" className="w-full" onClick={addWindow}>
+                  <Icon name="add" size={16} /> Add availability window
+                </Button>
+              </div>
+            </Card>
+
+            <p className="px-xs font-label-md text-label-md text-on-surface-variant">
+              Patients can book any service that fits inside a window. The booking engine prevents therapist and patient
+              conflicts automatically.
+            </p>
+          </>
+        )}
       </div>
     </div>
-  )
-}
-
-function Legend({ className, label }: { className: string; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className={cn('h-4 w-4 rounded border-2', className)} /> {label}
-    </span>
   )
 }

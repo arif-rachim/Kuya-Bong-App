@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { TopBar } from '../../components/TopBar'
-import { Banner, Button, Card, EmptyState } from '../../components/ui'
+import { Banner, Button, Card, EmptyState, Field, Select, Textarea } from '../../components/ui'
 import { AppointmentStatusBadge, ClinicBadge } from '../../components/StatusBadge'
 import { Icon } from '../../components/Icon'
 import { Modal } from '../../components/Modal'
@@ -11,13 +11,18 @@ import { toast } from '../../components/Toast'
 import { cn } from '../../lib/cn'
 import { CANCEL_CUTOFF_HOURS, useApp } from '../../store/appStore'
 import { useClinicName } from '../../store/selectors'
-import { formatDate, formatDateShort, hoursUntil, weekdayLabel } from '../../lib/date'
+import { addDays, formatDate, formatDateShort, hoursUntil, nowMinutes, todayISO, weekdayLabel } from '../../lib/date'
+import { computeBookingOptions, uniqueStarts } from '../../lib/booking'
 
 export function AppointmentDetails() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
   const apt = useApp((s) => s.appointments.find((a) => a.id === id))
-  const slots = useApp((s) => s.slots)
+  const services = useApp((s) => s.services)
+  const therapists = useApp((s) => s.therapists)
+  const availability = useApp((s) => s.availability)
+  const appointments = useApp((s) => s.appointments)
+  const cancellationReasons = useApp((s) => s.cancellationReasons)
   const clinicName = useClinicName(apt?.clinicId)
   const reschedule = useApp((s) => s.rescheduleAppointment)
   const cancel = useApp((s) => s.cancelAppointment)
@@ -26,22 +31,50 @@ export function AppointmentDetails() {
   const [modalError, setModalError] = useState<string | null>(null)
   const [showReschedule, setShowReschedule] = useState(false)
   const [rsDate, setRsDate] = useState('')
+  const [showCancel, setShowCancel] = useState(false)
+  const [cancelReasonId, setCancelReasonId] = useState('')
+  const [cancelNote, setCancelNote] = useState('')
+
+  const service = services.find((sv) => sv.id === apt?.serviceTypeId)
+  const therapistName = therapists.find((t) => t.id === apt?.therapistId)?.name ?? '—'
+  const activeReasons = cancellationReasons.filter((r) => r.active)
+  const isOtherReason = activeReasons.find((r) => r.id === cancelReasonId)?.label.toLowerCase() === 'other'
 
   const canModify = apt && (apt.status === 'Confirmed' || apt.status === 'Rescheduled')
   // BR-05: changes are only allowed more than 24h before the session.
   const withinCutoff = apt ? hoursUntil(apt.date, apt.start) < CANCEL_CUTOFF_HOURS : false
 
-  const availableDates = useMemo(() => {
-    const set = new Set<string>()
-    slots.forEach((s) => {
-      if (s.clinicId === apt?.clinicId && s.status === 'available' && hoursUntil(s.date, s.start) > 0) set.add(s.date)
-    })
-    return Array.from(set).sort()
-  }, [slots, apt?.clinicId])
+  const rsArgs = useMemo(
+    () =>
+      apt && service
+        ? {
+            availability,
+            appointments,
+            therapists,
+            clinicId: apt.clinicId,
+            durationMinutes: service.durationMinutes,
+            patientUserId: apt.patientUserId,
+            excludeAppointmentId: apt.id,
+          }
+        : null,
+    [apt, service, availability, appointments, therapists],
+  )
 
-  const rsSlots = slots
-    .filter((s) => s.clinicId === apt?.clinicId && s.date === rsDate && s.status === 'available')
-    .sort((a, b) => a.start.localeCompare(b.start))
+  const availableDates = useMemo(() => {
+    if (!rsArgs) return []
+    const out: string[] = []
+    for (let d = 0; d < 14; d++) {
+      const day = addDays(todayISO(), d)
+      if (computeBookingOptions({ ...rsArgs, date: day, minStartMin: day === todayISO() ? nowMinutes() : null }).length)
+        out.push(day)
+    }
+    return out
+  }, [rsArgs])
+
+  const rsOptions = useMemo(() => {
+    if (!rsArgs || !rsDate) return []
+    return uniqueStarts(computeBookingOptions({ ...rsArgs, date: rsDate, minStartMin: rsDate === todayISO() ? nowMinutes() : null }))
+  }, [rsArgs, rsDate])
 
   if (!apt) {
     return (
@@ -52,17 +85,14 @@ export function AppointmentDetails() {
     )
   }
 
-  async function doReschedule(newSlotId: string) {
-    const slot = slots.find((s) => s.id === newSlotId)
+  async function doReschedule(start: string, therapistId: string) {
     const ok = await confirm({
       title: 'Reschedule appointment?',
-      message: slot
-        ? `Move this appointment to ${formatDate(slot.date)} at ${slot.start}–${slot.end}?`
-        : 'Move this appointment to the selected slot?',
+      message: `Move this appointment to ${formatDate(rsDate)} at ${start}?`,
       confirmLabel: 'Reschedule',
     })
     if (!ok) return
-    const err = reschedule(apt!.id, newSlotId, 'patient')
+    const err = reschedule(apt!.id, { therapistId, clinicId: apt!.clinicId, date: rsDate, start }, 'patient')
     if (err) return setModalError(err)
     setShowReschedule(false)
     setError(null)
@@ -70,17 +100,11 @@ export function AppointmentDetails() {
     toast.success('Appointment rescheduled.')
   }
 
-  async function doCancel() {
-    const ok = await confirm({
-      title: 'Cancel appointment?',
-      message: `Cancel your appointment on ${formatDate(apt!.date)} at ${apt!.start}? This frees the slot for others.`,
-      confirmLabel: 'Cancel appointment',
-      cancelLabel: 'Keep it',
-      danger: true,
-    })
-    if (!ok) return
-    const err = cancel(apt!.id, 'patient')
-    if (err) return setError(err)
+  function doCancel() {
+    if (!cancelReasonId) return setModalError('Please choose a cancellation reason.')
+    const err = cancel(apt!.id, 'patient', cancelReasonId, cancelNote.trim() || undefined)
+    if (err) return setModalError(err)
+    setShowCancel(false)
     toast.success('Appointment cancelled.')
     navigate('/patient/appointments', { replace: true })
   }
@@ -90,7 +114,7 @@ export function AppointmentDetails() {
       <TopBar title="Appointment Details" back />
       <div className="space-y-md px-margin-mobile py-md">
         <PageIntro>
-          The full details of this appointment. You can reschedule it to another open slot or cancel it — both are
+          The full details of this appointment. You can reschedule it to another open time or cancel it — both are
           allowed up to {CANCEL_CUTOFF_HOURS} hours before the session starts.
         </PageIntro>
         {error && <Banner kind="error">{error}</Banner>}
@@ -100,10 +124,21 @@ export function AppointmentDetails() {
         </div>
 
         <Card className="space-y-md" accent={apt.clinicId === 'clinic-a' ? 'a' : 'b'}>
+          <DetailRow icon="medical_services" label="Service" value={service?.name ?? '—'} />
+          <DetailRow icon="person_4" label="Therapist" value={therapistName} />
           <DetailRow icon="location_on" label="Clinic" value={<ClinicBadge clinicId={apt.clinicId} name={clinicName} />} />
           <DetailRow icon="calendar_month" label="Date" value={formatDate(apt.date)} />
           <DetailRow icon="schedule" label="Time" value={`${apt.start} – ${apt.end}`} />
           <DetailRow icon="person" label="For" value={apt.forMemberName} />
+          {apt.cancellationReasonId && (
+            <DetailRow
+              icon="info"
+              label="Cancelled"
+              value={activeReasons.find((r) => r.id === apt.cancellationReasonId)?.label
+                ?? cancellationReasons.find((r) => r.id === apt.cancellationReasonId)?.label
+                ?? 'Cancelled'}
+            />
+          )}
         </Card>
 
         {canModify ? (
@@ -118,14 +153,16 @@ export function AppointmentDetails() {
               size="lg"
               variant="secondary"
               disabled={withinCutoff}
-              onClick={() => {
-                setModalError(null)
-                setShowReschedule(true)
-              }}
+              onClick={() => { setModalError(null); setShowReschedule(true) }}
             >
               <Icon name="event_repeat" size={20} /> Reschedule
             </Button>
-            <Button size="lg" variant="danger" disabled={withinCutoff} onClick={doCancel}>
+            <Button
+              size="lg"
+              variant="danger"
+              disabled={withinCutoff}
+              onClick={() => { setModalError(null); setCancelReasonId(''); setCancelNote(''); setShowCancel(true) }}
+            >
               <Icon name="close" size={20} /> Cancel Appointment
             </Button>
             {!withinCutoff && (
@@ -139,10 +176,10 @@ export function AppointmentDetails() {
         )}
       </div>
 
-      <Modal open={showReschedule} onClose={() => setShowReschedule(false)} title="Choose a New Slot">
+      <Modal open={showReschedule} onClose={() => setShowReschedule(false)} title="Choose a New Time">
         {modalError && <div className="mb-sm"><Banner kind="error">{modalError}</Banner></div>}
         {availableDates.length === 0 ? (
-          <EmptyState icon="event_busy" title="No slots available" />
+          <EmptyState icon="event_busy" title="No times available" />
         ) : (
           <>
             <p className="mb-sm font-label-lg text-label-lg text-on-surface">Date</p>
@@ -153,9 +190,7 @@ export function AppointmentDetails() {
                   onClick={() => setRsDate(d)}
                   className={cn(
                     'rounded-xl border-2 py-sm text-center transition-colors',
-                    rsDate === d
-                      ? 'border-primary bg-primary-fixed/40'
-                      : 'border-outline-variant hover:border-primary',
+                    rsDate === d ? 'border-primary bg-primary-fixed/40' : 'border-outline-variant hover:border-primary',
                   )}
                 >
                   <p className="text-label-md text-on-surface-variant">{weekdayLabel(d)}</p>
@@ -167,13 +202,14 @@ export function AppointmentDetails() {
               <>
                 <p className="mb-sm font-label-lg text-label-lg text-on-surface">Time</p>
                 <div className="grid grid-cols-3 gap-base">
-                  {rsSlots.map((s) => (
+                  {rsOptions.map((o) => (
                     <button
-                      key={s.id}
-                      onClick={() => doReschedule(s.id)}
-                      className="rounded-xl border-2 border-outline-variant py-sm font-label-lg text-label-lg text-on-surface transition-colors hover:border-primary hover:bg-primary-fixed/40"
+                      key={o.start}
+                      onClick={() => doReschedule(o.start, o.therapistId)}
+                      className="flex flex-col items-center rounded-xl border-2 border-outline-variant py-sm font-label-lg text-label-lg text-on-surface transition-colors hover:border-primary hover:bg-primary-fixed/40"
                     >
-                      {s.start}
+                      <span>{o.start}</span>
+                      <span className="font-label-md text-label-md text-on-surface-variant">– {o.end}</span>
                     </button>
                   ))}
                 </div>
@@ -181,6 +217,30 @@ export function AppointmentDetails() {
             )}
           </>
         )}
+      </Modal>
+
+      <Modal open={showCancel} onClose={() => setShowCancel(false)} title="Cancel Appointment">
+        {modalError && <div className="mb-sm"><Banner kind="error">{modalError}</Banner></div>}
+        <p className="mb-sm text-body-md text-on-surface-variant">
+          Cancelling your appointment on {formatDate(apt.date)} at {apt.start}. Please tell us why.
+        </p>
+        <div className="space-y-sm">
+          <Field label="Cancellation reason">
+            <Select value={cancelReasonId} onChange={(e) => setCancelReasonId(e.target.value)}>
+              <option value="">— Select a reason —</option>
+              {activeReasons.map((r) => (
+                <option key={r.id} value={r.id}>{r.label}</option>
+              ))}
+            </Select>
+          </Field>
+          {isOtherReason && (
+            <Field label="Note">
+              <Textarea value={cancelNote} onChange={(e) => setCancelNote(e.target.value)} placeholder="Add a short note (optional)" />
+            </Field>
+          )}
+          <Button size="lg" variant="danger" onClick={doCancel}>Cancel appointment</Button>
+          <Button size="lg" variant="secondary" onClick={() => setShowCancel(false)}>Keep it</Button>
+        </div>
       </Modal>
     </div>
   )

@@ -37,6 +37,7 @@ export function MyAppointments() {
   const user = useCurrentUser()
   const [tab, setTab] = useState<Tab>('upcoming')
   const clinics = useApp((s) => s.clinics)
+  const services = useApp((s) => s.services)
   const appointments = useApp((s) => s.appointments)
   const list = appointments
     .filter((a) => a.patientUserId === user?.id)
@@ -76,6 +77,7 @@ export function MyAppointments() {
         ) : (
           list.map((a) => {
             const clinicName = clinics.find((c) => c.id === a.clinicId)?.name ?? ''
+            const serviceName = services.find((sv) => sv.id === a.serviceTypeId)?.name
             const accent = a.clinicId === 'clinic-a' ? 'a' : 'b'
             return (
               <Link key={a.id} to={`/patient/appointment/${a.id}`} className="block">
@@ -89,6 +91,11 @@ export function MyAppointments() {
                           {a.start} – {a.end} · {a.forMemberName}
                         </p>
                       </div>
+                      {serviceName && (
+                        <p className="mt-xs font-label-md text-label-md text-on-surface-variant">
+                          <Icon name="medical_services" size={14} /> {serviceName}
+                        </p>
+                      )}
                       <div className="mt-sm flex flex-wrap items-center gap-base">
                         <ClinicBadge clinicId={a.clinicId} name={clinicName} />
                         <AppointmentStatusBadge status={a.status} />

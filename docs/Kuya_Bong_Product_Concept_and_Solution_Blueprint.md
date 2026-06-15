@@ -940,23 +940,28 @@ Patient Reviews Booking Details
 ↓
 System Confirms Reservation
 25.8 Additional Business Rules
+
+> Editorial note: the source PDF numbered these rules BR-17 through BR-27, which
+> collides with BR-17/BR-18/BR-19 already defined in Section 16. They are renumbered
+> here as BR-20 through BR-30 to keep every business-rule ID unique across the document.
+
 Rule ID Business Rule
-BR-17 Each appointment must be linked to a service type.
-BR-18 Each service type must have a defined duration.
-BR-19 The appointment end time should be calculated based on the
+BR-20 Each appointment must be linked to a service type.
+BR-21 Each service type must have a defined duration.
+BR-22 The appointment end time should be calculated based on the
 selected service duration.
-BR-20 The same therapist cannot be assigned to overlapping
+BR-23 The same therapist cannot be assigned to overlapping
 appointments.
-BR-21 The same patient cannot have overlapping appointments.
-BR-22 The system should check therapist availability before confirming
+BR-24 The same patient cannot have overlapping appointments.
+BR-25 The system should check therapist availability before confirming
 a booking.
-BR-23 The system should check patient availability before confirming a
+BR-26 The system should check patient availability before confirming a
 booking.
-BR-24 Patient cancellation must include a cancellation reason.
-BR-25 Kuya Bong can manage the master list of cancellation reasons.
-BR-26 Kuya Bong can cancel an appointment on behalf of the patient
+BR-27 Patient cancellation must include a cancellation reason.
+BR-28 Kuya Bong can manage the master list of cancellation reasons.
+BR-29 Kuya Bong can cancel an appointment on behalf of the patient
 when the request is received by phone or another offline channel.
-BR-27 The system should record who cancelled the appointment:
+BR-30 The system should record who cancelled the appointment:
 patient or administrator.
 25.9 Recommended GUI Additions
 Area Addition

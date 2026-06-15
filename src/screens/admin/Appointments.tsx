@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { PageHeader } from '../../components/PageHeader'
-import { Banner, Button, Card, EmptyState, Field, Select } from '../../components/ui'
+import { Banner, Button, Card, EmptyState, Field, Input, Select, Textarea } from '../../components/ui'
 import { AppointmentStatusBadge, ClinicBadge } from '../../components/StatusBadge'
 import { Icon } from '../../components/Icon'
 import { Modal } from '../../components/Modal'
@@ -8,8 +8,8 @@ import { toast } from '../../components/Toast'
 import { confirm } from '../../components/Confirm'
 import { cn } from '../../lib/cn'
 import { useApp } from '../../store/appStore'
-import { activePackageOf } from '../../store/selectors'
-import { formatDate, formatDateShort, hoursUntil, todayISO, weekdayLabel } from '../../lib/date'
+import { addDays, formatDate, formatDateShort, nowMinutes, todayISO, weekdayLabel } from '../../lib/date'
+import { computeBookingOptions, uniqueStarts } from '../../lib/booking'
 import type { Appointment, AppointmentStatus } from '../../data/types'
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
@@ -25,30 +25,45 @@ const STATUS_OPTIONS: { value: string; label: string }[] = [
 export function AdminAppointments() {
   const clinics = useApp((s) => s.clinics)
   const users = useApp((s) => s.users)
+  const services = useApp((s) => s.services)
+  const therapists = useApp((s) => s.therapists)
+  const availability = useApp((s) => s.availability)
   const appointments = useApp((s) => s.appointments)
   const patientPackages = useApp((s) => s.patientPackages)
-  const slots = useApp((s) => s.slots)
+  const cancellationReasons = useApp((s) => s.cancellationReasons)
   const markCompleted = useApp((s) => s.markCompleted)
   const cancelApt = useApp((s) => s.cancelAppointment)
   const markNoShow = useApp((s) => s.markNoShow)
   const rescheduleApt = useApp((s) => s.rescheduleAppointment)
 
   const [clinicFilter, setClinicFilter] = useState('all')
+  const [therapistFilter, setTherapistFilter] = useState('all')
+  const [serviceFilter, setServiceFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [dateFilter, setDateFilter] = useState('')
   const [completing, setCompleting] = useState<Appointment | null>(null)
   const [rescheduling, setRescheduling] = useState<Appointment | null>(null)
   const [rsDate, setRsDate] = useState('')
+  const [cancelling, setCancelling] = useState<Appointment | null>(null)
+  const [cancelReasonId, setCancelReasonId] = useState('')
+  const [cancelNote, setCancelNote] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const list = appointments
     .filter((a) => (clinicFilter === 'all' ? true : a.clinicId === clinicFilter))
+    .filter((a) => (therapistFilter === 'all' ? true : a.therapistId === therapistFilter))
+    .filter((a) => (serviceFilter === 'all' ? true : a.serviceTypeId === serviceFilter))
     .filter((a) => (statusFilter === 'all' ? true : a.status === (statusFilter as AppointmentStatus)))
     .filter((a) => (dateFilter ? a.date === dateFilter : true))
     .sort((a, b) => (b.date + b.start).localeCompare(a.date + a.start))
 
   const clinicName = (id: string) => clinics.find((c) => c.id === id)?.name ?? ''
   const patientName = (id: string) => users.find((u) => u.id === id)?.name ?? '—'
+  const serviceName = (id: string) => services.find((sv) => sv.id === id)?.name ?? '—'
+  const therapistName = (id: string) => therapists.find((t) => t.id === id)?.name ?? '—'
+  const reasonLabel = (id: string) => cancellationReasons.find((r) => r.id === id)?.label ?? 'Cancelled'
+  const activeReasons = cancellationReasons.filter((r) => r.active)
+  const isOtherReason = activeReasons.find((r) => r.id === cancelReasonId)?.label.toLowerCase() === 'other'
 
   function complete(pkgId?: string) {
     if (!completing) return
@@ -71,17 +86,18 @@ export function AdminAppointments() {
     toast.info('Marked as no-show.')
   }
 
-  async function cancel(a: Appointment) {
-    const ok = await confirm({
-      title: 'Cancel appointment?',
-      message: `Cancel ${patientName(a.patientUserId)}'s ${formatDate(a.date)} ${a.start} appointment? This frees the slot.`,
-      confirmLabel: 'Cancel appointment',
-      cancelLabel: 'Keep it',
-      danger: true,
-    })
-    if (!ok) return
-    const err = cancelApt(a.id, 'admin')
+  function openCancel(a: Appointment) {
+    setCancelling(a)
+    setCancelReasonId('')
+    setCancelNote('')
+  }
+
+  function doCancel() {
+    if (!cancelling) return
+    if (!cancelReasonId) return toast.error('Please choose a cancellation reason.')
+    const err = cancelApt(cancelling.id, 'admin', cancelReasonId, cancelNote.trim() || undefined)
     if (err) return toast.error(err)
+    setCancelling(null)
     toast.success('Appointment cancelled.')
   }
 
@@ -90,18 +106,48 @@ export function AdminAppointments() {
     setRsDate('')
   }
 
-  async function doReschedule(newSlotId: string) {
+  const rsService = rescheduling ? services.find((sv) => sv.id === rescheduling.serviceTypeId) : undefined
+  const rsArgs = useMemo(
+    () =>
+      rescheduling && rsService
+        ? {
+            availability,
+            appointments,
+            therapists,
+            clinicId: rescheduling.clinicId,
+            durationMinutes: rsService.durationMinutes,
+            patientUserId: rescheduling.patientUserId,
+            excludeAppointmentId: rescheduling.id,
+          }
+        : null,
+    [rescheduling, rsService, availability, appointments, therapists],
+  )
+
+  const rsDates = useMemo(() => {
+    if (!rsArgs) return []
+    const out: string[] = []
+    for (let d = 0; d < 14; d++) {
+      const day = addDays(todayISO(), d)
+      if (computeBookingOptions({ ...rsArgs, date: day, minStartMin: day === todayISO() ? nowMinutes() : null }).length)
+        out.push(day)
+    }
+    return out
+  }, [rsArgs])
+
+  const rsOptions = useMemo(() => {
+    if (!rsArgs || !rsDate) return []
+    return uniqueStarts(computeBookingOptions({ ...rsArgs, date: rsDate, minStartMin: rsDate === todayISO() ? nowMinutes() : null }))
+  }, [rsArgs, rsDate])
+
+  async function doReschedule(start: string, therapistId: string) {
     if (!rescheduling) return
-    const slot = slots.find((s) => s.id === newSlotId)
     const ok = await confirm({
       title: 'Reschedule appointment?',
-      message: slot
-        ? `Move ${patientName(rescheduling.patientUserId)}'s appointment to ${formatDate(slot.date)} at ${slot.start}–${slot.end}?`
-        : 'Move this appointment to the selected slot?',
+      message: `Move ${patientName(rescheduling.patientUserId)}'s appointment to ${formatDate(rsDate)} at ${start}?`,
       confirmLabel: 'Reschedule',
     })
     if (!ok) return
-    const err = rescheduleApt(rescheduling.id, newSlotId, 'admin')
+    const err = rescheduleApt(rescheduling.id, { therapistId, clinicId: rescheduling.clinicId, date: rsDate, start }, 'admin')
     if (err) return toast.error(err)
     setRescheduling(null)
     setRsDate('')
@@ -110,22 +156,6 @@ export function AdminAppointments() {
 
   const completingPkgs = completing
     ? patientPackages.filter((p) => p.ownerUserId === completing.patientUserId)
-    : []
-
-  // Open future slots in the rescheduling appointment's clinic.
-  const rsDates = rescheduling
-    ? Array.from(
-        new Set(
-          slots
-            .filter((s) => s.clinicId === rescheduling.clinicId && s.status === 'available' && hoursUntil(s.date, s.start) > 0)
-            .map((s) => s.date),
-        ),
-      ).sort()
-    : []
-  const rsSlots = rescheduling
-    ? slots
-        .filter((s) => s.clinicId === rescheduling.clinicId && s.date === rsDate && s.status === 'available')
-        .sort((a, b) => a.start.localeCompare(b.start))
     : []
 
   return (
@@ -142,6 +172,24 @@ export function AdminAppointments() {
                 ))}
               </Select>
             </Field>
+            <Field label="Therapist">
+              <Select value={therapistFilter} onChange={(e) => setTherapistFilter(e.target.value)}>
+                <option value="all">All therapists</option>
+                {therapists.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          <Field label="Service">
+            <Select value={serviceFilter} onChange={(e) => setServiceFilter(e.target.value)}>
+              <option value="all">All services</option>
+              {services.map((sv) => (
+                <option key={sv.id} value={sv.id}>{sv.name}</option>
+              ))}
+            </Select>
+          </Field>
+          <div className="grid grid-cols-2 gap-sm">
             <Field label="Status">
               <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                 {STATUS_OPTIONS.map((o) => (
@@ -149,15 +197,10 @@ export function AdminAppointments() {
                 ))}
               </Select>
             </Field>
+            <Field label="Date">
+              <Input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} />
+            </Field>
           </div>
-          <Field label="Date">
-            <input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full rounded-lg border-2 border-outline-variant bg-surface-container-lowest px-md py-sm text-body-md text-on-surface outline-none focus:border-primary transition-colors"
-            />
-          </Field>
         </Card>
 
         {list.length === 0 ? (
@@ -179,15 +222,25 @@ export function AdminAppointments() {
                         <p className="font-label-md text-label-md text-on-surface-variant">for: {a.forMemberName}</p>
                       )}
                       <p className="mt-xs font-label-lg text-label-lg text-on-surface">{formatDate(a.date)} · {a.start}–{a.end}</p>
+                      <p className="font-label-md text-label-md text-on-surface-variant">
+                        {serviceName(a.serviceTypeId)} · {therapistName(a.therapistId)}
+                      </p>
                       <div className="mt-sm flex flex-wrap gap-xs">
                         <ClinicBadge clinicId={a.clinicId} name={clinicName(a.clinicId)} />
                         <AppointmentStatusBadge status={a.status} />
-                        {a.source === 'Manual' && (
+                        {a.source !== 'App' && (
                           <span className="inline-flex items-center gap-xs rounded-full bg-surface-container-highest px-sm py-xs font-label-md text-label-md text-on-surface-variant">
-                            <Icon name="call" size={14} /> Manual
+                            <Icon name="call" size={14} /> {a.source}
                           </span>
                         )}
                       </div>
+                      {a.cancellationReasonId && (
+                        <p className="mt-sm font-label-md text-label-md text-on-surface-variant">
+                          <Icon name="info" size={14} /> {reasonLabel(a.cancellationReasonId)}
+                          {a.cancelledBy ? ` · by ${a.cancelledBy}` : ''}
+                          {a.cancellationNote ? ` — “${a.cancellationNote}”` : ''}
+                        </p>
+                      )}
                     </div>
                   </div>
                   {actionable && (
@@ -202,7 +255,7 @@ export function AdminAppointments() {
                         <Button size="sm" variant="secondary" onClick={() => noShow(a)}>
                           <Icon name="person_off" size={16} /> No-show
                         </Button>
-                        <Button size="sm" variant="danger" onClick={() => cancel(a)}>
+                        <Button size="sm" variant="danger" onClick={() => openCancel(a)}>
                           <Icon name="cancel" size={16} /> Cancel
                         </Button>
                       </div>
@@ -255,11 +308,11 @@ export function AdminAppointments() {
       <Modal open={!!rescheduling} onClose={() => setRescheduling(null)} title="Reschedule Appointment">
         {rescheduling && (
           <p className="mb-sm text-body-md text-on-surface-variant">
-            {patientName(rescheduling.patientUserId)} · currently {formatDate(rescheduling.date)} · {rescheduling.start}
+            {patientName(rescheduling.patientUserId)} · {rsService?.name} · currently {formatDate(rescheduling.date)} · {rescheduling.start}
           </p>
         )}
         {rsDates.length === 0 ? (
-          <EmptyState icon="event_busy" title="No open slots" subtitle="Publish slots for this clinic first." />
+          <EmptyState icon="event_busy" title="No open times" subtitle="Add availability for this clinic first." />
         ) : (
           <>
             <p className="mb-sm font-label-lg text-label-lg text-on-surface">Date</p>
@@ -282,13 +335,14 @@ export function AdminAppointments() {
               <>
                 <p className="mb-sm font-label-lg text-label-lg text-on-surface">Time</p>
                 <div className="grid grid-cols-3 gap-base">
-                  {rsSlots.map((s) => (
+                  {rsOptions.map((o) => (
                     <button
-                      key={s.id}
-                      onClick={() => doReschedule(s.id)}
-                      className="rounded-xl border-2 border-outline-variant py-sm font-label-lg text-label-lg text-on-surface transition-colors hover:border-primary hover:bg-primary-fixed/40"
+                      key={o.start}
+                      onClick={() => doReschedule(o.start, o.therapistId)}
+                      className="flex flex-col items-center rounded-xl border-2 border-outline-variant py-sm font-label-lg text-label-lg text-on-surface transition-colors hover:border-primary hover:bg-primary-fixed/40"
                     >
-                      {s.start}
+                      <span>{o.start}</span>
+                      <span className="font-label-md text-label-md text-on-surface-variant">– {o.end}</span>
                     </button>
                   ))}
                 </div>
@@ -296,6 +350,31 @@ export function AdminAppointments() {
             )}
           </>
         )}
+      </Modal>
+
+      <Modal open={!!cancelling} onClose={() => setCancelling(null)} title="Cancel Appointment">
+        {cancelling && (
+          <p className="mb-sm text-body-md text-on-surface-variant">
+            {patientName(cancelling.patientUserId)} · {formatDate(cancelling.date)} · {cancelling.start}
+          </p>
+        )}
+        <div className="space-y-sm">
+          <Field label="Cancellation reason">
+            <Select value={cancelReasonId} onChange={(e) => setCancelReasonId(e.target.value)}>
+              <option value="">— Select a reason —</option>
+              {activeReasons.map((r) => (
+                <option key={r.id} value={r.id}>{r.label}</option>
+              ))}
+            </Select>
+          </Field>
+          {isOtherReason && (
+            <Field label="Note">
+              <Textarea value={cancelNote} onChange={(e) => setCancelNote(e.target.value)} placeholder="Add a short note (optional)" />
+            </Field>
+          )}
+          <Button size="lg" variant="danger" onClick={doCancel}>Cancel appointment</Button>
+          <Button size="lg" variant="secondary" onClick={() => setCancelling(null)}>Keep it</Button>
+        </div>
       </Modal>
     </div>
   )

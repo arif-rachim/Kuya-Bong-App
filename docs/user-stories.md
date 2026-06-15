@@ -1,8 +1,12 @@
 # Kuya Bong App — User Stories (MVP)
 
-Based on the *Product Concept and Solution Blueprint v0.2*.
+Based on the *Product Concept and Solution Blueprint v0.3* (tracking KBA-BP-20260615-001).
 Organized simply per feature, with a **Positive Flow** (success) and **Negative Flow** (failure / edge case).
 Two roles: **Patient** and **Admin (Kuya Bong)**.
+
+> **v0.3 update:** Sections 14–18 cover the additional confirmed requirements from blueprint Section 25 —
+> service types, therapists, service-duration-driven slots, conflict prevention, and cancellation reasons.
+> Sections 4, 5, and 7b were also updated to reflect service selection and required cancellation reasons.
 
 ---
 
@@ -46,13 +50,17 @@ Two roles: **Patient** and **Admin (Kuya Bong)**.
 ## 4. Appointment Booking
 
 ### Positive
+- As a patient, I want to select a service type first so that the system knows the required duration before showing times.
 - As a patient, I want to search available appointment slots so that I can find an open time.
 - As a patient, I want to select a clinic, date, and time so that I book at the right place.
-- As a patient, I want to review my booking details before confirming so that I avoid mistakes.
-- As a patient, I want to receive a booking confirmation (clinic, date, time) so that I know my reservation is set.
+- As a patient, I want the system to show only valid start times (with enough room for the service duration) so that I don't pick a slot that can't fit my treatment.
+- As a patient, I want to review my booking details (service, clinic, date, start–end time) before confirming so that I avoid mistakes.
+- As a patient, I want to receive a booking confirmation (service, clinic, date, start–end time) so that I know my reservation is set.
 
 ### Negative
 - As a patient, I want to be blocked from booking a slot someone just took so that double booking is prevented.
+- As a patient, I want to be blocked from booking a time that overlaps one of my existing appointments (even at the other clinic) so that I can't be in two places at once.
+- As a patient, I want to be stopped if no service type is selected so that every appointment is linked to a service.
 - As a patient, I want to see a clear message when no slots are available so that I know to try another date.
 - As a patient, I want to be stopped from booking a past or expired slot so that I only book valid times.
 
@@ -63,10 +71,14 @@ Two roles: **Patient** and **Admin (Kuya Bong)**.
 ### Positive
 - As a patient, I want to reschedule my appointment to another available slot so that I can change my plans.
 - As a patient, I want to cancel my appointment before the session so that the slot is freed up.
+- As a patient, I want to select a cancellation reason (from the admin-managed list) when I cancel so that the clinic understands why.
+- As a patient, I want to add a short note when I pick "Other" as the reason so that I can explain an unlisted situation.
 - As a patient, I want to view my appointment history (upcoming, completed, cancelled, rescheduled) so that I can track my visits.
 
 ### Negative
 - As a patient, I want to be prevented from rescheduling to an unavailable slot so that I only move to open times.
+- As a patient, I want to be prevented from rescheduling to a time that overlaps another of my appointments so that I don't double-book myself.
+- As a patient, I want to be stopped from cancelling without choosing a reason so that every cancellation is explained.
 - As a patient, I want to be blocked from cancelling/rescheduling past the allowed cutoff so that the clinic policy is respected.
 
 ---
@@ -99,10 +111,13 @@ Two roles: **Patient** and **Admin (Kuya Bong)**.
 
 ### Positive
 - As an admin, I want to reschedule a patient's appointment to another available slot so that I can handle changes received by phone or in person.
-- As an admin, I want to cancel a patient's appointment before the session so that the slot is freed up.
+- As an admin, I want to cancel a patient's appointment on their behalf when they request it by phone or another offline channel so that all changes stay in the system.
+- As an admin, I want to select a cancellation reason and optionally add an internal note when I cancel so that the record is complete.
+- As an admin, I want the system to record that the cancellation was performed by the administrator (not the patient) so that responsibility is clear.
 
 ### Negative
 - As an admin, I want to be prevented from rescheduling to an unavailable/taken slot so that double booking is prevented.
+- As an admin, I want to be stopped from cancelling without choosing a reason so that every cancellation is explained.
 - As an admin, I want cancelling/rescheduling to keep the patient's package balance intact (no deduction) so that only completed sessions are charged.
 
 ---
@@ -180,6 +195,71 @@ Two roles: **Patient** and **Admin (Kuya Bong)**.
 
 ---
 
-## 14. Notes
+## 14. Admin — Service Type Management
+
+### Positive
+- As an admin, I want to add a service type with a name and standard duration (e.g. Physiotherapy & Massage = 3h, Grounding Machine Therapy = 2h) so that bookings can be linked to a service.
+- As an admin, I want to edit a service name and update its duration when business rules change so that the catalogue stays current.
+- As an admin, I want to activate or deactivate a service so that only offered services appear during booking.
+
+### Negative
+- As an admin, I want to be prevented from saving a service with an empty name or a zero/invalid duration so that booking logic always has valid data.
+- As an admin, I want deactivated services hidden from new bookings while existing appointments keep their original service so that history stays accurate.
+
+---
+
+## 15. Admin — Therapist Management
+
+### Positive
+- As an admin, I want to add and edit therapist names so that I can support myself plus occasional therapists (e.g. my brother).
+- As an admin, I want to activate or deactivate a therapist so that only available therapists can be assigned.
+- As an admin, I want to assign a therapist to an appointment so that I know who delivers each session.
+- As an admin, I want to view appointments filtered by therapist so that I can see each therapist's schedule.
+
+### Negative
+- As an admin, I want to be prevented from saving a therapist with an empty name so that therapist data stays valid.
+- As an admin, I want to be warned before deactivating a therapist who has upcoming appointments so that I don't leave sessions unassigned.
+
+---
+
+## 16. Service Duration & Booking Slot Logic
+
+### Positive
+- As a patient, I want the appointment end time to be calculated automatically from my start time plus the service duration so that the booking reflects the real treatment length.
+- As an admin, I want availability to account for service duration so that a 3-hour service reserves the therapist and clinic for the full window (e.g. 09:00–12:00).
+
+### Negative
+- As a patient, I want start times that don't have enough remaining room for the service duration to be hidden or blocked so that I can't book a session that won't fit.
+- As an admin, I want changing a service duration to NOT alter the start/end times already saved on existing appointments so that confirmed bookings stay stable.
+
+---
+
+## 17. Conflict Prevention
+
+### Positive
+- As an admin, I want the system to check therapist, patient, and clinic/resource availability before confirming a booking so that overlaps are caught early.
+
+### Negative
+- As an admin/patient, I want a booking blocked when the chosen therapist is already occupied for an overlapping time (even at the other clinic) so that one therapist can't be in two places at once.
+- As a patient, I want a booking blocked when it overlaps another of my own appointments (any clinic, therapist, or service) so that I'm never double-booked.
+- As an admin, I want a booking blocked when a clinic/resource is already taken for an overlapping service duration (when resource checking applies) so that the same resource isn't double-booked.
+
+---
+
+## 18. Admin — Cancellation Reasons (Master Data)
+
+### Positive
+- As an admin, I want to manage the list of cancellation reasons (e.g. Patient not available, Patient is sick, Emergency, Booked wrong clinic, Booked wrong date/time, Other) so that cancellations are categorized consistently.
+- As an admin, I want "Other" to allow a free-text note so that unlisted situations can still be captured.
+
+### Negative
+- As an admin, I want to be prevented from saving an empty cancellation reason so that the list stays meaningful.
+- As an admin, I want deactivating/removing a reason to keep it on past cancellations that already used it so that history stays accurate.
+
+---
+
+## 19. Notes
 - Appointment statuses: Available, Pending Approval, Confirmed, Rescheduled, Cancelled (by Patient/Admin), Completed, No-Show.
-- Open items still to confirm with client (Section 20): auto vs manual approval, appointment duration, cancellation cutoff, verification method (OTP/email/both), multiple active packages, package start date, family approval rules.
+- **v0.3 appointment data now includes:** service type, therapist, calculated end time, cancellation reason, cancelled-by (patient/admin), and optional cancellation note. Booking source expands to App / phone / manual admin / other channel.
+- **Confirmed in v0.3 (Section 25), previously open:** service types are managed, each service has a duration that drives slot logic, therapists are managed and assigned, and cancellation reasons are required and managed.
+- Open items still to confirm with client (Section 20): auto vs manual approval, cancellation cutoff, verification method (OTP/email/both), multiple active packages, package start date, family approval rules.

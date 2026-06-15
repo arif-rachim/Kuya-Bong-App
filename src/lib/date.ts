@@ -49,10 +49,16 @@ export function isPastDate(iso: string): boolean {
   return iso < todayISO()
 }
 
-/** Hours between now and a slot (date + time). Negative if already past. */
+/** Hours between now and a date + time. Negative if already past. */
 export function hoursUntil(dateISO: string, timeHHmm: string): number {
   const target = new Date(`${dateISO}T${timeHHmm}:00`).getTime()
   return (target - Date.now()) / 36e5
+}
+
+/** Current local time as minutes since midnight (e.g. 09:30 -> 570). */
+export function nowMinutes(): number {
+  const d = new Date()
+  return d.getHours() * 60 + d.getMinutes()
 }
 
 export function formatPrice(value: number): string {
