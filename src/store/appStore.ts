@@ -11,9 +11,10 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { uid } from '../lib/uid'
 import { addDays, hoursUntil, todayISO } from '../lib/date'
+import { addMinutes, findConflict, timeToMin } from '../lib/booking'
 import {
   FAMILY_GROUP,
-  generateSlots,
+  generateAvailability,
   seedAppointments,
   seedCancellationReasons,
   seedClinics,
@@ -29,7 +30,7 @@ import {
 } from '../data/seed'
 import type {
   Appointment,
-  AppointmentSlot,
+  BookingSource,
   CancellationReason,
   Clinic,
   FamilyMember,
@@ -42,6 +43,7 @@ import type {
   ProductPurchase,
   ServiceType,
   Therapist,
+  TherapistAvailability,
   User,
 } from '../data/types'
 
@@ -68,7 +70,7 @@ interface AppState {
   services: ServiceType[]
   therapists: Therapist[]
   cancellationReasons: CancellationReason[]
-  slots: AppointmentSlot[]
+  availability: TherapistAvailability[]
   appointments: Appointment[]
   packageDefs: PackageDefinition[]
   patientPackages: PatientPackage[]
@@ -112,21 +114,34 @@ interface AppState {
   updateCancellationReason: (id: string, label: string) => Result
   toggleCancellationReasonActive: (id: string) => void
 
-  // ---- slots ----
-  publishSlot: (clinicId: string, date: string, start: string) => Result
-  removeSlot: (slotId: string) => Result
+  // ---- availability (therapist working windows) ----
+  publishAvailability: (input: { therapistId: string; clinicId: string; date: string; start: string; end: string }) => Result
+  removeAvailability: (id: string) => Result
 
   // ---- appointments ----
   bookAppointment: (input: {
-    slotId: string
+    serviceTypeId: string
+    therapistId: string
+    clinicId: string
+    date: string
+    start: string
     forMemberId?: string
     forMemberName: string
-    source?: 'App' | 'Manual'
+    source?: BookingSource
     patientUserId?: string
     note?: string
   }) => Result
-  rescheduleAppointment: (appointmentId: string, newSlotId: string, by: 'patient' | 'admin') => Result
-  cancelAppointment: (appointmentId: string, by: 'patient' | 'admin') => Result
+  rescheduleAppointment: (
+    appointmentId: string,
+    target: { therapistId: string; clinicId: string; date: string; start: string },
+    by: 'patient' | 'admin',
+  ) => Result
+  cancelAppointment: (
+    appointmentId: string,
+    by: 'patient' | 'admin',
+    reasonId?: string,
+    note?: string,
+  ) => Result
   markCompleted: (appointmentId: string, patientPackageId?: string) => Result
   markNoShow: (appointmentId: string) => Result
   approveAppointment: (appointmentId: string) => void
@@ -175,7 +190,7 @@ export const useApp = create<AppState>()(
       services: seedServices,
       therapists: seedTherapists,
       cancellationReasons: seedCancellationReasons,
-      slots: mergeSeedSlots(),
+      availability: generateAvailability(),
       appointments: seedAppointments(),
       packageDefs: seedPackageDefs,
       patientPackages: seedPatientPackages(),
@@ -365,36 +380,33 @@ export const useApp = create<AppState>()(
           cancellationReasons: s.cancellationReasons.map((r) => (r.id === id ? { ...r, active: !r.active } : r)),
         })),
 
-      // ---------------- SLOTS ----------------
-      publishSlot: (clinicId, date, start) => {
-        if (date < todayISO()) return 'Can\'t create a slot on a past date.'
-        const dup = get().slots.find(
-          (sl) => sl.clinicId === clinicId && sl.date === date && sl.start === start,
+      // ---------------- AVAILABILITY (therapist working windows) ----------------
+      publishAvailability: ({ therapistId, clinicId, date, start, end }) => {
+        if (date < todayISO()) return 'Can\'t add availability on a past date.'
+        if (timeToMin(end) <= timeToMin(start)) return 'End time must be after the start time.'
+        const therapist = get().therapists.find((t) => t.id === therapistId)
+        if (!therapist) return 'Therapist not found.'
+        const overlap = get().availability.find(
+          (w) =>
+            w.therapistId === therapistId &&
+            w.clinicId === clinicId &&
+            w.date === date &&
+            timeToMin(start) < timeToMin(w.end) &&
+            timeToMin(w.start) < timeToMin(end),
         )
-        if (dup) return 'A slot at this time already exists (avoid duplicates/overlap).'
-        const end = `${String(Number(start.slice(0, 2)) + 1).padStart(2, '0')}:00`
-        const slot: AppointmentSlot = {
-          id: uid('slot'),
-          clinicId,
-          date,
-          start,
-          end,
-          status: 'available',
-        }
-        set((s) => ({ slots: [...s.slots, slot] }))
+        if (overlap) return 'This therapist already has an overlapping window at this clinic.'
+        const window: TherapistAvailability = { id: uid('av'), therapistId, clinicId, date, start, end }
+        set((s) => ({ availability: [...s.availability, window] }))
         return null
       },
 
-      removeSlot: (slotId) => {
-        const slot = get().slots.find((sl) => sl.id === slotId)
-        if (!slot) return 'Slot not found.'
-        if (slot.status === 'booked') return 'Slot is already booked — it can\'t be removed.'
-        set((s) => ({ slots: s.slots.filter((sl) => sl.id !== slotId) }))
+      removeAvailability: (id) => {
+        set((s) => ({ availability: s.availability.filter((w) => w.id !== id) }))
         return null
       },
 
       // ---------------- APPOINTMENTS ----------------
-      bookAppointment: ({ slotId, forMemberId, forMemberName, source = 'App', patientUserId, note }) => {
+      bookAppointment: ({ serviceTypeId, therapistId, clinicId, date, start, forMemberId, forMemberName, source = 'App', patientUserId, note }) => {
         const state = get()
         const userId = patientUserId ?? state.currentUserId
         if (!userId) return 'No active session.'
@@ -403,66 +415,99 @@ export const useApp = create<AppState>()(
         // BR-01: must be verified before booking (for bookings via App)
         if (source === 'App' && user.verification !== 'verified')
           return 'Your account must be verified before booking.'
-        const slot = state.slots.find((sl) => sl.id === slotId)
-        if (!slot) return 'Slot unavailable.'
-        // BR-03: prevent double booking
-        if (slot.status === 'booked') return 'That slot was just booked by someone else. Please choose another.'
-        // a past slot is not allowed
-        if (hoursUntil(slot.date, slot.start) < 0) return 'That slot has passed — please choose a valid time.'
+        const service = state.services.find((sv) => sv.id === serviceTypeId)
+        if (!service || !service.active) return 'Please choose an available service.'
+        const therapist = state.therapists.find((t) => t.id === therapistId)
+        if (!therapist || !therapist.active) return 'Please choose an available therapist.'
+        if (hoursUntil(date, start) < 0) return 'That time has passed — please choose a valid time.'
+        // BR-22: end time is derived from the service duration
+        const end = addMinutes(start, service.durationMinutes)
+        // must fall inside one of the therapist's working windows for the clinic/date
+        const inWindow = state.availability.some(
+          (w) =>
+            w.therapistId === therapistId &&
+            w.clinicId === clinicId &&
+            w.date === date &&
+            timeToMin(start) >= timeToMin(w.start) &&
+            timeToMin(end) <= timeToMin(w.end),
+        )
+        if (!inWindow) return 'The therapist isn\'t available for the full duration at that time.'
+        // BR-23/24: therapist & patient conflict checks
+        const conflict = findConflict({
+          appointments: state.appointments,
+          therapistId,
+          patientUserId: userId,
+          date,
+          start,
+          end,
+        })
+        if (conflict) return conflict
 
         const apt: Appointment = {
           id: uid('apt'),
-          slotId: slot.id,
-          clinicId: slot.clinicId,
-          date: slot.date,
-          start: slot.start,
-          end: slot.end,
+          clinicId,
+          serviceTypeId,
+          therapistId,
+          date,
+          start,
+          end,
           patientUserId: userId,
           forMemberId,
           forMemberName,
-          // App bookings need approval when the admin enabled it (BR/Q-07);
+          // App bookings need approval when the admin enabled it (Q-07);
           // admin/manual bookings are always confirmed immediately.
           status: source === 'App' && state.requireApproval ? 'PendingApproval' : 'Confirmed',
           source,
           note,
           createdAt: todayISO(),
         }
-        set((s) => ({
-          appointments: [...s.appointments, apt],
-          slots: s.slots.map((sl) => (sl.id === slot.id ? { ...sl, status: 'booked' } : sl)),
-        }))
+        set((s) => ({ appointments: [...s.appointments, apt] }))
         return null
       },
 
-      rescheduleAppointment: (appointmentId, newSlotId, by) => {
+      rescheduleAppointment: (appointmentId, target, by) => {
         const state = get()
         const apt = state.appointments.find((a) => a.id === appointmentId)
         if (!apt) return 'Appointment not found.'
         // BR-05: cutoff (patients only)
         if (by === 'patient' && hoursUntil(apt.date, apt.start) < CANCEL_CUTOFF_HOURS)
           return `Rescheduling must be more than ${CANCEL_CUTOFF_HOURS} hours before the session.`
-        const newSlot = state.slots.find((sl) => sl.id === newSlotId)
-        if (!newSlot) return 'Target slot not found.'
-        // BR-04: only to an available slot
-        if (newSlot.status !== 'available') return 'Target slot is unavailable.'
-        if (hoursUntil(newSlot.date, newSlot.start) < 0) return 'Target slot has passed.'
+        const service = state.services.find((sv) => sv.id === apt.serviceTypeId)
+        if (!service) return 'Service not found.'
+        if (hoursUntil(target.date, target.start) < 0) return 'Target time has passed.'
+        const end = addMinutes(target.start, service.durationMinutes)
+        const inWindow = state.availability.some(
+          (w) =>
+            w.therapistId === target.therapistId &&
+            w.clinicId === target.clinicId &&
+            w.date === target.date &&
+            timeToMin(target.start) >= timeToMin(w.start) &&
+            timeToMin(end) <= timeToMin(w.end),
+        )
+        if (!inWindow) return 'The therapist isn\'t available for the full duration at that time.'
+        // BR-23/24: re-check conflicts, ignoring this appointment itself
+        const conflict = findConflict({
+          appointments: state.appointments,
+          therapistId: target.therapistId,
+          patientUserId: apt.patientUserId,
+          date: target.date,
+          start: target.start,
+          end,
+          excludeAppointmentId: apt.id,
+        })
+        if (conflict) return conflict
         // note: no package deduction — balance unchanged (BR-14)
         set((s) => ({
-          slots: s.slots.map((sl) => {
-            if (sl.id === apt.slotId) return { ...sl, status: 'available' }
-            if (sl.id === newSlot.id) return { ...sl, status: 'booked' }
-            return sl
-          }),
           appointments: s.appointments.map((a) =>
             a.id === appointmentId
               ? {
                   ...a,
                   status: 'Rescheduled',
-                  slotId: newSlot.id,
-                  clinicId: newSlot.clinicId,
-                  date: newSlot.date,
-                  start: newSlot.start,
-                  end: newSlot.end,
+                  clinicId: target.clinicId,
+                  therapistId: target.therapistId,
+                  date: target.date,
+                  start: target.start,
+                  end,
                 }
               : a,
           ),
@@ -470,7 +515,7 @@ export const useApp = create<AppState>()(
         return null
       },
 
-      cancelAppointment: (appointmentId, by) => {
+      cancelAppointment: (appointmentId, by, reasonId, note) => {
         const state = get()
         const apt = state.appointments.find((a) => a.id === appointmentId)
         if (!apt) return 'Appointment not found.'
@@ -478,10 +523,15 @@ export const useApp = create<AppState>()(
           return `Cancellation must be more than ${CANCEL_CUTOFF_HOURS} hours before the session.`
         // no package deduction on cancel (BR-14)
         set((s) => ({
-          slots: s.slots.map((sl) => (sl.id === apt.slotId ? { ...sl, status: 'available' } : sl)),
           appointments: s.appointments.map((a) =>
             a.id === appointmentId
-              ? { ...a, status: by === 'admin' ? 'CancelledByAdmin' : 'CancelledByPatient' }
+              ? {
+                  ...a,
+                  status: by === 'admin' ? 'CancelledByAdmin' : 'CancelledByPatient',
+                  cancelledBy: by,
+                  cancellationReasonId: reasonId,
+                  cancellationNote: note,
+                }
               : a,
           ),
         }))
@@ -540,17 +590,12 @@ export const useApp = create<AppState>()(
           ),
         })),
 
-      rejectAppointment: (appointmentId) => {
-        const apt = get().appointments.find((a) => a.id === appointmentId)
+      rejectAppointment: (appointmentId) =>
         set((s) => ({
           appointments: s.appointments.map((a) =>
-            a.id === appointmentId ? { ...a, status: 'CancelledByAdmin' } : a,
+            a.id === appointmentId ? { ...a, status: 'CancelledByAdmin', cancelledBy: 'admin' } : a,
           ),
-          slots: apt
-            ? s.slots.map((sl) => (sl.id === apt.slotId ? { ...sl, status: 'available' } : sl))
-            : s.slots,
-        }))
-      },
+        })),
 
       // ---------------- PACKAGES ----------------
       createPackageDef: (name, sessions, validityDays) => {
@@ -696,27 +741,29 @@ export const useApp = create<AppState>()(
     {
       name: 'kuya-bong-store',
       version: 2,
-      // v2 adds service types, therapists, and cancellation reasons. Backfill them
-      // for stores persisted under v1 so existing users keep their data.
+      // v2 introduces service types, therapists, cancellation reasons, and a
+      // duration-aware availability model (replacing fixed slots). Backfill the
+      // new collections for stores persisted under v1 so existing data survives.
       migrate: (persisted, version) => {
-        const state = persisted as Partial<AppState> | undefined
-        if (!state) return persisted as AppState
+        const state = persisted as Record<string, unknown> | undefined
+        if (!state) return persisted as unknown as AppState
         if (version < 2) {
           state.services = state.services ?? seedServices
           state.therapists = state.therapists ?? seedTherapists
           state.cancellationReasons = state.cancellationReasons ?? seedCancellationReasons
+          state.availability = state.availability ?? generateAvailability()
+          delete state.slots
+          state.appointments = (Array.isArray(state.appointments) ? state.appointments : []).map((a) => {
+            const apt = a as Record<string, unknown>
+            return {
+              ...apt,
+              serviceTypeId: apt.serviceTypeId ?? 'svc-physio',
+              therapistId: apt.therapistId ?? 'th-bong',
+            }
+          })
         }
-        return state as AppState
+        return state as unknown as AppState
       },
     },
   ),
 )
-
-// --- seed helper: mark slots that already have an appointment as booked ---
-function mergeSeedSlots(): AppointmentSlot[] {
-  const slots = generateSlots()
-  const apts = seedAppointments()
-  return slots.map((sl) =>
-    apts.some((a) => a.slotId === sl.id) ? { ...sl, status: 'booked' } : sl,
-  )
-}

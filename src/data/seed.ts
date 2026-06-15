@@ -2,7 +2,6 @@
 import { addDays, addMonths, todayISO } from '../lib/date'
 import type {
   Appointment,
-  AppointmentSlot,
   CancellationReason,
   Clinic,
   FamilyMember,
@@ -13,6 +12,7 @@ import type {
   ProductPurchase,
   ServiceType,
   Therapist,
+  TherapistAvailability,
   User,
 } from './types'
 
@@ -87,31 +87,20 @@ export const seedCancellationReasons: CancellationReason[] = [
   { id: 'cr-other', label: 'Other', active: true },
 ]
 
-const SLOT_TIMES = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00']
-
-/** Generate 60-minute slots for the next 14 days, both clinics. */
-export function generateSlots(): AppointmentSlot[] {
-  const slots: AppointmentSlot[] = []
+/**
+ * Generate therapist working windows for the next 14 days.
+ * Kuya Bong covers both clinics; his brother helps at Clinic A in the afternoon.
+ */
+export function generateAvailability(): TherapistAvailability[] {
+  const out: TherapistAvailability[] = []
   const base = todayISO()
   for (let d = 0; d < 14; d++) {
     const date = addDays(base, d)
-    for (const clinicId of ['clinic-a', 'clinic-b']) {
-      // clinic B opens at different hours to feel distinct
-      const times = clinicId === 'clinic-a' ? SLOT_TIMES : SLOT_TIMES.slice(2)
-      for (const start of times) {
-        const end = `${String(Number(start.slice(0, 2)) + 1).padStart(2, '0')}:00`
-        slots.push({
-          id: `slot-${clinicId}-${date}-${start}`,
-          clinicId,
-          date,
-          start,
-          end,
-          status: 'available',
-        })
-      }
-    }
+    out.push({ id: `av-bong-a-${date}`, therapistId: 'th-bong', clinicId: 'clinic-a', date, start: '09:00', end: '17:00' })
+    out.push({ id: `av-bong-b-${date}`, therapistId: 'th-bong', clinicId: 'clinic-b', date, start: '11:00', end: '17:00' })
+    out.push({ id: `av-bro-a-${date}`, therapistId: 'th-brother', clinicId: 'clinic-a', date, start: '13:00', end: '17:00' })
   }
-  return slots
+  return out
 }
 
 export function seedAppointments(): Appointment[] {
@@ -119,11 +108,12 @@ export function seedAppointments(): Appointment[] {
   return [
     {
       id: 'apt-1',
-      slotId: `slot-clinic-a-${today}-10:00`,
       clinicId: 'clinic-a',
+      serviceTypeId: 'svc-physio',
+      therapistId: 'th-bong',
       date: today,
       start: '10:00',
-      end: '11:00',
+      end: '13:00', // 3-hour Physiotherapy & Massage
       patientUserId: 'u-pat-1',
       forMemberName: 'Maria Santos',
       status: 'Confirmed',
@@ -132,11 +122,12 @@ export function seedAppointments(): Appointment[] {
     },
     {
       id: 'apt-2',
-      slotId: `slot-clinic-b-${addDays(today, 3)}-13:00`,
       clinicId: 'clinic-b',
+      serviceTypeId: 'svc-grounding',
+      therapistId: 'th-bong',
       date: addDays(today, 3),
       start: '13:00',
-      end: '14:00',
+      end: '15:00', // 2-hour Grounding Machine Therapy
       patientUserId: 'u-pat-1',
       forMemberName: 'Jose Santos',
       status: 'Confirmed',
