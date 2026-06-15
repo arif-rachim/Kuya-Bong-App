@@ -22,6 +22,7 @@ const mobileTabs: NavItem[] = [
   { to: '/admin/appointments', label: 'Visits', icon: 'event' },
   { to: '/admin/patients', label: 'Patients', icon: 'group' },
   { to: '/admin/products', label: 'Products', icon: 'medication' },
+  { to: '/admin/settings', label: 'Settings', icon: 'settings' },
 ]
 
 export function AdminLayout() {
