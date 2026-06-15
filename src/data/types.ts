@@ -49,6 +49,33 @@ export interface Clinic {
   active: boolean
 }
 
+/**
+ * A bookable service offered by the clinic (blueprint Section 25.1).
+ * Each appointment is linked to one service, and the service duration drives
+ * the appointment end time and the available booking start times.
+ */
+export interface ServiceType {
+  id: string
+  name: string
+  durationMinutes: number
+  active: boolean
+  notes?: string
+}
+
+/** A therapist who can be assigned to appointments (blueprint Section 25.3). */
+export interface Therapist {
+  id: string
+  name: string
+  active: boolean
+}
+
+/** A reason a patient or admin can pick when cancelling (blueprint Section 25.5). */
+export interface CancellationReason {
+  id: string
+  label: string
+  active: boolean
+}
+
 export type SlotStatus = 'available' | 'booked'
 
 export interface AppointmentSlot {

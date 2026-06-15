@@ -3,6 +3,7 @@ import { addDays, addMonths, todayISO } from '../lib/date'
 import type {
   Appointment,
   AppointmentSlot,
+  CancellationReason,
   Clinic,
   FamilyMember,
   PackageDefinition,
@@ -10,6 +11,8 @@ import type {
   PatientProfile,
   Product,
   ProductPurchase,
+  ServiceType,
+  Therapist,
   User,
 } from './types'
 
@@ -63,6 +66,25 @@ export const seedFamily: FamilyMember[] = [
 export const seedClinics: Clinic[] = [
   { id: 'clinic-a', name: 'Clinic A', address: 'Jumeirah Beach Rd 12, Dubai', active: true },
   { id: 'clinic-b', name: 'Clinic B', address: 'Al Falah St 88, Abu Dhabi', active: true },
+]
+
+export const seedServices: ServiceType[] = [
+  { id: 'svc-physio', name: 'Physiotherapy & Massage', durationMinutes: 180, active: true },
+  { id: 'svc-grounding', name: 'Grounding Machine Therapy', durationMinutes: 120, active: true },
+]
+
+export const seedTherapists: Therapist[] = [
+  { id: 'th-bong', name: 'Kuya Bong', active: true },
+  { id: 'th-brother', name: 'Kuya Bong\'s Brother', active: true },
+]
+
+export const seedCancellationReasons: CancellationReason[] = [
+  { id: 'cr-unavailable', label: 'Patient is not available', active: true },
+  { id: 'cr-sick', label: 'Patient is sick', active: true },
+  { id: 'cr-emergency', label: 'Emergency', active: true },
+  { id: 'cr-wrong-clinic', label: 'Booked wrong clinic', active: true },
+  { id: 'cr-wrong-time', label: 'Booked wrong date or time', active: true },
+  { id: 'cr-other', label: 'Other', active: true },
 ]
 
 const SLOT_TIMES = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00']

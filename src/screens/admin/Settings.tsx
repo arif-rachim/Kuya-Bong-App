@@ -63,6 +63,15 @@ export function AdminSettings() {
           </div>
         </Card>
 
+        <Card onClick={() => navigate('/admin/services')}>
+          <Item icon="medical_services" label="Service Types" desc="Services & durations" />
+        </Card>
+        <Card onClick={() => navigate('/admin/therapists')}>
+          <Item icon="person" label="Therapists" desc="Who delivers treatments" />
+        </Card>
+        <Card onClick={() => navigate('/admin/cancellation-reasons')}>
+          <Item icon="cancel" label="Cancellation Reasons" desc="Reasons for cancelling" />
+        </Card>
         <Card onClick={() => navigate('/admin/clinic-settings')}>
           <Item icon="apartment" label="Clinic Settings" desc="Edit Clinic A & B names" />
         </Card>

@@ -15,6 +15,7 @@ import {
   FAMILY_GROUP,
   generateSlots,
   seedAppointments,
+  seedCancellationReasons,
   seedClinics,
   seedFamily,
   seedPackageDefs,
@@ -22,11 +23,14 @@ import {
   seedProducts,
   seedProfiles,
   seedPurchases,
+  seedServices,
+  seedTherapists,
   seedUsers,
 } from '../data/seed'
 import type {
   Appointment,
   AppointmentSlot,
+  CancellationReason,
   Clinic,
   FamilyMember,
   PackageDefinition,
@@ -36,6 +40,8 @@ import type {
   Product,
   ProductCategory,
   ProductPurchase,
+  ServiceType,
+  Therapist,
   User,
 } from '../data/types'
 
@@ -59,6 +65,9 @@ interface AppState {
   profiles: PatientProfile[]
   family: FamilyMember[]
   clinics: Clinic[]
+  services: ServiceType[]
+  therapists: Therapist[]
+  cancellationReasons: CancellationReason[]
   slots: AppointmentSlot[]
   appointments: Appointment[]
   packageDefs: PackageDefinition[]
@@ -87,6 +96,21 @@ interface AppState {
 
   // ---- clinics ----
   updateClinicName: (id: string, name: string) => Result
+
+  // ---- service types (Section 25.1) ----
+  createService: (input: { name: string; durationMinutes: number; notes?: string }) => Result
+  updateService: (id: string, patch: Partial<Pick<ServiceType, 'name' | 'durationMinutes' | 'notes'>>) => Result
+  toggleServiceActive: (id: string) => void
+
+  // ---- therapists (Section 25.3) ----
+  createTherapist: (name: string) => Result
+  updateTherapist: (id: string, name: string) => Result
+  toggleTherapistActive: (id: string) => void
+
+  // ---- cancellation reasons (Section 25.5) ----
+  createCancellationReason: (label: string) => Result
+  updateCancellationReason: (id: string, label: string) => Result
+  toggleCancellationReasonActive: (id: string) => void
 
   // ---- slots ----
   publishSlot: (clinicId: string, date: string, start: string) => Result
@@ -148,6 +172,9 @@ export const useApp = create<AppState>()(
       profiles: seedProfiles,
       family: seedFamily,
       clinics: seedClinics,
+      services: seedServices,
+      therapists: seedTherapists,
+      cancellationReasons: seedCancellationReasons,
       slots: mergeSeedSlots(),
       appointments: seedAppointments(),
       packageDefs: seedPackageDefs,
@@ -268,6 +295,75 @@ export const useApp = create<AppState>()(
         set((s) => ({ clinics: s.clinics.map((c) => (c.id === id ? { ...c, name: name.trim() } : c)) }))
         return null
       },
+
+      // ---------------- SERVICE TYPES (BR-20/21) ----------------
+      createService: ({ name, durationMinutes, notes }) => {
+        if (!name.trim()) return 'Service name can\'t be empty.'
+        if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) return 'Duration must be greater than 0 minutes.'
+        const service: ServiceType = { id: uid('svc'), name: name.trim(), durationMinutes, active: true, notes }
+        set((s) => ({ services: [...s.services, service] }))
+        return null
+      },
+
+      updateService: (id, patch) => {
+        if (patch.name !== undefined && !patch.name.trim()) return 'Service name can\'t be empty.'
+        if (patch.durationMinutes !== undefined && (!Number.isFinite(patch.durationMinutes) || patch.durationMinutes <= 0))
+          return 'Duration must be greater than 0 minutes.'
+        set((s) => ({
+          services: s.services.map((sv) =>
+            sv.id === id
+              ? {
+                  ...sv,
+                  name: patch.name?.trim() ?? sv.name,
+                  durationMinutes: patch.durationMinutes ?? sv.durationMinutes,
+                  notes: patch.notes ?? sv.notes,
+                }
+              : sv,
+          ),
+        }))
+        return null
+      },
+
+      toggleServiceActive: (id) =>
+        set((s) => ({ services: s.services.map((sv) => (sv.id === id ? { ...sv, active: !sv.active } : sv)) })),
+
+      // ---------------- THERAPISTS ----------------
+      createTherapist: (name) => {
+        if (!name.trim()) return 'Therapist name can\'t be empty.'
+        const therapist: Therapist = { id: uid('th'), name: name.trim(), active: true }
+        set((s) => ({ therapists: [...s.therapists, therapist] }))
+        return null
+      },
+
+      updateTherapist: (id, name) => {
+        if (!name.trim()) return 'Therapist name can\'t be empty.'
+        set((s) => ({ therapists: s.therapists.map((t) => (t.id === id ? { ...t, name: name.trim() } : t)) }))
+        return null
+      },
+
+      toggleTherapistActive: (id) =>
+        set((s) => ({ therapists: s.therapists.map((t) => (t.id === id ? { ...t, active: !t.active } : t)) })),
+
+      // ---------------- CANCELLATION REASONS ----------------
+      createCancellationReason: (label) => {
+        if (!label.trim()) return 'Cancellation reason can\'t be empty.'
+        const reason: CancellationReason = { id: uid('cr'), label: label.trim(), active: true }
+        set((s) => ({ cancellationReasons: [...s.cancellationReasons, reason] }))
+        return null
+      },
+
+      updateCancellationReason: (id, label) => {
+        if (!label.trim()) return 'Cancellation reason can\'t be empty.'
+        set((s) => ({
+          cancellationReasons: s.cancellationReasons.map((r) => (r.id === id ? { ...r, label: label.trim() } : r)),
+        }))
+        return null
+      },
+
+      toggleCancellationReasonActive: (id) =>
+        set((s) => ({
+          cancellationReasons: s.cancellationReasons.map((r) => (r.id === id ? { ...r, active: !r.active } : r)),
+        })),
 
       // ---------------- SLOTS ----------------
       publishSlot: (clinicId, date, start) => {
@@ -599,7 +695,19 @@ export const useApp = create<AppState>()(
     }),
     {
       name: 'kuya-bong-store',
-      version: 1,
+      version: 2,
+      // v2 adds service types, therapists, and cancellation reasons. Backfill them
+      // for stores persisted under v1 so existing users keep their data.
+      migrate: (persisted, version) => {
+        const state = persisted as Partial<AppState> | undefined
+        if (!state) return persisted as AppState
+        if (version < 2) {
+          state.services = state.services ?? seedServices
+          state.therapists = state.therapists ?? seedTherapists
+          state.cancellationReasons = state.cancellationReasons ?? seedCancellationReasons
+        }
+        return state as AppState
+      },
     },
   ),
 )
