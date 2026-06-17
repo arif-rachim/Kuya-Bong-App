@@ -740,11 +740,12 @@ export const useApp = create<AppState>()(
     }),
     {
       name: 'kuya-bong-store',
-      version: 3,
+      version: 4,
       // v2 introduces service types, therapists, cancellation reasons, and a
       // duration-aware availability model (replacing fixed slots). v3 adds a
-      // next-week demo appointment so reschedule/cancel can be demoed. Backfill
-      // for older persisted stores so existing data survives.
+      // next-week demo appointment. v4 adds a second demo patient (Ahmed) with
+      // his own next-week appointment. Backfill for older persisted stores so
+      // existing data survives.
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown> | undefined
         if (!state) return persisted as unknown as AppState
@@ -767,6 +768,23 @@ export const useApp = create<AppState>()(
           const appts = Array.isArray(state.appointments) ? state.appointments : []
           if (!appts.some((a) => (a as Record<string, unknown>).id === 'apt-3')) {
             const demo = seedAppointments().find((a) => a.id === 'apt-3')
+            if (demo) state.appointments = [...appts, demo]
+          }
+        }
+        if (version < 4) {
+          const users = Array.isArray(state.users) ? state.users : []
+          if (!users.some((u) => (u as Record<string, unknown>).id === 'u-pat-2')) {
+            const u = seedUsers.find((u) => u.id === 'u-pat-2')
+            if (u) state.users = [...users, u]
+          }
+          const profiles = Array.isArray(state.profiles) ? state.profiles : []
+          if (!profiles.some((p) => (p as Record<string, unknown>).id === 'p-2')) {
+            const p = seedProfiles.find((p) => p.id === 'p-2')
+            if (p) state.profiles = [...profiles, p]
+          }
+          const appts = Array.isArray(state.appointments) ? state.appointments : []
+          if (!appts.some((a) => (a as Record<string, unknown>).id === 'apt-4')) {
+            const demo = seedAppointments().find((a) => a.id === 'apt-4')
             if (demo) state.appointments = [...appts, demo]
           }
         }
