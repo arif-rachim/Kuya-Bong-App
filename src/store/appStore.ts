@@ -740,10 +740,11 @@ export const useApp = create<AppState>()(
     }),
     {
       name: 'kuya-bong-store',
-      version: 2,
+      version: 3,
       // v2 introduces service types, therapists, cancellation reasons, and a
-      // duration-aware availability model (replacing fixed slots). Backfill the
-      // new collections for stores persisted under v1 so existing data survives.
+      // duration-aware availability model (replacing fixed slots). v3 adds a
+      // next-week demo appointment so reschedule/cancel can be demoed. Backfill
+      // for older persisted stores so existing data survives.
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown> | undefined
         if (!state) return persisted as unknown as AppState
@@ -761,6 +762,13 @@ export const useApp = create<AppState>()(
               therapistId: apt.therapistId ?? 'th-bong',
             }
           })
+        }
+        if (version < 3) {
+          const appts = Array.isArray(state.appointments) ? state.appointments : []
+          if (!appts.some((a) => (a as Record<string, unknown>).id === 'apt-3')) {
+            const demo = seedAppointments().find((a) => a.id === 'apt-3')
+            if (demo) state.appointments = [...appts, demo]
+          }
         }
         return state as unknown as AppState
       },
