@@ -37,7 +37,18 @@ export const seedUsers: User[] = [
     password: 'patient123',
     verification: 'verified',
   },
+  {
+    id: 'u-pat-2',
+    role: 'patient',
+    name: 'Ahmed Rahman',
+    mobile: '+971544112233',
+    email: 'ahmed@example.com',
+    password: 'patient123',
+    verification: 'verified',
+  },
 ]
+
+export const FAMILY_GROUP_2 = 'fam-2'
 
 export const seedProfiles: PatientProfile[] = [
   {
@@ -48,6 +59,15 @@ export const seedProfiles: PatientProfile[] = [
     address: 'Dubai Marina, Dubai',
     emergencyContact: '+971552345678',
     familyGroupId: FAMILY_GROUP,
+  },
+  {
+    id: 'p-2',
+    userId: 'u-pat-2',
+    dateOfBirth: '1980-09-21',
+    gender: 'male',
+    address: 'Al Barsha, Dubai',
+    emergencyContact: '+971557788990',
+    familyGroupId: FAMILY_GROUP_2,
   },
 ]
 
@@ -146,6 +166,22 @@ export function seedAppointments(): Appointment[] {
       end: '16:00', // 2-hour Grounding Machine Therapy
       patientUserId: 'u-pat-1',
       forMemberName: 'Maria Santos',
+      status: 'Confirmed',
+      source: 'App',
+      createdAt: today,
+    },
+    {
+      // A second patient (Ahmed) with a next-week booking, so the cancel /
+      // reschedule demo isn't limited to a single patient.
+      id: 'apt-4',
+      clinicId: 'clinic-a',
+      serviceTypeId: 'svc-physio',
+      therapistId: 'th-bong',
+      date: addDays(today, 8),
+      start: '09:00',
+      end: '12:00', // 3-hour Physiotherapy & Massage
+      patientUserId: 'u-pat-2',
+      forMemberName: 'Ahmed Rahman',
       status: 'Confirmed',
       source: 'App',
       createdAt: today,
