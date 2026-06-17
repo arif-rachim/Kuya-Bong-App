@@ -134,6 +134,22 @@ export function seedAppointments(): Appointment[] {
       source: 'Manual',
       createdAt: today,
     },
+    {
+      // Next-week appointment so reschedule/cancel (with reason picker) can be
+      // demoed — it's well outside the 24h cutoff, so the buttons stay enabled.
+      id: 'apt-3',
+      clinicId: 'clinic-a',
+      serviceTypeId: 'svc-grounding',
+      therapistId: 'th-bong',
+      date: addDays(today, 7),
+      start: '14:00',
+      end: '16:00', // 2-hour Grounding Machine Therapy
+      patientUserId: 'u-pat-1',
+      forMemberName: 'Maria Santos',
+      status: 'Confirmed',
+      source: 'App',
+      createdAt: today,
+    },
   ]
 }
 
