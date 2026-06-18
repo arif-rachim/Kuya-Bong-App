@@ -20,7 +20,7 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SHOTS = os.path.join(ROOT, "docs/assets/shots")
 GEN = os.path.join(ROOT, "docs/assets/gen")
-OUT = os.path.join(ROOT, "docs/Kuya_Bong_Prototype_Update_3Slide.pptx")
+OUT = os.path.join(ROOT, "docs/Kuya_Bong_Prototype_Update_3Slide_v2.pptx")
 
 GREEN = RGBColor(0x1E, 0x9E, 0x3A)
 GREEN_DK = RGBColor(0x12, 0x5E, 0x26)
@@ -293,39 +293,39 @@ def slide3():
           ("Store, hosting, domain, SMS & email are external costs that vary by provider, country & usage.",
            11.5, False, AMBER_TX, FONT)]], anchor=MSO_ANCHOR.MIDDLE)
 
-    opt1 = {
-        "tag": "OPTION 1", "name": "Basic Launch", "color": GREEN,
-        "sub": "Lowest cost to get live — you run the day-to-day.",
+    kickoff = {
+        "tag": "STARTING COST", "name": "Kick-off Cost", "color": GREEN,
+        "sub": "One-time first-year setup — free / starter tiers where possible.",
         "items": [
-            ("Google Play developer account", "publish on Android"),
-            ("Apple Developer account", "publish on iOS"),
-            ("Database / backend hosting", "starter / free tier to begin"),
-            ("Domain (if needed)", "app web address"),
+            ("Apple Store registration", "USD 100"),
+            ("Play Store / Google registration", "USD 100"),
+            ("Database (free / starter tier)", "USD 0"),
+            ("Domain name", "USD 15"),
         ],
-        "now": "≈ $140*", "init": "≈ $140*", "yearly": "≈ $115* / year",
-        "note": "Best if Kuya wants the lowest starting cost.",
+        "total_label": "Total Starting Cost", "total_val": "USD 215  (AED 790)",
+        "note": None,
     }
-    opt2 = {
-        "tag": "OPTION 2", "name": "Managed Launch", "color": TEAL,
-        "sub": "Everything in Basic + we set up, publish & support.",
+    maint = {
+        "tag": "ANNUALLY", "name": "Maintenance Cost", "color": TEAL,
+        "sub": "Recurring yearly cost from next year onward.",
         "items": [
-            ("Everything in Basic Launch", "accounts · hosting · domain"),
-            ("Setup & publishing assistance", "store submission & config"),
-            ("Monitoring & basic support", "we keep it running"),
-            ("Minor updates package", "small fixes after feedback"),
+            ("Domain name renewal", "USD 15"),
+            ("Apple developer account (yearly)", "USD 100"),
+            ("Google Play (one-time — no yearly fee)", "USD 0"),
+            ("Database (within free / starter tier)", "USD 0"),
         ],
-        "now": "≈ $140* + setup*", "init": "≈ $540*", "yearly": "≈ $715* / year",
-        "note": "Best if Kuya wants us to manage setup, publishing & early support.",
+        "total_label": "Total Annual Maintenance", "total_val": "USD 115  (AED 422)",
+        "note": "Database may no longer be free if capacity grows significantly — considered unlikely at this stage.",
     }
-    cw = Inches(6.0); ch = Inches(4.45)
-    _opt_card(s, Inches(0.6), Inches(2.4), cw, ch, opt1)
-    _opt_card(s, Inches(6.73), Inches(2.4), cw, ch, opt2)
-    txt(s, Inches(0.6), Inches(7.02), Inches(12), Inches(0.4),
-        [P("* Estimate — to be confirmed. Managed-service prices are set by the sales team. Payment processing (≈2.9% + $0.30) applies only when payments are taken; not part of the MVP.",
+    cw = Inches(6.0); ch = Inches(4.6)
+    _cost_card(s, Inches(0.6), Inches(2.35), cw, ch, kickoff)
+    _cost_card(s, Inches(6.73), Inches(2.35), cw, ch, maint)
+    txt(s, Inches(0.6), Inches(7.08), Inches(12), Inches(0.4),
+        [P("* Estimates — to be confirmed. USD→AED at 1 USD ≈ 3.67 AED. Store, hosting & domain are external costs that vary by provider, country & account type.",
            9, False, SLATE)])
 
 
-def _opt_card(s, x, y, w, h, o):
+def _cost_card(s, x, y, w, h, o):
     c = rect(s, x, y, w, h, WHITE, line=RGBColor(0xE0, 0xEA, 0xE3), shape=MSO_SHAPE.ROUNDED_RECTANGLE)
     soft_shadow(c, 16000)
     # header bar
@@ -335,26 +335,28 @@ def _opt_card(s, x, y, w, h, o):
          [(o["name"], 21, True, WHITE, FONT)]], space_after=1)
     txt(s, x + Inches(0.35), y + Inches(1.02), w - Inches(0.7), Inches(0.45),
         [P(o["sub"], 11, False, SLATE)], line_spacing=1.0)
-    # items
+    # items: label on the left, amount right-aligned
     yy = y + Inches(1.55)
-    for it, sub in o["items"]:
-        rect(s, x + Inches(0.38), yy + Inches(0.07), Inches(0.13), Inches(0.13), o["color"],
+    for it, amount in o["items"]:
+        rect(s, x + Inches(0.38), yy + Inches(0.06), Inches(0.13), Inches(0.13), o["color"],
              shape=MSO_SHAPE.OVAL)
-        txt(s, x + Inches(0.66), yy - Inches(0.02), w - Inches(1.0), Inches(0.5),
-            [[(it + "  ", 11.5, True, INK, FONT), ("— " + sub, 10, False, SLATE, FONT)]],
-            line_spacing=1.0)
+        txt(s, x + Inches(0.66), yy - Inches(0.02), w - Inches(2.1), Inches(0.4),
+            [P(it, 11.5, True, INK)], line_spacing=1.0, anchor=MSO_ANCHOR.MIDDLE)
+        txt(s, x + w - Inches(1.55), yy - Inches(0.02), Inches(1.25), Inches(0.4),
+            [P(amount, 11.5, True, SLATE)], align=PP_ALIGN.RIGHT, anchor=MSO_ANCHOR.MIDDLE)
         yy += Inches(0.46)
-    # price block
-    pb_y = y + h - Inches(1.05)
+    # total band (same position on both cards)
+    pb_y = y + h - Inches(1.15)
     rect(s, x + Inches(0.3), pb_y, w - Inches(0.6), Inches(0.62), GREEN_SOFT,
          shape=MSO_SHAPE.ROUNDED_RECTANGLE)
-    tw = (w - Inches(0.6)) / 3
-    for i, (lab, val) in enumerate([("Pay now", o["now"]), ("Total initial", o["init"]), ("Yearly onward", o["yearly"])]):
-        txt(s, x + Inches(0.3) + tw * i, pb_y + Inches(0.07), tw, Inches(0.5),
-            [P(lab, 9, False, SLATE), [(val, 12.5, True, GREEN_DK, FONT)]],
-            align=PP_ALIGN.CENTER, space_after=1)
-    txt(s, x + Inches(0.35), y + h - Inches(0.38), w - Inches(0.7), Inches(0.32),
-        [[("➜  ", 10, True, o["color"], FONT), (o["note"], 10, True, o["color"], FONT)]])
+    txt(s, x + Inches(0.5), pb_y, Inches(2.7), Inches(0.62),
+        [P(o["total_label"], 12, True, INK)], anchor=MSO_ANCHOR.MIDDLE, line_spacing=1.0)
+    txt(s, x + w - Inches(3.4), pb_y, Inches(2.9), Inches(0.62),
+        [P(o["total_val"], 15, True, GREEN_DK)], align=PP_ALIGN.RIGHT, anchor=MSO_ANCHOR.MIDDLE)
+    if o["note"]:
+        txt(s, x + Inches(0.4), pb_y + Inches(0.7), w - Inches(0.8), Inches(0.5),
+            [[("Note:  ", 9.5, True, AMBER_TX, FONT), (o["note"], 9.5, False, SLATE, FONT)]],
+            line_spacing=1.02)
 
 
 def footer(s, label):
