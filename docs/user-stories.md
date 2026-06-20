@@ -1,12 +1,17 @@
 # Kuya Bong App — User Stories (MVP)
 
-Based on the *Product Concept and Solution Blueprint v0.3* (tracking KBA-BP-20260615-001).
+Based on the *Product Concept and Solution Blueprint v0.3* (tracking KBA-BP-20260615-001)
+and *Blueprint Update v0.4* (tracking KBA-BP-20260620-001).
 Organized simply per feature, with a **Positive Flow** (success) and **Negative Flow** (failure / edge case).
-Two roles: **Patient** and **Admin (Kuya Bong)**.
+Roles: **Patient**, **Admin (Kuya Bong / Master Admin)**, and **Sub-Admin**.
 
-> **v0.3 update:** Sections 14–18 cover the additional confirmed requirements from blueprint Section 25 —
-> service types, therapists, service-duration-driven slots, conflict prevention, and cancellation reasons.
-> Sections 4, 5, and 7b were also updated to reflect service selection and required cancellation reasons.
+> **v0.3 update:** Sections 14–18 cover blueprint Section 25 — service types, therapists,
+> service-duration-driven slots, conflict prevention, and cancellation reasons. Sections 4, 5,
+> and 7b were also updated for service selection and required cancellation reasons.
+>
+> **v0.4 update:** Sections 20–23 cover the latest customer-meeting requirements — clinic
+> lifecycle management, announcements & push notifications, master/sub-admin roles, and
+> financial ad-hoc reports. Items still pending confirmation are listed in the Notes.
 
 ---
 
@@ -258,8 +263,67 @@ Two roles: **Patient** and **Admin (Kuya Bong)**.
 
 ---
 
-## 19. Notes
+## 20. Admin — Clinic Management (v0.4)
+
+### Positive
+- As an admin, I want to add a new clinic so that the business can grow to more locations.
+- As an admin, I want to edit a clinic's details (name, address) so that information stays accurate.
+- As an admin, I want to deactivate a clinic so that it no longer appears for new bookings while its history is preserved.
+- As an admin, I want to delete a clinic only when it has no linked records (appointments, bookings, sales, packages) so that empty/mistaken entries can be cleaned up.
+
+### Negative
+- As an admin, I want deletion blocked when a clinic has any historical transactions, with deactivation offered instead, so that historical records are protected.
+- As an admin, I want a deactivated clinic hidden from new booking/availability while existing appointments there stay intact.
+- As an admin, I want to be prevented from saving a clinic with an empty name so that clinic data stays valid.
+
+---
+
+## 21. Announcements & Push Notifications (v0.4)
+
+### Positive
+- As an admin, I want to create an announcement (title + message) and push it to registered customers so that I can share promos, clinic notices, and updates.
+- As an admin, I want to set an expiry date so that the announcement hides automatically once it's no longer relevant.
+- As an admin, I want to manually unpublish/pull an announcement before its expiry so that I can retract it early.
+- As an admin, I want announcement history kept for reference so that I can see what was sent.
+- As a patient, I want to receive a notification and see the announcement inside the app so that I stay informed.
+
+### Negative
+- As an admin, I want to be prevented from publishing an announcement with an empty title/message or an expiry date in the past so that only valid announcements go out.
+- As a patient, I want expired or unpublished announcements to no longer appear so that I only see current notices.
+
+---
+
+## 22. Master Admin & Sub-Admin Roles (v0.4)
+
+### Positive
+- As the Master Admin (Kuya), I want to appoint a registered user as a Sub-Admin so that they can help with daily operations.
+- As the Master Admin, I want to remove a Sub-Admin's access so that I stay in control of who can administer the system.
+- As a Sub-Admin, I want to help with daily tasks (bookings, completion, product purchases, announcements per policy) so that operations run smoothly.
+
+### Negative
+- As a Sub-Admin, I want to be blocked from adding/removing other Sub-Admins and from changing the Master Admin's access so that only Kuya controls admin access.
+- As a Sub-Admin, I want core master data (clinics, therapists, services, cancellation reasons) to be read-only/hidden so that only the Master Admin manages it.
+- As the Master Admin, I want my own Master Admin access to be impossible to remove so that I never lose control of the system.
+
+---
+
+## 23. Financial Ad-Hoc Reports (v0.4)
+
+### Positive
+- As an admin, I want to generate a financial report filtered by Category (Services or Products), From Date (defaults to the 1st of the month), and To Date (defaults to today) so that I can review income for a period.
+- As an admin, I want a Service filter (default All) when Category = Services, and a Product filter (default All) when Category = Products, so that I can narrow the report.
+- As an admin, I want the Services report to list completed therapy sessions in range, and the Products report to list sold products in range, with the related amount/income when recorded.
+- As an admin, I want to share the generated report as a PDF via my phone's standard share function so that I can send it easily.
+
+### Negative
+- As an admin, I want to be blocked (with a clear message) when From Date is later than To Date so that the range is always valid.
+- As an admin, I want a clear "no records in range" message when nothing matches so that an empty report isn't confusing.
+
+---
+
+## 24. Notes
 - Appointment statuses: Available, Pending Approval, Confirmed, Rescheduled, Cancelled (by Patient/Admin), Completed, No-Show.
-- **v0.3 appointment data now includes:** service type, therapist, calculated end time, cancellation reason, cancelled-by (patient/admin), and optional cancellation note. Booking source expands to App / phone / manual admin / other channel.
-- **Confirmed in v0.3 (Section 25), previously open:** service types are managed, each service has a duration that drives slot logic, therapists are managed and assigned, and cancellation reasons are required and managed.
-- Open items still to confirm with client (Section 20): auto vs manual approval, cancellation cutoff, verification method (OTP/email/both), multiple active packages, package start date, family approval rules.
+- **v0.3 appointment data includes:** service type, therapist, calculated end time, cancellation reason, cancelled-by (patient/admin), and optional cancellation note. Booking source expands to App / phone / manual admin / other channel.
+- **Confirmed in v0.3 (Section 25):** service types (with durations driving slot logic), therapists (managed + assigned), and required/managed cancellation reasons.
+- **v0.4 open questions to confirm with client:** (1) MVP vs Phase 2 for these items; (2) can Sub-Admins view financial reports; (3) can Sub-Admins publish announcements or only Kuya; (4) announcements to all customers or selected; (5) how service income is recorded (manual / price list / package records) — **note: services currently have no price field, only products do**; (6) report sharing PDF-only or also Excel/CSV later.
+- Open items still pending from earlier: auto vs manual approval, cancellation cutoff, verification method (OTP/email/both), multiple active packages, package start date, family approval rules, and clinic/resource-level conflict checking.
