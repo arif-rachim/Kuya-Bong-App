@@ -84,10 +84,10 @@ export function AdminPatientProfile() {
         </Card>
 
         <div className="grid grid-cols-2 gap-sm">
-          <Button size="sm" variant="secondary" className="whitespace-nowrap" onClick={() => { setModal('pkg'); setError(null) }}>
+          <Button size="sm" variant="secondary" className="text-center" onClick={() => { setModal('pkg'); setError(null) }}>
             <Icon name="inventory_2" size={18} /> Assign Package
           </Button>
-          <Button size="sm" variant="secondary" className="whitespace-nowrap" onClick={() => { setModal('buy'); setError(null) }}>
+          <Button size="sm" variant="secondary" className="text-center" onClick={() => { setModal('buy'); setError(null) }}>
             <Icon name="shopping_bag" size={18} /> Record Purchase
           </Button>
         </div>

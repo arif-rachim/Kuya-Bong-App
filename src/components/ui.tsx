@@ -92,7 +92,7 @@ export function Field({
   children: ReactNode
 }) {
   return (
-    <label className="block">
+    <label className="block min-w-0">
       {label && <span className="mb-base block font-label-lg text-label-lg text-on-surface">{label}</span>}
       {children}
       {hint && !error && <span className="mt-xs block text-label-md text-on-surface-variant">{hint}</span>}
@@ -102,7 +102,7 @@ export function Field({
 }
 
 const inputBase =
-  'w-full rounded-lg border-2 border-outline-variant bg-surface-container-lowest px-md py-sm text-body-md text-on-surface outline-none placeholder:text-on-surface-variant/70 focus:border-primary transition-colors'
+  'w-full min-w-0 rounded-lg border-2 border-outline-variant bg-surface-container-lowest px-md py-sm text-body-md text-on-surface outline-none placeholder:text-on-surface-variant/70 focus:border-primary transition-colors'
 
 export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={cn(inputBase, props.className)} />
