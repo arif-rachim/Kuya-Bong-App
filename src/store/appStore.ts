@@ -15,6 +15,7 @@ import { addMinutes, findConflict, timeToMin } from '../lib/booking'
 import {
   FAMILY_GROUP,
   generateAvailability,
+  seedAnnouncements,
   seedAppointments,
   seedCancellationReasons,
   seedClinics,
@@ -29,6 +30,7 @@ import {
   seedUsers,
 } from '../data/seed'
 import type {
+  Announcement,
   Appointment,
   BookingSource,
   CancellationReason,
@@ -77,6 +79,7 @@ interface AppState {
   packageUsage: PackageUsage[]
   products: Product[]
   purchases: ProductPurchase[]
+  announcements: Announcement[]
 
   // ---- session ----
   currentUserId: string | null
@@ -96,8 +99,16 @@ interface AppState {
   changePassword: (current: string, next: string) => Result
   resetPassword: (email: string, code: string, next: string) => Result
 
-  // ---- clinics ----
+  // ---- admin roles (v0.4: master / sub-admin) ----
+  appointSubAdmin: (userId: string) => Result
+  removeSubAdmin: (userId: string) => Result
+
+  // ---- clinics (v0.4 lifecycle) ----
   updateClinicName: (id: string, name: string) => Result
+  createClinic: (input: { name: string; address: string }) => Result
+  updateClinic: (id: string, patch: { name?: string; address?: string }) => Result
+  toggleClinicActive: (id: string) => void
+  deleteClinic: (id: string) => Result
 
   // ---- service types (Section 25.1) ----
   createService: (input: { name: string; durationMinutes: number; notes?: string }) => Result
@@ -170,6 +181,11 @@ interface AppState {
     notes?: string
   }) => Result
   setFollowUpStatus: (purchaseId: string, status: ProductPurchase['followUpStatus']) => void
+
+  // ---- announcements (v0.4) ----
+  createAnnouncement: (input: { title: string; message: string; expiryDate: string }) => Result
+  unpublishAnnouncement: (id: string) => void
+  deleteAnnouncement: (id: string) => void
 }
 
 /** Refresh package status based on balance & expiry (BR-13/zero balance). */
@@ -197,6 +213,7 @@ export const useApp = create<AppState>()(
       packageUsage: [],
       products: seedProducts,
       purchases: seedPurchases(),
+      announcements: seedAnnouncements(),
       currentUserId: null,
       requireApproval: false, // Q-07 default: auto-confirm. Admin can switch on manual approval.
 
@@ -304,10 +321,63 @@ export const useApp = create<AppState>()(
         return null
       },
 
+      // ---------------- ADMIN ROLES (v0.4) ----------------
+      // Only the Master Admin may appoint/remove sub-admins (enforced in the UI too).
+      appointSubAdmin: (userId) => {
+        const target = get().users.find((u) => u.id === userId)
+        if (!target) return 'User not found.'
+        if (target.role === 'admin') return 'This user is already an admin.'
+        set((s) => ({
+          users: s.users.map((u) => (u.id === userId ? { ...u, role: 'admin', adminLevel: 'sub' } : u)),
+        }))
+        return null
+      },
+
+      removeSubAdmin: (userId) => {
+        const target = get().users.find((u) => u.id === userId)
+        if (!target) return 'User not found.'
+        if (target.adminLevel === 'master') return 'The Master Admin can\'t be removed.'
+        set((s) => ({
+          users: s.users.map((u) => (u.id === userId ? { ...u, role: 'patient', adminLevel: undefined } : u)),
+        }))
+        return null
+      },
+
       // ---------------- CLINICS ----------------
       updateClinicName: (id, name) => {
         if (!name.trim()) return 'Clinic name can\'t be empty.'
         set((s) => ({ clinics: s.clinics.map((c) => (c.id === id ? { ...c, name: name.trim() } : c)) }))
+        return null
+      },
+
+      createClinic: ({ name, address }) => {
+        if (!name.trim()) return 'Clinic name can\'t be empty.'
+        const clinic: Clinic = { id: uid('clinic'), name: name.trim(), address: address.trim(), active: true }
+        set((s) => ({ clinics: [...s.clinics, clinic] }))
+        return null
+      },
+
+      updateClinic: (id, patch) => {
+        if (patch.name !== undefined && !patch.name.trim()) return 'Clinic name can\'t be empty.'
+        set((s) => ({
+          clinics: s.clinics.map((c) =>
+            c.id === id ? { ...c, name: patch.name?.trim() ?? c.name, address: patch.address?.trim() ?? c.address } : c,
+          ),
+        }))
+        return null
+      },
+
+      toggleClinicActive: (id) =>
+        set((s) => ({ clinics: s.clinics.map((c) => (c.id === id ? { ...c, active: !c.active } : c)) })),
+
+      // Delete only when nothing is linked to the clinic; otherwise deactivate (BR v0.4 §1).
+      deleteClinic: (id) => {
+        const state = get()
+        const hasAppointments = state.appointments.some((a) => a.clinicId === id)
+        const hasAvailability = state.availability.some((w) => w.clinicId === id)
+        if (hasAppointments || hasAvailability)
+          return 'This clinic has linked records — deactivate it instead of deleting.'
+        set((s) => ({ clinics: s.clinics.filter((c) => c.id !== id) }))
         return null
       },
 
@@ -737,10 +807,35 @@ export const useApp = create<AppState>()(
         set((s) => ({
           purchases: s.purchases.map((p) => (p.id === purchaseId ? { ...p, followUpStatus: status } : p)),
         })),
+
+      // ---------------- ANNOUNCEMENTS (v0.4) ----------------
+      createAnnouncement: ({ title, message, expiryDate }) => {
+        if (!title.trim()) return 'Announcement title can\'t be empty.'
+        if (!message.trim()) return 'Announcement message can\'t be empty.'
+        if (expiryDate < todayISO()) return 'Expiry date can\'t be in the past.'
+        const ann: Announcement = {
+          id: uid('ann'),
+          title: title.trim(),
+          message: message.trim(),
+          createdAt: todayISO(),
+          expiryDate,
+          published: true,
+        }
+        set((s) => ({ announcements: [ann, ...s.announcements] }))
+        return null
+      },
+
+      unpublishAnnouncement: (id) =>
+        set((s) => ({
+          announcements: s.announcements.map((a) => (a.id === id ? { ...a, published: false } : a)),
+        })),
+
+      deleteAnnouncement: (id) =>
+        set((s) => ({ announcements: s.announcements.filter((a) => a.id !== id) })),
     }),
     {
       name: 'kuya-bong-store',
-      version: 4,
+      version: 6,
       // v2 introduces service types, therapists, cancellation reasons, and a
       // duration-aware availability model (replacing fixed slots). v3 adds a
       // next-week demo appointment. v4 adds a second demo patient (Ahmed) with
@@ -787,6 +882,20 @@ export const useApp = create<AppState>()(
             const demo = seedAppointments().find((a) => a.id === 'apt-4')
             if (demo) state.appointments = [...appts, demo]
           }
+        }
+        if (version < 5) {
+          // v0.4: designate the Master Admin and add a demo sub-admin.
+          let users = (Array.isArray(state.users) ? state.users : []) as Record<string, unknown>[]
+          users = users.map((u) => (u.id === 'u-admin' ? { ...u, name: 'Kuya Bong', adminLevel: 'master' } : u))
+          if (!users.some((u) => u.id === 'u-sub')) {
+            const sub = seedUsers.find((u) => u.id === 'u-sub')
+            if (sub) users = [...users, sub as unknown as Record<string, unknown>]
+          }
+          state.users = users
+        }
+        if (version < 6) {
+          // v0.4: announcements feature.
+          if (!Array.isArray(state.announcements)) state.announcements = seedAnnouncements()
         }
         return state as unknown as AppState
       },

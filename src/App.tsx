@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { MotionConfig } from 'framer-motion'
 import type { ReactNode } from 'react'
 import { useApp } from './store/appStore'
-import { useCurrentUser } from './store/selectors'
+import { useCurrentUser, useIsMaster } from './store/selectors'
 import { PatientLayout } from './layouts/PatientLayout'
 import { AdminLayout } from './layouts/AdminLayout'
 import { Toaster } from './components/Toast'
@@ -25,6 +25,7 @@ import { MyPackages } from './screens/patient/MyPackages'
 import { PackageDetails } from './screens/patient/PackageDetails'
 import { Family } from './screens/patient/Family'
 import { Clinics } from './screens/patient/Clinics'
+import { PatientAnnouncements } from './screens/patient/Announcements'
 import { Profile } from './screens/patient/Profile'
 
 // admin
@@ -41,12 +42,22 @@ import { ClinicSettings } from './screens/admin/ClinicSettings'
 import { AdminServiceTypes } from './screens/admin/ServiceTypes'
 import { AdminTherapists } from './screens/admin/Therapists'
 import { AdminCancellationReasons } from './screens/admin/CancellationReasons'
+import { AdminSubAdmins } from './screens/admin/SubAdmins'
+import { AdminAnnouncements } from './screens/admin/Announcements'
+import { AdminReports } from './screens/admin/Reports'
 import { AdminSettings } from './screens/admin/Settings'
 
 function RequireRole({ role, children }: { role: 'patient' | 'admin'; children: ReactNode }) {
   const user = useCurrentUser()
   if (!user) return <Navigate to="/welcome" replace />
   if (user.role !== role) return <Navigate to={user.role === 'admin' ? '/admin/dashboard' : '/patient/home'} replace />
+  return <>{children}</>
+}
+
+/** Master-Admin-only routes (core master data & sub-admin management). */
+function RequireMaster({ children }: { children: ReactNode }) {
+  const isMaster = useIsMaster()
+  if (!isMaster) return <Navigate to="/admin/dashboard" replace />
   return <>{children}</>
 }
 
@@ -81,6 +92,7 @@ export default function App() {
         <Route path="package/:id" element={<PackageDetails />} />
         <Route path="family" element={<Family />} />
         <Route path="clinics" element={<Clinics />} />
+        <Route path="announcements" element={<PatientAnnouncements />} />
         <Route path="profile" element={<Profile />} />
       </Route>
 
@@ -98,15 +110,18 @@ export default function App() {
         <Route path="calendar" element={<AdminCalendar />} />
         <Route path="appointments" element={<AdminAppointments />} />
         <Route path="manual-booking" element={<ManualBooking />} />
+        <Route path="announcements" element={<AdminAnnouncements />} />
+        <Route path="reports" element={<AdminReports />} />
         <Route path="patients" element={<AdminPatients />} />
         <Route path="patient/:id" element={<AdminPatientProfile />} />
         <Route path="packages" element={<AdminPackages />} />
         <Route path="products" element={<AdminProducts />} />
         <Route path="follow-ups" element={<AdminFollowUps />} />
-        <Route path="clinic-settings" element={<ClinicSettings />} />
-        <Route path="services" element={<AdminServiceTypes />} />
-        <Route path="therapists" element={<AdminTherapists />} />
-        <Route path="cancellation-reasons" element={<AdminCancellationReasons />} />
+        <Route path="clinic-settings" element={<RequireMaster><ClinicSettings /></RequireMaster>} />
+        <Route path="services" element={<RequireMaster><AdminServiceTypes /></RequireMaster>} />
+        <Route path="therapists" element={<RequireMaster><AdminTherapists /></RequireMaster>} />
+        <Route path="cancellation-reasons" element={<RequireMaster><AdminCancellationReasons /></RequireMaster>} />
+        <Route path="sub-admins" element={<RequireMaster><AdminSubAdmins /></RequireMaster>} />
         <Route path="settings" element={<AdminSettings />} />
       </Route>
 

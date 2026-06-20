@@ -10,6 +10,8 @@ export type VerificationStatus = 'unverified' | 'verified'
 export interface User {
   id: string
   role: Role
+  /** For admins only: 'master' (Kuya) can manage core data & sub-admins; 'sub' helps with daily ops. */
+  adminLevel?: 'master' | 'sub'
   name: string
   mobile: string
   email: string
@@ -151,6 +153,16 @@ export interface PackageUsage {
   memberName: string
   date: string
   recordedBy: string
+}
+
+/** Admin announcement pushed to customers (blueprint v0.4 §2). */
+export interface Announcement {
+  id: string
+  title: string
+  message: string
+  createdAt: string // YYYY-MM-DD
+  expiryDate: string // YYYY-MM-DD — auto-hidden after this date
+  published: boolean // false once manually pulled/unpublished
 }
 
 export type ProductCategory = 'herbal' | 'supplement' | 'other'

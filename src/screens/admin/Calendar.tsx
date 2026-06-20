@@ -15,7 +15,7 @@ const TIME_OPTIONS = Array.from({ length: 23 }, (_, i) => {
 })
 
 export function AdminCalendar() {
-  const clinics = useApp((s) => s.clinics)
+  const clinics = useApp((s) => s.clinics).filter((c) => c.active)
   const allTherapists = useApp((s) => s.therapists)
   const availability = useApp((s) => s.availability)
   const publishAvailability = useApp((s) => s.publishAvailability)
