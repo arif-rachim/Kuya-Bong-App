@@ -25,6 +25,7 @@ import { AppointmentDetails } from './screens/patient/AppointmentDetails'
 import { MyPackages } from './screens/patient/MyPackages'
 import { PackageDetails } from './screens/patient/PackageDetails'
 import { Family } from './screens/patient/Family'
+import { Friends } from './screens/patient/Friends'
 import { Clinics } from './screens/patient/Clinics'
 import { PatientAnnouncements } from './screens/patient/Announcements'
 import { Profile } from './screens/patient/Profile'
@@ -45,6 +46,8 @@ import { AdminTherapists } from './screens/admin/Therapists'
 import { AdminCancellationReasons } from './screens/admin/CancellationReasons'
 import { AdminSubAdmins } from './screens/admin/SubAdmins'
 import { AdminAuditLog } from './screens/admin/AuditLog'
+import { AdminCreditTransfers } from './screens/admin/CreditTransfers'
+import { AdminHouseholdReport } from './screens/admin/HouseholdReport'
 import { AdminAnnouncements } from './screens/admin/Announcements'
 import { AdminReports } from './screens/admin/Reports'
 import { AdminSettings } from './screens/admin/Settings'
@@ -100,6 +103,7 @@ export default function App() {
         <Route path="packages" element={<MyPackages />} />
         <Route path="package/:id" element={<PackageDetails />} />
         <Route path="family" element={<Family />} />
+        <Route path="friends" element={<Friends />} />
         <Route path="clinics" element={<Clinics />} />
         <Route path="announcements" element={<PatientAnnouncements />} />
         <Route path="profile" element={<Profile />} />
@@ -121,6 +125,7 @@ export default function App() {
         <Route path="manual-booking" element={<RequireCap caps={['appointmentManagement']}><ManualBooking /></RequireCap>} />
         <Route path="announcements" element={<RequireCap caps={['manageAnnouncements']}><AdminAnnouncements /></RequireCap>} />
         <Route path="reports" element={<RequireCap caps={['reportsServices', 'reportsProducts']}><AdminReports /></RequireCap>} />
+        <Route path="household" element={<RequireCap caps={['managePatients']}><AdminHouseholdReport /></RequireCap>} />
         <Route path="patients" element={<RequireCap caps={['managePatients']}><AdminPatients /></RequireCap>} />
         <Route path="patient/:id" element={<RequireCap caps={['managePatients']}><AdminPatientProfile /></RequireCap>} />
         <Route path="packages" element={<RequireCap caps={['managePatients']}><AdminPackages /></RequireCap>} />
@@ -132,6 +137,7 @@ export default function App() {
         <Route path="cancellation-reasons" element={<RequireCap caps={['manageCancellationReasons']}><AdminCancellationReasons /></RequireCap>} />
         <Route path="sub-admins" element={<RequireMaster><AdminSubAdmins /></RequireMaster>} />
         <Route path="audit" element={<RequireMaster><AdminAuditLog /></RequireMaster>} />
+        <Route path="transfers" element={<RequireMaster><AdminCreditTransfers /></RequireMaster>} />
         <Route path="settings" element={<AdminSettings />} />
       </Route>
 

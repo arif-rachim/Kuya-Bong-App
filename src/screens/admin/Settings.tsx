@@ -17,6 +17,7 @@ export function AdminSettings() {
   const canClinics = useCan('manageClinics')
   const canAnnouncements = useCan('manageAnnouncements')
   const canFollowUp = useCan('manageFollowUp')
+  const canPatients = useCan('managePatients')
   const canReports = useCanAny(['reportsServices', 'reportsProducts'])
   const logout = useApp((s) => s.logout)
   const requireApproval = useApp((s) => s.requireApproval)
@@ -110,6 +111,11 @@ export function AdminSettings() {
             <Item icon="bar_chart" label="Financial Reports" desc="Service & product income" />
           </Card>
         )}
+        {canPatients && (
+          <Card onClick={() => navigate('/admin/household')}>
+            <Item icon="diversity_3" label="Household Report" desc="Spending & active packages" />
+          </Card>
+        )}
         {canFollowUp && (
           <Card onClick={() => navigate('/admin/follow-ups')}>
             <Item icon="medication" label="Follow-up List" desc="Patients to contact" />
@@ -126,6 +132,9 @@ export function AdminSettings() {
             </Card>
             <Card onClick={() => navigate('/admin/audit')}>
               <Item icon="history" label="Audit Log" desc="Important admin actions" />
+            </Card>
+            <Card onClick={() => navigate('/admin/transfers')}>
+              <Item icon="swap_horiz" label="Credit Transfers" desc="Friend transfers & reversal" />
             </Card>
           </>
         )}

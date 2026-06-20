@@ -38,7 +38,9 @@ import type {
   Capability,
   CancellationReason,
   Clinic,
+  CreditTransfer,
   FamilyMember,
+  Friend,
   PackageDefinition,
   PackageUsage,
   PatientPackage,
@@ -86,6 +88,8 @@ interface AppState {
   announcements: Announcement[]
   subAdminPermissions: SubAdminPermissions
   auditLog: AuditEntry[]
+  friends: Friend[]
+  creditTransfers: CreditTransfer[]
 
   // ---- session ----
   currentUserId: string | null
@@ -196,6 +200,14 @@ interface AppState {
 
   // ---- audit (v0.6) ----
   logAudit: (action: string, detail: string) => void
+
+  // ---- friends & credit transfer (v0.6 §5) ----
+  requestFriend: (emailOrMobile: string) => Result
+  acceptFriend: (friendId: string) => void
+  declineFriend: (friendId: string) => void
+  removeFriend: (friendId: string) => void
+  transferCredit: (input: { fromPackageId: string; toUserId: string; sessions: number }) => Result
+  reverseTransfer: (transferId: string) => Result
 }
 
 /** Refresh package status based on balance & expiry (BR-13/zero balance). */
@@ -226,6 +238,8 @@ export const useApp = create<AppState>()(
       announcements: seedAnnouncements(),
       subAdminPermissions: seedSubAdminPermissions,
       auditLog: [],
+      friends: [],
+      creditTransfers: [],
       currentUserId: null,
       requireApproval: false, // Q-07 default: auto-confirm. Admin can switch on manual approval.
 
@@ -873,10 +887,118 @@ export const useApp = create<AppState>()(
         }
         set((st) => ({ auditLog: [entry, ...st.auditLog].slice(0, 500) }))
       },
+
+      // ---------------- FRIENDS & CREDIT TRANSFER (v0.6 §5) ----------------
+      requestFriend: (emailOrMobile) => {
+        const state = get()
+        const me = state.currentUserId
+        if (!me) return 'No active session.'
+        const q = emailOrMobile.trim().toLowerCase()
+        const target = state.users.find(
+          (u) => u.email.toLowerCase() === q || u.mobile.replace(/\s/g, '') === q.replace(/\s/g, ''),
+        )
+        if (!target) return 'That email/mobile isn\'t registered. Friends must be registered users.'
+        if (target.id === me) return 'You can\'t add yourself as a friend.'
+        const exists = state.friends.find(
+          (f) =>
+            (f.requesterUserId === me && f.addresseeUserId === target.id) ||
+            (f.requesterUserId === target.id && f.addresseeUserId === me),
+        )
+        if (exists) return 'You already have a friend link (or pending request) with this person.'
+        const friend: Friend = { id: uid('frn'), requesterUserId: me, addresseeUserId: target.id, status: 'pending' }
+        set((s) => ({ friends: [...s.friends, friend] }))
+        return null
+      },
+
+      acceptFriend: (friendId) =>
+        set((s) => ({ friends: s.friends.map((f) => (f.id === friendId ? { ...f, status: 'active' } : f)) })),
+
+      declineFriend: (friendId) =>
+        set((s) => ({ friends: s.friends.filter((f) => f.id !== friendId) })),
+
+      removeFriend: (friendId) =>
+        set((s) => ({ friends: s.friends.filter((f) => f.id !== friendId) })),
+
+      // Transfer package sessions to a confirmed Friend. Transferred credit keeps the
+      // original expiry date and records a full audit trail (v0.6 §5).
+      transferCredit: ({ fromPackageId, toUserId, sessions }) => {
+        const state = get()
+        const me = state.currentUserId
+        if (!me) return 'No active session.'
+        if (!Number.isFinite(sessions) || sessions <= 0) return 'Enter how many sessions to transfer.'
+        const confirmed = state.friends.some(
+          (f) =>
+            f.status === 'active' &&
+            ((f.requesterUserId === me && f.addresseeUserId === toUserId) ||
+              (f.requesterUserId === toUserId && f.addresseeUserId === me)),
+        )
+        if (!confirmed) return 'You can only transfer to a confirmed friend.'
+        const pkg = state.patientPackages.find((p) => p.id === fromPackageId && p.ownerUserId === me)
+        if (!pkg) return 'Package not found.'
+        if (pkg.expiryDate < todayISO()) return 'This package has expired and can\'t be transferred.'
+        if (sessions > pkg.remaining) return 'You don\'t have that many sessions to transfer.'
+
+        const recipientPkg: PatientPackage = {
+          id: uid('pp'),
+          definitionId: pkg.definitionId,
+          name: `${pkg.name} (from friend)`,
+          ownerUserId: toUserId,
+          totalSessions: sessions,
+          remaining: sessions,
+          assignDate: todayISO(),
+          expiryDate: pkg.expiryDate, // retains original expiry
+          status: 'active',
+          sourcePackageId: pkg.id,
+          transferredFromUserId: me,
+        }
+        const transfer: CreditTransfer = {
+          id: uid('xfer'),
+          at: new Date().toISOString(),
+          fromUserId: me,
+          toUserId,
+          sessions,
+          originalPackageId: pkg.id,
+          recipientPackageId: recipientPkg.id,
+          expiryDate: pkg.expiryDate,
+          reversed: false,
+        }
+        set((s) => ({
+          patientPackages: [
+            ...s.patientPackages.map((p) => (p.id === pkg.id ? recomputePackage({ ...p, remaining: p.remaining - sessions }) : p)),
+            recipientPkg,
+          ],
+          creditTransfers: [transfer, ...s.creditTransfers],
+        }))
+        const from = state.users.find((u) => u.id === me)
+        const to = state.users.find((u) => u.id === toUserId)
+        get().logAudit('Transfer package credit', `${sessions} session(s): ${from?.name ?? me} -> ${to?.name ?? toUserId}`)
+        return null
+      },
+
+      // Master Admin can reverse a transfer if the recipient hasn't used the credit yet.
+      reverseTransfer: (transferId) => {
+        const state = get()
+        const t = state.creditTransfers.find((x) => x.id === transferId)
+        if (!t) return 'Transfer not found.'
+        if (t.reversed) return 'This transfer was already reversed.'
+        const recipientPkg = state.patientPackages.find((p) => p.id === t.recipientPackageId)
+        if (!recipientPkg || recipientPkg.remaining < t.sessions)
+          return 'Can\'t reverse — the recipient has already used some of the transferred sessions.'
+        const sourcePkg = state.patientPackages.find((p) => p.id === t.originalPackageId)
+        if (!sourcePkg) return 'Original package no longer exists.'
+        set((s) => ({
+          patientPackages: s.patientPackages
+            .map((p) => (p.id === t.originalPackageId ? recomputePackage({ ...p, remaining: p.remaining + t.sessions }) : p))
+            .map((p) => (p.id === t.recipientPackageId ? recomputePackage({ ...p, remaining: p.remaining - t.sessions, totalSessions: Math.max(0, p.totalSessions - t.sessions) }) : p)),
+          creditTransfers: s.creditTransfers.map((x) => (x.id === transferId ? { ...x, reversed: true } : x)),
+        }))
+        get().logAudit('Reverse credit transfer', `${t.sessions} session(s) returned to original owner`)
+        return null
+      },
     }),
     {
       name: 'kuya-bong-store',
-      version: 7,
+      version: 8,
       // v2 introduces service types, therapists, cancellation reasons, and a
       // duration-aware availability model (replacing fixed slots). v3 adds a
       // next-week demo appointment. v4 adds a second demo patient (Ahmed) with
@@ -942,6 +1064,11 @@ export const useApp = create<AppState>()(
           // v0.6: central sub-admin permission profile + audit log.
           if (!state.subAdminPermissions) state.subAdminPermissions = seedSubAdminPermissions
           if (!Array.isArray(state.auditLog)) state.auditLog = []
+        }
+        if (version < 8) {
+          // v0.6: friends + package-credit transfer.
+          if (!Array.isArray(state.friends)) state.friends = []
+          if (!Array.isArray(state.creditTransfers)) state.creditTransfers = []
         }
         return state as unknown as AppState
       },

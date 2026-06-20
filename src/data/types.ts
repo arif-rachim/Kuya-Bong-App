@@ -174,6 +174,32 @@ export interface PatientPackage {
   assignDate: string
   expiryDate: string
   status: PackageStatus
+  /** Lineage for credit transferred from a Friend (blueprint v0.6 §5). */
+  sourcePackageId?: string
+  transferredFromUserId?: string
+}
+
+export type FriendStatus = 'pending' | 'active'
+
+/** A Friend link between two registered users (separate from Family; v0.6 §5). */
+export interface Friend {
+  id: string
+  requesterUserId: string
+  addresseeUserId: string
+  status: FriendStatus
+}
+
+/** Audit record of a package-credit transfer between confirmed Friends (v0.6 §5). */
+export interface CreditTransfer {
+  id: string
+  at: string // ISO datetime
+  fromUserId: string
+  toUserId: string
+  sessions: number
+  originalPackageId: string
+  recipientPackageId: string
+  expiryDate: string // retains the original package expiry
+  reversed: boolean
 }
 
 export interface PackageUsage {

@@ -12,6 +12,7 @@ const items = [
   { to: '/patient/appointments', label: 'My Visits', icon: 'event' },
   { to: '/patient/packages', label: 'Packages', icon: 'inventory_2' },
   { to: '/patient/family', label: 'Family', icon: 'groups' },
+  { to: '/patient/friends', label: 'Friends', icon: 'diversity_3' },
   { to: '/patient/clinics', label: 'Clinics', icon: 'location_on' },
   { to: '/patient/profile', label: 'Profile', icon: 'person' },
 ]

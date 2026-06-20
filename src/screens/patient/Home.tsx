@@ -139,6 +139,11 @@ export function PatientHome() {
             <p className="font-label-lg text-label-lg text-on-surface">Clinics</p>
             <p className="font-label-md text-label-md text-on-surface-variant">Clinic A &amp; B info</p>
           </div>
+          <div onClick={() => navigate('/patient/friends')} className="cursor-pointer rounded-xl border border-outline-variant/30 bg-surface-container-low p-md">
+            <Icon name="diversity_3" className="mb-sm text-primary" />
+            <p className="font-label-lg text-label-lg text-on-surface">Friends</p>
+            <p className="font-label-md text-label-md text-on-surface-variant">Share package credit</p>
+          </div>
         </div>
       </main>
     </div>
