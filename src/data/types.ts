@@ -19,6 +19,36 @@ export interface User {
   verification: VerificationStatus
 }
 
+/**
+ * Capabilities a sub-admin can be granted (blueprint v0.6 §6). One central
+ * profile applies to all sub-admins; the Master Admin always has every capability.
+ */
+export type Capability =
+  | 'manageBooking'
+  | 'appointmentManagement'
+  | 'manageClinics'
+  | 'manageTherapists'
+  | 'managePatients'
+  | 'manageProducts'
+  | 'manageServices'
+  | 'manageCancellationReasons'
+  | 'manageAnnouncements'
+  | 'manageFollowUp'
+  | 'reportsServices'
+  | 'reportsProducts'
+
+export type SubAdminPermissions = Record<Capability, boolean>
+
+/** Audit entry for important Master/Sub-Admin actions (blueprint v0.6 §6). */
+export interface AuditEntry {
+  id: string
+  at: string // ISO datetime
+  actorUserId: string
+  actorName: string
+  action: string
+  detail: string
+}
+
 export interface PatientProfile {
   id: string
   userId: string

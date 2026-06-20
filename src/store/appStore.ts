@@ -26,13 +26,16 @@ import {
   seedProfiles,
   seedPurchases,
   seedServices,
+  seedSubAdminPermissions,
   seedTherapists,
   seedUsers,
 } from '../data/seed'
 import type {
   Announcement,
   Appointment,
+  AuditEntry,
   BookingSource,
+  Capability,
   CancellationReason,
   Clinic,
   FamilyMember,
@@ -44,6 +47,7 @@ import type {
   ProductCategory,
   ProductPurchase,
   ServiceType,
+  SubAdminPermissions,
   Therapist,
   TherapistAvailability,
   User,
@@ -80,6 +84,8 @@ interface AppState {
   products: Product[]
   purchases: ProductPurchase[]
   announcements: Announcement[]
+  subAdminPermissions: SubAdminPermissions
+  auditLog: AuditEntry[]
 
   // ---- session ----
   currentUserId: string | null
@@ -102,6 +108,7 @@ interface AppState {
   // ---- admin roles (v0.4: master / sub-admin) ----
   appointSubAdmin: (userId: string) => Result
   removeSubAdmin: (userId: string) => Result
+  setSubAdminPermission: (capability: Capability, value: boolean) => void
 
   // ---- clinics (v0.4 lifecycle) ----
   updateClinicName: (id: string, name: string) => Result
@@ -186,6 +193,9 @@ interface AppState {
   createAnnouncement: (input: { title: string; message: string; expiryDate: string }) => Result
   unpublishAnnouncement: (id: string) => void
   deleteAnnouncement: (id: string) => void
+
+  // ---- audit (v0.6) ----
+  logAudit: (action: string, detail: string) => void
 }
 
 /** Refresh package status based on balance & expiry (BR-13/zero balance). */
@@ -214,6 +224,8 @@ export const useApp = create<AppState>()(
       products: seedProducts,
       purchases: seedPurchases(),
       announcements: seedAnnouncements(),
+      subAdminPermissions: seedSubAdminPermissions,
+      auditLog: [],
       currentUserId: null,
       requireApproval: false, // Q-07 default: auto-confirm. Admin can switch on manual approval.
 
@@ -330,6 +342,7 @@ export const useApp = create<AppState>()(
         set((s) => ({
           users: s.users.map((u) => (u.id === userId ? { ...u, role: 'admin', adminLevel: 'sub' } : u)),
         }))
+        get().logAudit('Appoint sub-admin', `${target.name} (${target.email})`)
         return null
       },
 
@@ -340,7 +353,13 @@ export const useApp = create<AppState>()(
         set((s) => ({
           users: s.users.map((u) => (u.id === userId ? { ...u, role: 'patient', adminLevel: undefined } : u)),
         }))
+        get().logAudit('Remove sub-admin', `${target.name} (${target.email})`)
         return null
+      },
+
+      setSubAdminPermission: (capability, value) => {
+        set((s) => ({ subAdminPermissions: { ...s.subAdminPermissions, [capability]: value } }))
+        get().logAudit('Change sub-admin permission', `${capability} = ${value ? 'on' : 'off'}`)
       },
 
       // ---------------- CLINICS ----------------
@@ -354,6 +373,7 @@ export const useApp = create<AppState>()(
         if (!name.trim()) return 'Clinic name can\'t be empty.'
         const clinic: Clinic = { id: uid('clinic'), name: name.trim(), address: address.trim(), active: true }
         set((s) => ({ clinics: [...s.clinics, clinic] }))
+        get().logAudit('Create clinic', clinic.name)
         return null
       },
 
@@ -377,7 +397,9 @@ export const useApp = create<AppState>()(
         const hasAvailability = state.availability.some((w) => w.clinicId === id)
         if (hasAppointments || hasAvailability)
           return 'This clinic has linked records — deactivate it instead of deleting.'
+        const clinic = state.clinics.find((c) => c.id === id)
         set((s) => ({ clinics: s.clinics.filter((c) => c.id !== id) }))
+        get().logAudit('Delete clinic', clinic?.name ?? id)
         return null
       },
 
@@ -605,6 +627,7 @@ export const useApp = create<AppState>()(
               : a,
           ),
         }))
+        get().logAudit('Cancel appointment', `${apt.forMemberName} · ${apt.date} ${apt.start} (by ${by})`)
         return null
       },
 
@@ -693,6 +716,8 @@ export const useApp = create<AppState>()(
           status: 'active',
         }
         set((s) => ({ patientPackages: [...s.patientPackages, pp] }))
+        const owner = get().users.find((u) => u.id === userId)
+        get().logAudit('Assign package', `${def.name} -> ${owner?.name ?? userId}`)
         return null
       },
 
@@ -833,10 +858,25 @@ export const useApp = create<AppState>()(
 
       deleteAnnouncement: (id) =>
         set((s) => ({ announcements: s.announcements.filter((a) => a.id !== id) })),
+
+      // ---------------- AUDIT (v0.6) ----------------
+      logAudit: (action, detail) => {
+        const s = get()
+        const actor = s.users.find((u) => u.id === s.currentUserId)
+        const entry: AuditEntry = {
+          id: uid('aud'),
+          at: new Date().toISOString(),
+          actorUserId: actor?.id ?? 'system',
+          actorName: actor?.name ?? 'System',
+          action,
+          detail,
+        }
+        set((st) => ({ auditLog: [entry, ...st.auditLog].slice(0, 500) }))
+      },
     }),
     {
       name: 'kuya-bong-store',
-      version: 6,
+      version: 7,
       // v2 introduces service types, therapists, cancellation reasons, and a
       // duration-aware availability model (replacing fixed slots). v3 adds a
       // next-week demo appointment. v4 adds a second demo patient (Ahmed) with
@@ -897,6 +937,11 @@ export const useApp = create<AppState>()(
         if (version < 6) {
           // v0.4: announcements feature.
           if (!Array.isArray(state.announcements)) state.announcements = seedAnnouncements()
+        }
+        if (version < 7) {
+          // v0.6: central sub-admin permission profile + audit log.
+          if (!state.subAdminPermissions) state.subAdminPermissions = seedSubAdminPermissions
+          if (!Array.isArray(state.auditLog)) state.auditLog = []
         }
         return state as unknown as AppState
       },

@@ -4,29 +4,33 @@ import { cn } from '../lib/cn'
 import { Icon } from '../components/Icon'
 import { Logo } from '../components/Logo'
 import { BottomNav, type NavItem } from '../components/BottomNav'
-
-const items = [
-  { to: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { to: '/admin/calendar', label: 'Calendar', icon: 'calendar_month' },
-  { to: '/admin/appointments', label: 'Appointments', icon: 'event' },
-  { to: '/admin/patients', label: 'Patients', icon: 'group' },
-  { to: '/admin/packages', label: 'Packages', icon: 'inventory_2' },
-  { to: '/admin/products', label: 'Products', icon: 'medication' },
-  { to: '/admin/settings', label: 'Settings', icon: 'settings' },
-]
-
-// Subset for the mobile bottom nav (shorter labels for proportional fit).
-const mobileTabs: NavItem[] = [
-  { to: '/admin/dashboard', label: 'Home', icon: 'dashboard' },
-  { to: '/admin/calendar', label: 'Calendar', icon: 'calendar_month' },
-  { to: '/admin/appointments', label: 'Visits', icon: 'event' },
-  { to: '/admin/patients', label: 'Patients', icon: 'group' },
-  { to: '/admin/products', label: 'Products', icon: 'medication' },
-  { to: '/admin/settings', label: 'Settings', icon: 'settings' },
-]
+import { useCan } from '../store/selectors'
 
 export function AdminLayout() {
   const location = useLocation()
+  const canPatients = useCan('managePatients')
+  const canProducts = useCan('manageProducts')
+
+  const items = [
+    { to: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard', show: true },
+    { to: '/admin/calendar', label: 'Calendar', icon: 'calendar_month', show: true },
+    { to: '/admin/appointments', label: 'Appointments', icon: 'event', show: true },
+    { to: '/admin/patients', label: 'Patients', icon: 'group', show: canPatients },
+    { to: '/admin/packages', label: 'Packages', icon: 'inventory_2', show: canPatients },
+    { to: '/admin/products', label: 'Products', icon: 'medication', show: canProducts },
+    { to: '/admin/settings', label: 'Settings', icon: 'settings', show: true },
+  ].filter((i) => i.show)
+
+  // Subset for the mobile bottom nav (shorter labels for proportional fit).
+  const mobileTabs: NavItem[] = [
+    { to: '/admin/dashboard', label: 'Home', icon: 'dashboard', show: true },
+    { to: '/admin/calendar', label: 'Calendar', icon: 'calendar_month', show: true },
+    { to: '/admin/appointments', label: 'Visits', icon: 'event', show: true },
+    { to: '/admin/patients', label: 'Patients', icon: 'group', show: canPatients },
+    { to: '/admin/products', label: 'Products', icon: 'medication', show: canProducts },
+    { to: '/admin/settings', label: 'Settings', icon: 'settings', show: true },
+  ].filter((i) => i.show).map(({ to, label, icon }) => ({ to, label, icon }))
+
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[1100px] bg-background">
       {/* Sidebar (desktop) */}

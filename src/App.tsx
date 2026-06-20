@@ -2,7 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { MotionConfig } from 'framer-motion'
 import type { ReactNode } from 'react'
 import { useApp } from './store/appStore'
-import { useCurrentUser, useIsMaster } from './store/selectors'
+import { useCurrentUser, useIsMaster, useCanAny } from './store/selectors'
+import type { Capability } from './data/types'
 import { PatientLayout } from './layouts/PatientLayout'
 import { AdminLayout } from './layouts/AdminLayout'
 import { Toaster } from './components/Toast'
@@ -43,6 +44,7 @@ import { AdminServiceTypes } from './screens/admin/ServiceTypes'
 import { AdminTherapists } from './screens/admin/Therapists'
 import { AdminCancellationReasons } from './screens/admin/CancellationReasons'
 import { AdminSubAdmins } from './screens/admin/SubAdmins'
+import { AdminAuditLog } from './screens/admin/AuditLog'
 import { AdminAnnouncements } from './screens/admin/Announcements'
 import { AdminReports } from './screens/admin/Reports'
 import { AdminSettings } from './screens/admin/Settings'
@@ -54,10 +56,17 @@ function RequireRole({ role, children }: { role: 'patient' | 'admin'; children: 
   return <>{children}</>
 }
 
-/** Master-Admin-only routes (core master data & sub-admin management). */
+/** Master-Admin-only routes (sub-admin management & audit log). */
 function RequireMaster({ children }: { children: ReactNode }) {
   const isMaster = useIsMaster()
   if (!isMaster) return <Navigate to="/admin/dashboard" replace />
+  return <>{children}</>
+}
+
+/** Routes gated by sub-admin capability (master always allowed). */
+function RequireCap({ caps, children }: { caps: Capability[]; children: ReactNode }) {
+  const allowed = useCanAny(caps)
+  if (!allowed) return <Navigate to="/admin/dashboard" replace />
   return <>{children}</>
 }
 
@@ -109,19 +118,20 @@ export default function App() {
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="calendar" element={<AdminCalendar />} />
         <Route path="appointments" element={<AdminAppointments />} />
-        <Route path="manual-booking" element={<ManualBooking />} />
-        <Route path="announcements" element={<AdminAnnouncements />} />
-        <Route path="reports" element={<AdminReports />} />
-        <Route path="patients" element={<AdminPatients />} />
-        <Route path="patient/:id" element={<AdminPatientProfile />} />
-        <Route path="packages" element={<AdminPackages />} />
-        <Route path="products" element={<AdminProducts />} />
-        <Route path="follow-ups" element={<AdminFollowUps />} />
-        <Route path="clinic-settings" element={<RequireMaster><ClinicSettings /></RequireMaster>} />
-        <Route path="services" element={<RequireMaster><AdminServiceTypes /></RequireMaster>} />
-        <Route path="therapists" element={<RequireMaster><AdminTherapists /></RequireMaster>} />
-        <Route path="cancellation-reasons" element={<RequireMaster><AdminCancellationReasons /></RequireMaster>} />
+        <Route path="manual-booking" element={<RequireCap caps={['appointmentManagement']}><ManualBooking /></RequireCap>} />
+        <Route path="announcements" element={<RequireCap caps={['manageAnnouncements']}><AdminAnnouncements /></RequireCap>} />
+        <Route path="reports" element={<RequireCap caps={['reportsServices', 'reportsProducts']}><AdminReports /></RequireCap>} />
+        <Route path="patients" element={<RequireCap caps={['managePatients']}><AdminPatients /></RequireCap>} />
+        <Route path="patient/:id" element={<RequireCap caps={['managePatients']}><AdminPatientProfile /></RequireCap>} />
+        <Route path="packages" element={<RequireCap caps={['managePatients']}><AdminPackages /></RequireCap>} />
+        <Route path="products" element={<RequireCap caps={['manageProducts']}><AdminProducts /></RequireCap>} />
+        <Route path="follow-ups" element={<RequireCap caps={['manageFollowUp']}><AdminFollowUps /></RequireCap>} />
+        <Route path="clinic-settings" element={<RequireCap caps={['manageClinics']}><ClinicSettings /></RequireCap>} />
+        <Route path="services" element={<RequireCap caps={['manageServices']}><AdminServiceTypes /></RequireCap>} />
+        <Route path="therapists" element={<RequireCap caps={['manageTherapists']}><AdminTherapists /></RequireCap>} />
+        <Route path="cancellation-reasons" element={<RequireCap caps={['manageCancellationReasons']}><AdminCancellationReasons /></RequireCap>} />
         <Route path="sub-admins" element={<RequireMaster><AdminSubAdmins /></RequireMaster>} />
+        <Route path="audit" element={<RequireMaster><AdminAuditLog /></RequireMaster>} />
         <Route path="settings" element={<AdminSettings />} />
       </Route>
 

@@ -5,6 +5,7 @@ import type {
   Appointment,
   CancellationReason,
   Clinic,
+  SubAdminPermissions,
   FamilyMember,
   PackageDefinition,
   PatientPackage,
@@ -109,6 +110,23 @@ export const seedTherapists: Therapist[] = [
   { id: 'th-bong', name: 'Kuya Bong', active: true },
   { id: 'th-brother', name: 'Kuya Bong\'s Brother', active: true },
 ]
+
+// Central sub-admin permission profile (v0.6 §6). Default: daily operations on,
+// core master data off, reports on. Master Admin always has everything.
+export const seedSubAdminPermissions: SubAdminPermissions = {
+  manageBooking: true,
+  appointmentManagement: true,
+  manageClinics: false,
+  manageTherapists: false,
+  managePatients: true,
+  manageProducts: true,
+  manageServices: false,
+  manageCancellationReasons: false,
+  manageAnnouncements: true,
+  manageFollowUp: true,
+  reportsServices: true,
+  reportsProducts: true,
+}
 
 export const seedCancellationReasons: CancellationReason[] = [
   { id: 'cr-unavailable', label: 'Patient is not available', active: true },

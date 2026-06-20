@@ -8,6 +8,7 @@ import { toast } from '../../components/Toast'
 import { confirm } from '../../components/Confirm'
 import { cn } from '../../lib/cn'
 import { useApp } from '../../store/appStore'
+import { useCan } from '../../store/selectors'
 import { addDays, formatDate, formatDateShort, nowMinutes, todayISO, weekdayLabel } from '../../lib/date'
 import { computeBookingOptions, uniqueStarts } from '../../lib/booking'
 import type { Appointment, AppointmentStatus } from '../../data/types'
@@ -35,6 +36,7 @@ export function AdminAppointments() {
   const cancelApt = useApp((s) => s.cancelAppointment)
   const markNoShow = useApp((s) => s.markNoShow)
   const rescheduleApt = useApp((s) => s.rescheduleAppointment)
+  const canManage = useCan('appointmentManagement')
 
   const [clinicFilter, setClinicFilter] = useState('all')
   const [therapistFilter, setTherapistFilter] = useState('all')
@@ -208,7 +210,7 @@ export function AdminAppointments() {
         ) : (
           <div className="space-y-sm">
             {list.map((a) => {
-              const actionable = a.status === 'Confirmed' || a.status === 'Rescheduled'
+              const actionable = canManage && (a.status === 'Confirmed' || a.status === 'Rescheduled')
               const isToday = a.date <= todayISO()
               return (
                 <Card key={a.id}>

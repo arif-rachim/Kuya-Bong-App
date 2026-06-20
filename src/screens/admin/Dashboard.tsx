@@ -6,7 +6,7 @@ import { Icon } from '../../components/Icon'
 import { toast } from '../../components/Toast'
 import { confirm } from '../../components/Confirm'
 import { useApp } from '../../store/appStore'
-import { useIsMaster } from '../../store/selectors'
+import { useCan, useCanAny } from '../../store/selectors'
 import { todayISO } from '../../lib/date'
 
 export function AdminDashboard() {
@@ -20,7 +20,14 @@ export function AdminDashboard() {
   const therapists = useApp((s) => s.therapists)
   const approve = useApp((s) => s.approveAppointment)
   const reject = useApp((s) => s.rejectAppointment)
-  const isMaster = useIsMaster()
+  const canAppointments = useCan('appointmentManagement')
+  const canServices = useCan('manageServices')
+  const canTherapists = useCan('manageTherapists')
+  const canPatients = useCan('managePatients')
+  const canProducts = useCan('manageProducts')
+  const canFollowUp = useCan('manageFollowUp')
+  const canAnnouncements = useCan('manageAnnouncements')
+  const canReports = useCanAny(['reportsServices', 'reportsProducts'])
 
   const todays = appointments
     .filter((a) => a.date === today && (a.status === 'Confirmed' || a.status === 'Rescheduled'))
@@ -94,7 +101,7 @@ export function AdminDashboard() {
           )}
         </section>
 
-        {pending.length > 0 && (
+        {pending.length > 0 && canAppointments && (
           <section>
             <SectionTitle>Pending Approval Requests</SectionTitle>
             <div className="space-y-sm">
@@ -130,14 +137,15 @@ export function AdminDashboard() {
         )}
 
         <section className="grid grid-cols-2 gap-sm">
-          <QuickAction icon="event_available" label="Manual Booking" onClick={() => navigate('/admin/manual-booking')} />
-          {isMaster && <QuickAction icon="medical_services" label="Service Types" onClick={() => navigate('/admin/services')} />}
-          {isMaster && <QuickAction icon="person_4" label="Therapists" onClick={() => navigate('/admin/therapists')} />}
-          <QuickAction icon="medication" label="Follow-up List" onClick={() => navigate('/admin/follow-ups')} />
-          <QuickAction icon="inventory_2" label="Packages" onClick={() => navigate('/admin/packages')} />
-          <QuickAction icon="groups" label="Patients" onClick={() => navigate('/admin/patients')} />
-          <QuickAction icon="campaign" label="Announcements" onClick={() => navigate('/admin/announcements')} />
-          <QuickAction icon="bar_chart" label="Reports" onClick={() => navigate('/admin/reports')} />
+          {canAppointments && <QuickAction icon="event_available" label="Manual Booking" onClick={() => navigate('/admin/manual-booking')} />}
+          {canServices && <QuickAction icon="medical_services" label="Service Types" onClick={() => navigate('/admin/services')} />}
+          {canTherapists && <QuickAction icon="person_4" label="Therapists" onClick={() => navigate('/admin/therapists')} />}
+          {canFollowUp && <QuickAction icon="medication" label="Follow-up List" onClick={() => navigate('/admin/follow-ups')} />}
+          {canPatients && <QuickAction icon="inventory_2" label="Packages" onClick={() => navigate('/admin/packages')} />}
+          {canPatients && <QuickAction icon="groups" label="Patients" onClick={() => navigate('/admin/patients')} />}
+          {canProducts && <QuickAction icon="medication" label="Products" onClick={() => navigate('/admin/products')} />}
+          {canAnnouncements && <QuickAction icon="campaign" label="Announcements" onClick={() => navigate('/admin/announcements')} />}
+          {canReports && <QuickAction icon="bar_chart" label="Reports" onClick={() => navigate('/admin/reports')} />}
         </section>
       </div>
     </div>
