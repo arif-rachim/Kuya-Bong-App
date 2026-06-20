@@ -1,18 +1,18 @@
 ---
 title: Kuya Bong Mobile App - Product Concept and Solution Blueprint
-document_version: "0.3"
-status: For Internal Review and Stakeholder Discussion
-tracking_number: KBA-BP-20260615-001
-source_pdf: Kuya_Bong_Product_Concept_and_Solution_Blueprint.pdf
-updated: 2026-06-15
+document_version: "0.6"
+status: Consolidated working requirements; open questions remain
+tracking_number: KBA-BP-20260620-003
+source_pdf: Kuya_Bong_Product_Concept_and_Solution_Blueprint.pdf plus Blueprint Updates v0.4-v0.6
+updated: 2026-06-20
 ---
 
 # Kuya Bong Mobile App
 
 Product Concept and Solution Blueprint
 
-> Tracking number: KBA-BP-20260615-001
-> Source: Extracted from `docs/Kuya_Bong_Product_Concept_and_Solution_Blueprint.pdf` on 2026-06-15.
+> Current tracking number: KBA-BP-20260620-003
+> Consolidates the v0.3 source blueprint with additive updates v0.4, v0.5, and v0.6. If update wording conflicts, the latest version takes precedence.
 
 ## Page 1
 
@@ -997,3 +997,141 @@ Booking Source App, phone, manual admin entry, or other channel.
 25.11 Impact on MVP Priority
 Recommendation: treat these additions as MVP requirements, not future features. They directly affect the booking engine and
 should be included before the developer finalizes appointment logic, slot generation, conflict checking, and calendar design.
+
+## 26. Consolidated Requirements Through Blueprint Update v0.6
+
+### 26.1 Version precedence
+
+This section consolidates customer-meeting updates v0.4 through v0.6. v0.6 is authoritative where later wording conflicts with v0.4 or v0.5. Earlier update documents remain part of the audit trail.
+
+Notable supersessions:
+
+- v0.6 replaces v0.5 **Trusted Contacts** with **Friends**.
+- v0.6 replaces fixed Sub-Admin restrictions with a centrally configured permission profile shared by all Sub-Admins.
+- Friends are not Family Members and are not part of the household grouping.
+
+### 26.2 Clinic lifecycle management
+
+The Master Admin, or a Sub-Admin with **Manage Clinics** enabled, can add, edit, deactivate, and conditionally delete clinics.
+
+- Inactive clinics must not be available for new bookings.
+- Existing and historical records must continue to show their original clinic.
+- A clinic can be deleted only when no appointment, booking, sale, package, or other historical record references it.
+- A clinic with history must be deactivated rather than deleted.
+
+### 26.3 Announcements and push notifications
+
+An authorized admin can create an announcement title and message, publish a notification to registered users, set an expiry date, withdraw it early, and retain its history.
+
+- Expired or withdrawn announcements must no longer appear as active announcements.
+- Historical announcements remain available for admin reference.
+- Audience selection (all versus selected users) remains open.
+
+### 26.4 Product photo management
+
+An authorized admin can attach one or multiple photos to a product. High-resolution uploads must be resized and compressed before storage and serving. Product information shown to users should include the associated optimized photos.
+
+### 26.5 Family relationships
+
+Family is a distinct relationship type covering spouse, child, parent, sibling, or another family member.
+
+- A user can add or link Family Members.
+- A registered Family Member must receive a request and confirm before the link becomes active.
+- An unregistered dependent, such as a child without a login, may be managed under the account according to the existing dependent rules.
+- A user may book on behalf of a Family Member.
+- Family may share package usage when allowed.
+- Each package deduction must identify the person who received the session.
+
+### 26.6 Friends and package-credit transfer
+
+Friends must be stored separately from Family. Both parties must be registered users, and the Friend relationship becomes active only after the recipient confirms the request.
+
+Friend restrictions:
+
+- A user cannot book an appointment on behalf of a Friend.
+- A Friend cannot directly consume another user's package.
+- Sharing package value with a Friend requires an explicit credit transfer.
+
+Transfer invariants:
+
+- Sender and recipient must be confirmed Friends.
+- Either confirmed Friend may transfer credit to the other.
+- Transferred credit retains the original package expiry date.
+- The transfer record must preserve sender, recipient, transferred amount, original package reference, and expiry date.
+- Transfer quantity, unit, onward transfer, and reversal behavior remain open questions and must not be hard-coded as final policy until confirmed.
+
+### 26.7 Master Admin and Sub-Admin permission control
+
+Kuya is the Master Admin. Only the Master Admin can appoint a registered user as a Sub-Admin or remove that access. Sub-Admins cannot change Master Admin access or manage other Sub-Admins.
+
+One central configuration applies to all Sub-Admins. Each permission is independently enabled or disabled:
+
+| No. | Permission | Disabled behavior |
+| --- | --- | --- |
+| 1 | Manage Booking / time-slot availability | Calendar view only |
+| 2 | Appointment Management | No completion, cancellation, rescheduling, or related appointment mutation |
+| 3 | Manage Clinics | No clinic creation, editing, deletion, or deactivation |
+| 4 | Manage Therapists | No therapist mutation |
+| 5 | Manage Patients | No package assignment, purchase recording, or operational patient updates |
+| 6 | Manage Products | No product mutation |
+| 7 | Manage Service Types | No service-type mutation |
+| 8 | Manage Cancellation Reasons | No cancellation-reason mutation |
+| 9 | Manage Announcements | No announcement mutation |
+| 10 | Manage Follow-Up List | No follow-up-list mutation |
+| 11 | Financial Reports - Services | No service financial report generation/access, subject to open question 26.10.6 |
+| 12 | Financial Reports - Products/Sales | No product/sales financial report generation/access, subject to open question 26.10.6 |
+
+Important Master Admin and Sub-Admin actions must be audit logged. Permission enforcement must occur at the authorization layer, not only by hiding user-interface controls.
+
+### 26.8 Financial ad-hoc reports
+
+| Filter | Requirement |
+| --- | --- |
+| Category | Services or Products |
+| From Date | Defaults to first day of current month |
+| To Date | Defaults to today |
+| Service | Shown only for Services; defaults to All |
+| Product | Shown only for Products; defaults to All |
+
+- From Date must not be later than To Date.
+- A Services report includes completed therapy sessions in range.
+- A Products report includes sold products in range.
+- The related amount or income value is included when recorded.
+- Reports should be shareable from mobile, preferably as PDF.
+
+### 26.9 Household spending and active package report
+
+Household means the main patient account plus linked Family Members. Friends are excluded from household membership.
+
+The report includes:
+
+- Main account owner and linked Family Members.
+- Total spending.
+- Active package/subscription.
+- Package start and expiry dates.
+- Total, used, and remaining sessions.
+- The Family Member associated with each used session.
+- Friend credit-transfer records when relevant to household balances or package lineage.
+
+### 26.10 Current open questions
+
+1. Can users transfer partial package credit, or only all remaining credit?
+2. Is transferred credit measured in sessions, money, or both?
+3. Can received credit be transferred again to another confirmed Friend?
+4. Can Kuya cancel or reverse a transfer?
+5. Do central Sub-Admin permission changes take effect immediately?
+6. Are service and product/sales reports visible to Sub-Admins only when the corresponding report permission is enabled?
+7. Are announcements sent to all users or a selected audience?
+8. Is report sharing PDF-only, or should Excel/CSV be added later?
+
+### 26.11 Technical data and audit requirements
+
+The logical data model must support:
+
+- Product-to-photo associations, ordering/main-photo designation if later required, optimized asset metadata, and upload audit data.
+- Typed relationship records that distinguish Family from Friend and retain requester, recipient, status, confirmation time, and status history.
+- Package-credit transfers with immutable original-package lineage, original expiry, sender, recipient, quantity/value and unit, timestamps, status, and actor/audit metadata.
+- A single versioned Sub-Admin permission profile plus the Master Admin identity.
+- Authorization checks for every protected operation and audit records for important admin actions.
+- Announcement lifecycle state, expiry, author, publication/withdrawal timestamps, and retained history.
+- Financial report inputs derived from completed service records and recorded product sales without rewriting historical amounts.

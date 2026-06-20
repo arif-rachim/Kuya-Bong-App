@@ -1,7 +1,7 @@
 # Kuya Bong App — User Stories (MVP)
 
-Based on the *Product Concept and Solution Blueprint v0.3* (tracking KBA-BP-20260615-001)
-and *Blueprint Update v0.4* (tracking KBA-BP-20260620-001).
+Based on the consolidated *Product Concept and Solution Blueprint v0.6* (tracking KBA-BP-20260620-003),
+including the traceable v0.4 and v0.5 update documents.
 Organized simply per feature, with a **Positive Flow** (success) and **Negative Flow** (failure / edge case).
 Roles: **Patient**, **Admin (Kuya Bong / Master Admin)**, and **Sub-Admin**.
 
@@ -12,6 +12,10 @@ Roles: **Patient**, **Admin (Kuya Bong / Master Admin)**, and **Sub-Admin**.
 > **v0.4 update:** Sections 20–23 cover the latest customer-meeting requirements — clinic
 > lifecycle management, announcements & push notifications, master/sub-admin roles, and
 > financial ad-hoc reports. Items still pending confirmation are listed in the Notes.
+>
+> **v0.5/v0.6 update:** Sections 25–28 cover product photos, expanded Family linking, confirmed
+> Friends with package-credit transfer, household reporting, and central Sub-Admin permissions.
+> v0.6 supersedes v0.5 Trusted Contacts with Friends.
 
 ---
 
@@ -156,12 +160,16 @@ Roles: **Patient**, **Admin (Kuya Bong / Master Admin)**, and **Sub-Admin**.
 
 ### Positive
 - As a patient, I want to link an adult family member (spouse) by their registered email/mobile so that we can share eligible packages.
+- As a patient, I want to identify a Family Member as spouse, child, parent, sibling, or other family so that the relationship is clear.
 - As a patient, I want to add a child under my account (no separate login) so that I can manage their sessions.
+- As a patient, I want to book a session on behalf of a Family Member so that I can manage household care.
 - As a patient, I want to view which family member used each session so that usage is transparent.
 
 ### Negative
 - As a patient, I want an adult link request to require the other person's acceptance so that no one is linked without consent.
 - As a patient, I want to be told when the email/mobile I'm linking isn't registered so that I can correct it.
+- As a patient, I want a registered Family link to remain pending until the invited user confirms it so that relationships are consensual.
+- As a patient, I want Family and Friends displayed and stored separately so that package and booking rules cannot be confused.
 
 ---
 
@@ -169,12 +177,15 @@ Roles: **Patient**, **Admin (Kuya Bong / Master Admin)**, and **Sub-Admin**.
 
 ### Positive
 - As an admin, I want to create, edit, activate/deactivate, and price products so that my catalogue stays current.
+- As an authorized admin, I want to upload one or multiple product photos so that customers can recognize products.
+- As a customer, I want optimized product photos displayed with product information so that I can identify what is offered.
 - As an admin, I want to record a patient's product purchase with price-at-time-of-sale and date so that I keep accurate history.
 - As an admin, I want to review each patient's last purchase date and a follow-up list so that I can contact patients when products may be running out.
 
 ### Negative
 - As an admin, I want updating a product's price to NOT change past purchase records so that historical prices stay accurate.
 - As an admin, I want deactivated products hidden from new purchase selection so that I don't sell discontinued items.
+- As an admin, I want large product images automatically resized and compressed before storage so that uploads do not overload storage or delivery.
 
 ---
 
@@ -298,12 +309,14 @@ Roles: **Patient**, **Admin (Kuya Bong / Master Admin)**, and **Sub-Admin**.
 ### Positive
 - As the Master Admin (Kuya), I want to appoint a registered user as a Sub-Admin so that they can help with daily operations.
 - As the Master Admin, I want to remove a Sub-Admin's access so that I stay in control of who can administer the system.
-- As a Sub-Admin, I want to help with daily tasks (bookings, completion, product purchases, announcements per policy) so that operations run smoothly.
+- As a Sub-Admin, I want to perform only the operations enabled in Kuya's central permission profile so that operations run smoothly without excessive access.
+- As the Master Admin, I want one central checkbox-based permission profile for all Sub-Admins so that access is consistent and easy to control.
 
 ### Negative
 - As a Sub-Admin, I want to be blocked from adding/removing other Sub-Admins and from changing the Master Admin's access so that only Kuya controls admin access.
-- As a Sub-Admin, I want core master data (clinics, therapists, services, cancellation reasons) to be read-only/hidden so that only the Master Admin manages it.
+- As a Sub-Admin, I want every disabled capability to be blocked even if I attempt to reach it directly so that permissions are enforced beyond the visible UI.
 - As the Master Admin, I want my own Master Admin access to be impossible to remove so that I never lose control of the system.
+- As the Master Admin, I want important admin actions audit logged so that changes and responsibility can be traced.
 
 ---
 
@@ -321,9 +334,72 @@ Roles: **Patient**, **Admin (Kuya Bong / Master Admin)**, and **Sub-Admin**.
 
 ---
 
-## 24. Notes
+## 25. Friends & Package-Credit Transfer (v0.6)
+
+### Positive
+- As a registered user, I want to send a Friend-link request to another registered user so that we can establish a confirmed relationship.
+- As an invited user, I want to receive a notification and explicitly accept or decline the Friend request so that the relationship requires my consent.
+- As a confirmed Friend, I want to transfer package credit to the other confirmed Friend so that I can share package benefit without giving direct package access.
+- As a package owner or recipient, I want transferred credit to retain the original expiry date so that transfer does not extend validity.
+- As Kuya, I want every transfer to record sender, recipient, amount, original package, and expiry date so that package lineage is auditable.
+
+### Negative
+- As a user, I want Friend linking blocked when the other person is not registered so that credit cannot be transferred to an unidentified recipient.
+- As a user, I want transfer blocked until the Friend request is confirmed so that unapproved relationships cannot receive credit.
+- As a user, I want booking on behalf of a Friend blocked so that Friend rules cannot be confused with Family rules.
+- As a Friend, I want direct use of another user's package blocked so that sharing occurs only through an auditable transfer.
+- As a user, I want the transfer rejected when the source package is expired or has insufficient transferable credit so that balances remain valid.
+
+---
+
+## 26. Sub-Admin Central Permission Profile (v0.6)
+
+### Positive
+- As the Master Admin, I want to enable or disable each of the 12 defined permissions from one panel so that one policy consistently governs all Sub-Admins.
+- As the Master Admin, I want separate report permissions for Services and Products/Sales so that financial access can be scoped by category.
+- As a Sub-Admin with Manage Booking disabled, I want calendar view-only access so that I can see schedules without changing availability.
+- As an auditor/Master Admin, I want important admin actions logged with actor and timestamp so that changes are traceable.
+
+### Negative
+- As a Sub-Admin, I want an operation blocked when its permission is disabled, even through a direct route or API request, so that UI hiding is not the only control.
+- As a Sub-Admin, I want to be blocked from appointing/removing Sub-Admins or changing Master Admin access so that Kuya retains control.
+- As the Master Admin, I want the system to prevent any permission edit from removing or downgrading my Master Admin identity.
+
+The configurable permissions are: Manage Booking, Appointment Management, Manage Clinics, Manage Therapists, Manage Patients, Manage Products, Manage Service Types, Manage Cancellation Reasons, Manage Announcements, Manage Follow-Up List, Financial Reports - Services, and Financial Reports - Products/Sales.
+
+---
+
+## 27. Household Spending & Active Package Report (v0.6)
+
+### Positive
+- As Kuya, I want a household report for the main account and linked Family Members so that I can understand household spending and package use.
+- As Kuya, I want the report to show total spending, active package, start/expiry dates, total/used/remaining sessions, and the person who used each session so that balances are explainable.
+- As Kuya, I want relevant Friend credit transfers shown alongside package lineage so that transfers affecting the household are visible without treating Friends as household members.
+
+### Negative
+- As Kuya, I want Friends excluded from household membership so that Family and Friend reporting remains semantically separate.
+- As Kuya, I want historical usage and transfers retained when a relationship is later unlinked so that reports remain auditable.
+
+---
+
+## 28. Technical Integrity & Audit Stories (v0.6)
+
+### Positive
+- As the system owner, I want relationship records to retain type, requester, recipient, status, confirmation time, and status history so that consent is provable.
+- As the system owner, I want original package references and expiry dates immutable on transfer records so that credit lineage cannot be lost.
+- As the system owner, I want product-photo metadata to identify optimized assets and their product association so that storage and delivery remain manageable.
+- As the system owner, I want financial reports to use historical service/product amounts as recorded at the time so that later catalogue changes do not rewrite history.
+
+### Negative
+- As the system owner, I want invalid relationship-state transitions and unauthorized permission changes rejected so that stored state remains consistent.
+- As the system owner, I want important admin records retained rather than hard-deleted so that audit history is not broken.
+
+---
+
+## 29. Notes
 - Appointment statuses: Available, Pending Approval, Confirmed, Rescheduled, Cancelled (by Patient/Admin), Completed, No-Show.
 - **v0.3 appointment data includes:** service type, therapist, calculated end time, cancellation reason, cancelled-by (patient/admin), and optional cancellation note. Booking source expands to App / phone / manual admin / other channel.
 - **Confirmed in v0.3 (Section 25):** service types (with durations driving slot logic), therapists (managed + assigned), and required/managed cancellation reasons.
-- **v0.4 open questions to confirm with client:** (1) MVP vs Phase 2 for these items; (2) can Sub-Admins view financial reports; (3) can Sub-Admins publish announcements or only Kuya; (4) announcements to all customers or selected; (5) how service income is recorded (manual / price list / package records) — **note: services currently have no price field, only products do**; (6) report sharing PDF-only or also Excel/CSV later.
+- **v0.6 current open questions:** (1) partial or full remaining Friend credit transfer; (2) transfer unit - sessions, money, or both; (3) onward re-transfer; (4) Kuya cancellation/reversal; (5) immediate effect of Sub-Admin permission changes; (6) whether report visibility strictly follows the two report permissions; (7) announcement audience - all or selected users; (8) PDF-only or future Excel/CSV report sharing.
+- **Superseded:** v0.5 Trusted Contacts and their proposed booking/direct package-use behavior. v0.6 Friends and credit-transfer rules are authoritative.
 - Open items still pending from earlier: auto vs manual approval, cancellation cutoff, verification method (OTP/email/both), multiple active packages, package start date, family approval rules, and clinic/resource-level conflict checking.
