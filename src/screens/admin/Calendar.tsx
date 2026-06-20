@@ -5,6 +5,7 @@ import { Icon } from '../../components/Icon'
 import { toast } from '../../components/Toast'
 import { cn } from '../../lib/cn'
 import { useApp } from '../../store/appStore'
+import { useCan } from '../../store/selectors'
 import { addDays, formatDate, formatDateShort, todayISO, weekdayLabel } from '../../lib/date'
 import { timeToMin } from '../../lib/booking'
 
@@ -20,6 +21,7 @@ export function AdminCalendar() {
   const availability = useApp((s) => s.availability)
   const publishAvailability = useApp((s) => s.publishAvailability)
   const removeAvailability = useApp((s) => s.removeAvailability)
+  const canManage = useCan('manageBooking')
 
   const therapists = allTherapists.filter((t) => t.active)
   const [therapistId, setTherapistId] = useState(therapists[0]?.id ?? '')
@@ -110,32 +112,40 @@ export function AdminCalendar() {
                       <span className="inline-flex items-center gap-xs font-label-lg text-label-lg text-on-surface">
                         <Icon name="check_circle" size={18} fill className="text-primary" /> {w.start} – {w.end}
                       </span>
-                      <button
-                        onClick={() => remove(w.id, `${w.start}–${w.end}`)}
-                        aria-label="Remove window"
-                        className="rounded-full p-xs text-on-surface-variant transition-colors hover:bg-error-container hover:text-error"
-                      >
-                        <Icon name="delete" size={20} />
-                      </button>
+                      {canManage && (
+                        <button
+                          onClick={() => remove(w.id, `${w.start}–${w.end}`)}
+                          aria-label="Remove window"
+                          className="rounded-full p-xs text-on-surface-variant transition-colors hover:bg-error-container hover:text-error"
+                        >
+                          <Icon name="delete" size={20} />
+                        </button>
+                      )}
                     </div>
                   ))
                 )}
 
-                <div className="grid grid-cols-2 gap-sm pt-sm">
-                  <Field label="From">
-                    <Select value={start} onChange={(e) => setStart(e.target.value)}>
-                      {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
-                    </Select>
-                  </Field>
-                  <Field label="To">
-                    <Select value={end} onChange={(e) => setEnd(e.target.value)}>
-                      {TIME_OPTIONS.filter((t) => timeToMin(t) > timeToMin(start)).map((t) => <option key={t} value={t}>{t}</option>)}
-                    </Select>
-                  </Field>
-                </div>
-                <Button size="sm" className="w-full" onClick={addWindow}>
-                  <Icon name="add" size={16} /> Add availability window
-                </Button>
+                {canManage ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-sm pt-sm">
+                      <Field label="From">
+                        <Select value={start} onChange={(e) => setStart(e.target.value)}>
+                          {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+                        </Select>
+                      </Field>
+                      <Field label="To">
+                        <Select value={end} onChange={(e) => setEnd(e.target.value)}>
+                          {TIME_OPTIONS.filter((t) => timeToMin(t) > timeToMin(start)).map((t) => <option key={t} value={t}>{t}</option>)}
+                        </Select>
+                      </Field>
+                    </div>
+                    <Button size="sm" className="w-full" onClick={addWindow}>
+                      <Icon name="add" size={16} /> Add availability window
+                    </Button>
+                  </>
+                ) : (
+                  <p className="pt-sm font-label-md text-label-md text-on-surface-variant">View-only — you don't have the Manage Booking permission.</p>
+                )}
               </div>
             </Card>
 

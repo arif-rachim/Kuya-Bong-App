@@ -4,6 +4,7 @@ import { Banner, Button, Card, EmptyState, Field, Input, Select } from '../../co
 import { Icon } from '../../components/Icon'
 import { toast } from '../../components/Toast'
 import { useApp } from '../../store/appStore'
+import { useCan } from '../../store/selectors'
 import { firstOfMonthISO, formatDate, formatPrice, todayISO } from '../../lib/date'
 
 type Category = 'services' | 'products'
@@ -15,8 +16,10 @@ export function AdminReports() {
   const products = useApp((s) => s.products)
   const appointments = useApp((s) => s.appointments)
   const purchases = useApp((s) => s.purchases)
+  const canServices = useCan('reportsServices')
+  const canProducts = useCan('reportsProducts')
 
-  const [category, setCategory] = useState<Category>('services')
+  const [category, setCategory] = useState<Category>(canServices ? 'services' : 'products')
   const [fromDate, setFromDate] = useState(firstOfMonthISO())
   const [toDate, setToDate] = useState(todayISO())
   const [serviceId, setServiceId] = useState('all')
@@ -63,9 +66,9 @@ export function AdminReports() {
       <div className="space-y-md p-md">
         <Card className="space-y-sm bg-surface-container-low">
           <Field label="Category">
-            <Select value={category} onChange={(e) => setCategory(e.target.value as Category)}>
-              <option value="services">Services (completed sessions)</option>
-              <option value="products">Products (sales)</option>
+            <Select value={category} onChange={(e) => setCategory(e.target.value as Category)} disabled={!(canServices && canProducts)}>
+              {canServices && <option value="services">Services (completed sessions)</option>}
+              {canProducts && <option value="products">Products (sales)</option>}
             </Select>
           </Field>
           <div className="grid grid-cols-2 gap-sm">

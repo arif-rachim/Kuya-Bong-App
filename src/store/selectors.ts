@@ -1,7 +1,7 @@
 /** Derived selector hooks on top of useApp. */
 import { useApp } from './appStore'
 import { todayISO } from '../lib/date'
-import type { Appointment, FamilyMember, PatientPackage } from '../data/types'
+import type { Appointment, Capability, FamilyMember, PatientPackage } from '../data/types'
 
 export function useCurrentUser() {
   return useApp((s) => s.users.find((u) => u.id === s.currentUserId) ?? null)
@@ -16,6 +16,29 @@ export function useIsMaster() {
   return useApp((s) => {
     const u = s.users.find((u) => u.id === s.currentUserId)
     return u?.role === 'admin' && u.adminLevel === 'master'
+  })
+}
+
+/**
+ * Whether the current admin can use a capability (blueprint v0.6 §6).
+ * Master Admin has everything; sub-admins follow the central permission profile.
+ */
+export function useCan(capability: Capability) {
+  return useApp((s) => {
+    const u = s.users.find((u) => u.id === s.currentUserId)
+    if (u?.role !== 'admin') return false
+    if (u.adminLevel === 'master') return true
+    return s.subAdminPermissions[capability] === true
+  })
+}
+
+/** True when the current admin has at least one of the given capabilities. */
+export function useCanAny(capabilities: Capability[]) {
+  return useApp((s) => {
+    const u = s.users.find((u) => u.id === s.currentUserId)
+    if (u?.role !== 'admin') return false
+    if (u.adminLevel === 'master') return true
+    return capabilities.some((c) => s.subAdminPermissions[c] === true)
   })
 }
 

@@ -6,11 +6,29 @@ import { toast } from '../../components/Toast'
 import { confirm } from '../../components/Confirm'
 import { cn } from '../../lib/cn'
 import { useApp } from '../../store/appStore'
+import type { Capability } from '../../data/types'
+
+const CAPABILITIES: { key: Capability; label: string }[] = [
+  { key: 'manageBooking', label: 'Manage Booking (availability)' },
+  { key: 'appointmentManagement', label: 'Appointment Management' },
+  { key: 'manageClinics', label: 'Manage Clinics' },
+  { key: 'manageTherapists', label: 'Manage Therapists' },
+  { key: 'managePatients', label: 'Manage Patients & Packages' },
+  { key: 'manageProducts', label: 'Manage Products' },
+  { key: 'manageServices', label: 'Manage Service Types' },
+  { key: 'manageCancellationReasons', label: 'Manage Cancellation Reasons' },
+  { key: 'manageAnnouncements', label: 'Manage Announcements' },
+  { key: 'manageFollowUp', label: 'Manage Follow-Up List' },
+  { key: 'reportsServices', label: 'Financial Reports - Services' },
+  { key: 'reportsProducts', label: 'Financial Reports - Products' },
+]
 
 export function AdminSubAdmins() {
   const users = useApp((s) => s.users)
   const appointSubAdmin = useApp((s) => s.appointSubAdmin)
   const removeSubAdmin = useApp((s) => s.removeSubAdmin)
+  const permissions = useApp((s) => s.subAdminPermissions)
+  const setPermission = useApp((s) => s.setSubAdminPermission)
 
   const admins = users.filter((u) => u.role === 'admin')
   const patients = users.filter((u) => u.role === 'patient')
@@ -102,6 +120,26 @@ export function AdminSubAdmins() {
             })
           )}
         </div>
+
+        <p className="px-xs pt-sm font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">
+          Sub-Admin permissions (applies to all sub-admins)
+        </p>
+        <Card className="space-y-xs">
+          {CAPABILITIES.map((c) => (
+            <div key={c.key} className="flex items-center justify-between gap-sm border-b border-outline-variant/20 py-xs last:border-0">
+              <span className="min-w-0 text-body-md text-on-surface">{c.label}</span>
+              <button
+                role="switch"
+                aria-checked={permissions[c.key]}
+                aria-label={c.label}
+                onClick={() => setPermission(c.key, !permissions[c.key])}
+                className={cn('relative h-7 w-12 shrink-0 rounded-full transition-colors', permissions[c.key] ? 'bg-primary' : 'bg-outline-variant')}
+              >
+                <span className={cn('absolute top-1 h-5 w-5 rounded-full bg-surface-container-lowest shadow transition-all', permissions[c.key] ? 'left-6' : 'left-1')} />
+              </button>
+            </div>
+          ))}
+        </Card>
       </div>
     </div>
   )
