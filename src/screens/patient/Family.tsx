@@ -174,7 +174,7 @@ export function Family() {
                 return (
                   <Card key={m.id} className={pending ? 'opacity-80' : undefined}>
                     <div className="flex items-center justify-between gap-sm">
-                      <div className="flex items-center gap-sm">
+                      <div className="flex min-w-0 items-center gap-sm">
                         <div
                           className={
                             'flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-headline-sm text-headline-sm ' +
@@ -186,11 +186,11 @@ export function Family() {
                           {initials(m.name)}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-headline-sm text-headline-sm text-on-surface">{m.name}</p>
+                          <p className="truncate font-headline-sm text-headline-sm text-on-surface">{m.name}</p>
                           <p className="text-label-md text-on-surface-variant">{role}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-xs">
+                      <div className="flex shrink-0 items-center gap-xs">
                         {pending ? (
                           <span className="inline-flex items-center gap-xs rounded-full bg-tertiary-fixed px-sm py-xs font-label-md text-label-md text-on-tertiary-fixed-variant">
                             <Icon name="schedule" size={16} /> Pending
