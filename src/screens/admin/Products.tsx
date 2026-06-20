@@ -8,6 +8,7 @@ import { confirm } from '../../components/Confirm'
 import { cn } from '../../lib/cn'
 import { useApp } from '../../store/appStore'
 import { formatPrice } from '../../lib/date'
+import { compressImage } from '../../lib/image'
 import type { Product, ProductCategory } from '../../data/types'
 
 export function AdminProducts() {
@@ -18,31 +19,50 @@ export function AdminProducts() {
 
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState<Product | null>(null)
-  const [form, setForm] = useState<{ name: string; category: ProductCategory; price: string; notes: string }>({
-    name: '', category: 'herbal', price: '', notes: '',
+  const [form, setForm] = useState<{ name: string; category: ProductCategory; price: string; notes: string; images: string[] }>({
+    name: '', category: 'herbal', price: '', notes: '', images: [],
   })
   const [error, setError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
 
   function openCreate() {
     setEditing(null)
-    setForm({ name: '', category: 'herbal', price: '', notes: '' })
+    setForm({ name: '', category: 'herbal', price: '', notes: '', images: [] })
     setError(null)
     setModal(true)
   }
   function openEdit(p: Product) {
     setEditing(p)
-    setForm({ name: p.name, category: p.category, price: String(p.price), notes: p.notes ?? '' })
+    setForm({ name: p.name, category: p.category, price: String(p.price), notes: p.notes ?? '', images: p.images ?? [] })
     setError(null)
     setModal(true)
+  }
+  async function addPhotos(files: FileList | null) {
+    if (!files || files.length === 0) return
+    setUploading(true)
+    try {
+      const next: string[] = []
+      for (const file of Array.from(files)) {
+        next.push(await compressImage(file))
+      }
+      setForm((f) => ({ ...f, images: [...f.images, ...next].slice(0, 5) }))
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not add photo.')
+    } finally {
+      setUploading(false)
+    }
+  }
+  function removePhoto(idx: number) {
+    setForm((f) => ({ ...f, images: f.images.filter((_, i) => i !== idx) }))
   }
   function save() {
     const price = Number(form.price)
     if (editing) {
-      const err = updateProduct(editing.id, { name: form.name, category: form.category, price, notes: form.notes })
+      const err = updateProduct(editing.id, { name: form.name, category: form.category, price, notes: form.notes, images: form.images })
       if (err) return setError(err)
       toast.success('Product updated.')
     } else {
-      const err = createProduct({ name: form.name, category: form.category, price, notes: form.notes })
+      const err = createProduct({ name: form.name, category: form.category, price, notes: form.notes, images: form.images })
       if (err) return setError(err)
       toast.success('Product added.')
     }
@@ -63,10 +83,19 @@ export function AdminProducts() {
           products.map((p) => (
             <Card key={p.id} className={cn(!p.active && 'opacity-60')}>
               <div className="flex items-start justify-between gap-sm">
-                <div className="min-w-0">
-                  <p className="font-label-lg text-label-lg text-on-surface">{p.name}</p>
-                  <p className="text-label-md capitalize text-on-surface-variant">{p.category} · {formatPrice(p.price)}</p>
-                  {p.notes && <p className="mt-xs text-label-md text-on-surface-variant">{p.notes}</p>}
+                <div className="flex min-w-0 gap-sm">
+                  {p.images?.[0] ? (
+                    <img src={p.images[0]} alt={p.name} className="h-14 w-14 shrink-0 rounded-lg border border-outline-variant/30 object-cover" />
+                  ) : (
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-surface-container-high text-on-surface-variant">
+                      <Icon name="image" size={22} />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-label-lg text-label-lg text-on-surface">{p.name}</p>
+                    <p className="text-label-md capitalize text-on-surface-variant">{p.category} · {formatPrice(p.price)}</p>
+                    {p.notes && <p className="mt-xs text-label-md text-on-surface-variant">{p.notes}</p>}
+                  </div>
                 </div>
                 <span
                   className={cn(
@@ -128,7 +157,30 @@ export function AdminProducts() {
           <Field label="Notes (optional)">
             <Textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
           </Field>
-          <Button size="lg" onClick={save}>Save</Button>
+          <Field label="Photos (optional)" hint="Up to 5. Large images are automatically resized & compressed.">
+            <div className="flex flex-wrap gap-sm">
+              {form.images.map((src, i) => (
+                <div key={i} className="relative">
+                  <img src={src} alt={`Photo ${i + 1}`} className="h-16 w-16 rounded-lg border border-outline-variant/30 object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(i)}
+                    aria-label="Remove photo"
+                    className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-error text-on-error"
+                  >
+                    <Icon name="close" size={12} />
+                  </button>
+                </div>
+              ))}
+              {form.images.length < 5 && (
+                <label className="flex h-16 w-16 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary">
+                  <Icon name={uploading ? 'hourglass_empty' : 'add_a_photo'} size={20} />
+                  <input type="file" accept="image/*" multiple className="hidden" disabled={uploading} onChange={(e) => { addPhotos(e.target.files); e.target.value = '' }} />
+                </label>
+              )}
+            </div>
+          </Field>
+          <Button size="lg" onClick={save} disabled={uploading}>Save</Button>
         </div>
       </Modal>
     </div>

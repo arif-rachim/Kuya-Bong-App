@@ -174,6 +174,7 @@ export interface Product {
   price: number
   active: boolean
   notes?: string
+  images?: string[] // optimized JPEG data URLs (v0.6 §3)
 }
 
 export type FollowUpStatus = 'NotDue' | 'Due' | 'Contacted' | 'Completed'

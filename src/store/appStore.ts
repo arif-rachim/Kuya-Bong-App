@@ -170,8 +170,8 @@ interface AppState {
   removeFamilyMember: (familyMemberId: string) => void
 
   // ---- products ----
-  createProduct: (input: { name: string; category: ProductCategory; price: number; notes?: string }) => Result
-  updateProduct: (id: string, patch: Partial<Pick<Product, 'name' | 'price' | 'category' | 'notes'>>) => Result
+  createProduct: (input: { name: string; category: ProductCategory; price: number; notes?: string; images?: string[] }) => Result
+  updateProduct: (id: string, patch: Partial<Pick<Product, 'name' | 'price' | 'category' | 'notes' | 'images'>>) => Result
   toggleProductActive: (id: string) => void
   recordPurchase: (input: {
     patientUserId: string
@@ -753,10 +753,10 @@ export const useApp = create<AppState>()(
         })),
 
       // ---------------- PRODUCTS ----------------
-      createProduct: ({ name, category, price, notes }) => {
+      createProduct: ({ name, category, price, notes, images }) => {
         if (!name.trim()) return 'Product name can\'t be empty.'
         if (price < 0) return 'Invalid price.'
-        const productNew: Product = { id: uid('prod'), name: name.trim(), category, price, active: true, notes }
+        const productNew: Product = { id: uid('prod'), name: name.trim(), category, price, active: true, notes, images }
         set((s) => ({ products: [...s.products, productNew] }))
         return null
       },
@@ -772,6 +772,7 @@ export const useApp = create<AppState>()(
                   price: patch.price ?? p.price,
                   category: patch.category ?? p.category,
                   notes: patch.notes ?? p.notes,
+                  images: patch.images ?? p.images,
                 }
               : p,
           ),
