@@ -5,11 +5,12 @@ import { Icon } from '../../components/Icon'
 import { toast } from '../../components/Toast'
 import { confirm } from '../../components/Confirm'
 import { useApp } from '../../store/appStore'
-import { useCurrentUser } from '../../store/selectors'
+import { useCurrentUser, useIsMaster } from '../../store/selectors'
 
 export function AdminSettings() {
   const navigate = useNavigate()
   const user = useCurrentUser()
+  const isMaster = useIsMaster()
   const logout = useApp((s) => s.logout)
   const requireApproval = useApp((s) => s.requireApproval)
   const setRequireApproval = useApp((s) => s.setRequireApproval)
@@ -63,17 +64,36 @@ export function AdminSettings() {
           </div>
         </Card>
 
-        <Card onClick={() => navigate('/admin/services')}>
-          <Item icon="medical_services" label="Service Types" desc="Services & durations" />
+        {isMaster && (
+          <>
+            <p className="px-xs pt-sm font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">
+              Master Admin only
+            </p>
+            <Card onClick={() => navigate('/admin/services')}>
+              <Item icon="medical_services" label="Service Types" desc="Services & durations" />
+            </Card>
+            <Card onClick={() => navigate('/admin/therapists')}>
+              <Item icon="person" label="Therapists" desc="Who delivers treatments" />
+            </Card>
+            <Card onClick={() => navigate('/admin/cancellation-reasons')}>
+              <Item icon="cancel" label="Cancellation Reasons" desc="Reasons for cancelling" />
+            </Card>
+            <Card onClick={() => navigate('/admin/clinic-settings')}>
+              <Item icon="apartment" label="Clinic Settings" desc="Add, edit & deactivate clinics" />
+            </Card>
+            <Card onClick={() => navigate('/admin/sub-admins')}>
+              <Item icon="shield_person" label="Sub-Admins" desc="Manage admin access" />
+            </Card>
+            <p className="px-xs pt-sm font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">
+              General
+            </p>
+          </>
+        )}
+        <Card onClick={() => navigate('/admin/announcements')}>
+          <Item icon="campaign" label="Announcements" desc="Push notices to customers" />
         </Card>
-        <Card onClick={() => navigate('/admin/therapists')}>
-          <Item icon="person" label="Therapists" desc="Who delivers treatments" />
-        </Card>
-        <Card onClick={() => navigate('/admin/cancellation-reasons')}>
-          <Item icon="cancel" label="Cancellation Reasons" desc="Reasons for cancelling" />
-        </Card>
-        <Card onClick={() => navigate('/admin/clinic-settings')}>
-          <Item icon="apartment" label="Clinic Settings" desc="Edit Clinic A & B names" />
+        <Card onClick={() => navigate('/admin/reports')}>
+          <Item icon="bar_chart" label="Financial Reports" desc="Service & product income" />
         </Card>
         <Card onClick={() => navigate('/admin/follow-ups')}>
           <Item icon="medication" label="Follow-up List" desc="Patients to contact" />

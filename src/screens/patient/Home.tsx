@@ -5,7 +5,7 @@ import { PageIntro } from '../../components/PageIntro'
 import { useApp } from '../../store/appStore'
 import { isUpcoming, useActivePackage, useCurrentUser } from '../../store/selectors'
 import { ClinicBadge } from '../../components/StatusBadge'
-import { formatDate } from '../../lib/date'
+import { formatDate, todayISO } from '../../lib/date'
 
 export function PatientHome() {
   const navigate = useNavigate()
@@ -13,6 +13,8 @@ export function PatientHome() {
   const pkg = useActivePackage(user?.id)
   const appointments = useApp((s) => s.appointments)
   const clinics = useApp((s) => s.clinics)
+  const announcements = useApp((s) => s.announcements)
+  const activeAnnouncements = announcements.filter((a) => a.published && a.expiryDate >= todayISO()).length
   const upcoming = appointments
     .filter((a) => a.patientUserId === user?.id && isUpcoming(a))
     .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))[0]
@@ -24,8 +26,17 @@ export function PatientHome() {
       {/* Top app bar */}
       <header className="safe-top sticky top-0 z-40 flex items-center justify-between bg-surface px-margin-mobile pb-base">
         <Logo className="text-xl" tagline />
-        <button className="rounded-full p-xs text-primary hover:bg-surface-container-high" aria-label="Notifications">
+        <button
+          onClick={() => navigate('/patient/announcements')}
+          className="relative rounded-full p-xs text-primary hover:bg-surface-container-high"
+          aria-label="Announcements"
+        >
           <Icon name="notifications" />
+          {activeAnnouncements > 0 && (
+            <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 font-label-md text-[10px] leading-none text-on-error">
+              {activeAnnouncements}
+            </span>
+          )}
         </button>
       </header>
 

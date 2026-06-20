@@ -49,6 +49,11 @@ export function isPastDate(iso: string): boolean {
   return iso < todayISO()
 }
 
+/** First day of the current month as an ISO date (YYYY-MM-01). */
+export function firstOfMonthISO(): string {
+  return todayISO().slice(0, 8) + '01'
+}
+
 /** Hours between now and a date + time. Negative if already past. */
 export function hoursUntil(dateISO: string, timeHHmm: string): number {
   const target = new Date(`${dateISO}T${timeHHmm}:00`).getTime()

@@ -1,6 +1,7 @@
 /** Initial (mock) data for the demo. Called when the store is first initialized. */
 import { addDays, addMonths, todayISO } from '../lib/date'
 import type {
+  Announcement,
   Appointment,
   CancellationReason,
   Clinic,
@@ -22,10 +23,21 @@ export const seedUsers: User[] = [
   {
     id: 'u-admin',
     role: 'admin',
-    name: 'Realief Expert',
+    adminLevel: 'master',
+    name: 'Kuya Bong',
     mobile: '+971501234567',
     email: 'admin@reliefexpert.app',
     password: 'admin123',
+    verification: 'verified',
+  },
+  {
+    id: 'u-sub',
+    role: 'admin',
+    adminLevel: 'sub',
+    name: 'Erick (Sub-Admin)',
+    mobile: '+971503334444',
+    email: 'staff@reliefexpert.app',
+    password: 'staff123',
     verification: 'verified',
   },
   {
@@ -207,6 +219,28 @@ export function seedPatientPackages(): PatientPackage[] {
       assignDate,
       expiryDate: addMonths(assignDate, 3),
       status: 'active',
+    },
+  ]
+}
+
+export function seedAnnouncements(): Announcement[] {
+  const today = todayISO()
+  return [
+    {
+      id: 'ann-1',
+      title: 'Buy One Get One Free',
+      message: 'This week only: buy any herbal product and get a second one free. Ask Kuya at your next visit!',
+      createdAt: addDays(today, -2),
+      expiryDate: addDays(today, 12),
+      published: true,
+    },
+    {
+      id: 'ann-2',
+      title: 'Clinic B Maintenance',
+      message: 'Clinic B will be closed for maintenance next Monday. Please book at Clinic A for that day.',
+      createdAt: addDays(today, -1),
+      expiryDate: addDays(today, 6),
+      published: true,
     },
   ]
 }

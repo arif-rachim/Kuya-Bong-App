@@ -6,6 +6,7 @@ import { Icon } from '../../components/Icon'
 import { toast } from '../../components/Toast'
 import { confirm } from '../../components/Confirm'
 import { useApp } from '../../store/appStore'
+import { useIsMaster } from '../../store/selectors'
 import { todayISO } from '../../lib/date'
 
 export function AdminDashboard() {
@@ -19,6 +20,7 @@ export function AdminDashboard() {
   const therapists = useApp((s) => s.therapists)
   const approve = useApp((s) => s.approveAppointment)
   const reject = useApp((s) => s.rejectAppointment)
+  const isMaster = useIsMaster()
 
   const todays = appointments
     .filter((a) => a.date === today && (a.status === 'Confirmed' || a.status === 'Rescheduled'))
@@ -129,11 +131,13 @@ export function AdminDashboard() {
 
         <section className="grid grid-cols-2 gap-sm">
           <QuickAction icon="event_available" label="Manual Booking" onClick={() => navigate('/admin/manual-booking')} />
-          <QuickAction icon="medical_services" label="Service Types" onClick={() => navigate('/admin/services')} />
-          <QuickAction icon="person_4" label="Therapists" onClick={() => navigate('/admin/therapists')} />
+          {isMaster && <QuickAction icon="medical_services" label="Service Types" onClick={() => navigate('/admin/services')} />}
+          {isMaster && <QuickAction icon="person_4" label="Therapists" onClick={() => navigate('/admin/therapists')} />}
           <QuickAction icon="medication" label="Follow-up List" onClick={() => navigate('/admin/follow-ups')} />
           <QuickAction icon="inventory_2" label="Packages" onClick={() => navigate('/admin/packages')} />
           <QuickAction icon="groups" label="Patients" onClick={() => navigate('/admin/patients')} />
+          <QuickAction icon="campaign" label="Announcements" onClick={() => navigate('/admin/announcements')} />
+          <QuickAction icon="bar_chart" label="Reports" onClick={() => navigate('/admin/reports')} />
         </section>
       </div>
     </div>

@@ -11,6 +11,14 @@ export function useCurrentProfile() {
   return useApp((s) => s.profiles.find((p) => p.userId === s.currentUserId) ?? null)
 }
 
+/** True when the logged-in user is the Master Admin (Kuya). */
+export function useIsMaster() {
+  return useApp((s) => {
+    const u = s.users.find((u) => u.id === s.currentUserId)
+    return u?.role === 'admin' && u.adminLevel === 'master'
+  })
+}
+
 export function useClinic(clinicId: string | undefined) {
   return useApp((s) => s.clinics.find((c) => c.id === clinicId) ?? null)
 }

@@ -14,7 +14,7 @@ export function ManualBooking() {
   const navigate = useNavigate()
   const allUsers = useApp((s) => s.users)
   const patients = allUsers.filter((u) => u.role === 'patient')
-  const clinics = useApp((s) => s.clinics)
+  const clinics = useApp((s) => s.clinics).filter((c) => c.active)
   const allServices = useApp((s) => s.services)
   const therapists = useApp((s) => s.therapists)
   const availability = useApp((s) => s.availability)
