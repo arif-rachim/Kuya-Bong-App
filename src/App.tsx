@@ -46,11 +46,11 @@ import { AdminTherapists } from './screens/admin/Therapists'
 import { AdminCancellationReasons } from './screens/admin/CancellationReasons'
 import { AdminSubAdmins } from './screens/admin/SubAdmins'
 import { AdminAuditLog } from './screens/admin/AuditLog'
-import { AdminCreditTransfers } from './screens/admin/CreditTransfers'
 import { AdminHouseholdReport } from './screens/admin/HouseholdReport'
 import { AdminAnnouncements } from './screens/admin/Announcements'
 import { AdminReports } from './screens/admin/Reports'
 import { AdminSettings } from './screens/admin/Settings'
+import { APP_VERSION } from './version'
 
 function RequireRole({ role, children }: { role: 'patient' | 'admin'; children: ReactNode }) {
   const user = useCurrentUser()
@@ -137,7 +137,6 @@ export default function App() {
         <Route path="cancellation-reasons" element={<RequireCap caps={['manageCancellationReasons']}><AdminCancellationReasons /></RequireCap>} />
         <Route path="sub-admins" element={<RequireMaster><AdminSubAdmins /></RequireMaster>} />
         <Route path="audit" element={<RequireMaster><AdminAuditLog /></RequireMaster>} />
-        <Route path="transfers" element={<RequireMaster><AdminCreditTransfers /></RequireMaster>} />
         <Route path="settings" element={<AdminSettings />} />
       </Route>
 
@@ -145,6 +144,9 @@ export default function App() {
       </Routes>
       <Toaster />
       <ConfirmHost />
+      <div className="pointer-events-none fixed right-1 top-1 z-[9999] select-none rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+        {APP_VERSION}
+      </div>
     </MotionConfig>
   )
 }

@@ -133,9 +133,6 @@ export function AdminSettings() {
             <Card onClick={() => navigate('/admin/audit')}>
               <Item icon="history" label="Audit Log" desc="Important admin actions" />
             </Card>
-            <Card onClick={() => navigate('/admin/transfers')}>
-              <Item icon="swap_horiz" label="Credit Transfers" desc="Friend transfers & reversal" />
-            </Card>
           </>
         )}
 

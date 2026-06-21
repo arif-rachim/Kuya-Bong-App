@@ -207,7 +207,6 @@ interface AppState {
   declineFriend: (friendId: string) => void
   removeFriend: (friendId: string) => void
   transferCredit: (input: { fromPackageId: string; toUserId: string; sessions: number }) => Result
-  reverseTransfer: (transferId: string) => Result
 }
 
 /** Refresh package status based on balance & expiry (BR-13/zero balance). */
@@ -972,27 +971,6 @@ export const useApp = create<AppState>()(
         const from = state.users.find((u) => u.id === me)
         const to = state.users.find((u) => u.id === toUserId)
         get().logAudit('Transfer package credit', `${sessions} session(s): ${from?.name ?? me} -> ${to?.name ?? toUserId}`)
-        return null
-      },
-
-      // Master Admin can reverse a transfer if the recipient hasn't used the credit yet.
-      reverseTransfer: (transferId) => {
-        const state = get()
-        const t = state.creditTransfers.find((x) => x.id === transferId)
-        if (!t) return 'Transfer not found.'
-        if (t.reversed) return 'This transfer was already reversed.'
-        const recipientPkg = state.patientPackages.find((p) => p.id === t.recipientPackageId)
-        if (!recipientPkg || recipientPkg.remaining < t.sessions)
-          return 'Can\'t reverse — the recipient has already used some of the transferred sessions.'
-        const sourcePkg = state.patientPackages.find((p) => p.id === t.originalPackageId)
-        if (!sourcePkg) return 'Original package no longer exists.'
-        set((s) => ({
-          patientPackages: s.patientPackages
-            .map((p) => (p.id === t.originalPackageId ? recomputePackage({ ...p, remaining: p.remaining + t.sessions }) : p))
-            .map((p) => (p.id === t.recipientPackageId ? recomputePackage({ ...p, remaining: p.remaining - t.sessions, totalSessions: Math.max(0, p.totalSessions - t.sessions) }) : p)),
-          creditTransfers: s.creditTransfers.map((x) => (x.id === transferId ? { ...x, reversed: true } : x)),
-        }))
-        get().logAudit('Reverse credit transfer', `${t.sessions} session(s) returned to original owner`)
         return null
       },
     }),
