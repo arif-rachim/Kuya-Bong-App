@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { PageHeader } from '../../components/PageHeader'
-import { Banner, Button, Card, EmptyState, Field, Input, Select, Textarea } from '../../components/ui'
+import { Banner, Button, Card, DateField, EmptyState, Field, Select, Textarea } from '../../components/ui'
 import { AppointmentStatusBadge, ClinicBadge } from '../../components/StatusBadge'
 import { Icon } from '../../components/Icon'
 import { Modal } from '../../components/Modal'
@@ -200,7 +200,7 @@ export function AdminAppointments() {
               </Select>
             </Field>
             <Field label="Date">
-              <Input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} />
+              <DateField value={dateFilter} onChange={setDateFilter} placeholder="Any date" />
             </Field>
           </div>
         </Card>
