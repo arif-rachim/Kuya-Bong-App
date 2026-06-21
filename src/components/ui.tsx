@@ -8,6 +8,7 @@ import {
 } from 'react'
 import { motion, type HTMLMotionProps } from 'framer-motion'
 import { cn } from '../lib/cn'
+import { formatDateCompact } from '../lib/date'
 import { Icon } from './Icon'
 
 // Drop the handful of DOM handlers whose names collide with Framer's props.
@@ -117,6 +118,46 @@ export function Select({ children, ...props }: SelectHTMLAttributes<HTMLSelectEl
     <select {...props} className={cn(inputBase, 'appearance-none', props.className)}>
       {children}
     </select>
+  )
+}
+
+/**
+ * Date field with a compact DD-MMM-YY label that still opens the OS date picker.
+ * The native input is overlaid transparently (absolutely positioned) so its
+ * width is the container's — avoiding WebKit/iOS date-input intrinsic-width
+ * overflow — while we control the visible, space-saving format.
+ */
+export function DateField({
+  value,
+  onChange,
+  min,
+  max,
+  placeholder = 'Select date',
+}: {
+  value: string
+  onChange: (value: string) => void
+  min?: string
+  max?: string
+  placeholder?: string
+}) {
+  return (
+    <div className="relative w-full">
+      <div className={cn(inputBase, 'flex items-center justify-between gap-sm')}>
+        <span className={cn('truncate', value ? 'text-on-surface' : 'text-on-surface-variant/70')}>
+          {value ? formatDateCompact(value) : placeholder}
+        </span>
+        <Icon name="calendar_today" size={18} className="shrink-0 text-on-surface-variant" />
+      </div>
+      <input
+        type="date"
+        value={value}
+        min={min}
+        max={max}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={placeholder}
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+      />
+    </div>
   )
 }
 

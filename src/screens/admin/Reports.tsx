@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { PageHeader } from '../../components/PageHeader'
-import { Banner, Button, Card, EmptyState, Field, Input, Select } from '../../components/ui'
+import { Banner, Button, Card, DateField, EmptyState, Field, Select } from '../../components/ui'
 import { Icon } from '../../components/Icon'
 import { toast } from '../../components/Toast'
 import { useApp } from '../../store/appStore'
@@ -71,14 +71,6 @@ export function AdminReports() {
               {canProducts && <option value="products">Products (sales)</option>}
             </Select>
           </Field>
-          <div className="grid grid-cols-2 gap-sm">
-            <Field label="From">
-              <Input type="date" value={fromDate} max={toDate} onChange={(e) => setFromDate(e.target.value)} />
-            </Field>
-            <Field label="To">
-              <Input type="date" value={toDate} min={fromDate} onChange={(e) => setToDate(e.target.value)} />
-            </Field>
-          </div>
           {category === 'services' ? (
             <Field label="Service">
               <Select value={serviceId} onChange={(e) => setServiceId(e.target.value)}>
@@ -98,6 +90,14 @@ export function AdminReports() {
               </Select>
             </Field>
           )}
+          <div className="grid grid-cols-2 gap-sm">
+            <Field label="From">
+              <DateField value={fromDate} max={toDate} onChange={setFromDate} />
+            </Field>
+            <Field label="To">
+              <DateField value={toDate} min={fromDate} onChange={setToDate} />
+            </Field>
+          </div>
         </Card>
 
         {invalidRange && <Banner kind="error">"From" date must not be later than "To" date.</Banner>}

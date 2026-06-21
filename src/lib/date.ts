@@ -36,6 +36,15 @@ export function formatDateShort(iso: string): string {
   return `${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`
 }
 
+/** Compact, space-saving format: DD-MMM-YY (e.g. 21-Jun-26). */
+export function formatDateCompact(iso: string): string {
+  if (!iso) return ''
+  const d = isoToDate(iso)
+  const day = String(d.getDate()).padStart(2, '0')
+  const yy = String(d.getFullYear()).slice(-2)
+  return `${day}-${MONTH_NAMES[d.getMonth()]}-${yy}`
+}
+
 export function weekdayLabel(iso: string): string {
   return DAY_NAMES[isoToDate(iso).getDay()]
 }
