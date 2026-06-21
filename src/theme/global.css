@@ -51,6 +51,30 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Form controls must never exceed their container. iOS/Safari (WebKit) gives
+   native date/time inputs an intrinsic min width that ignores `width:100%`,
+   which pushed the From/To fields off-screen. Resetting -webkit-appearance and
+   capping max-width makes them behave like normal boxes that fit their column. */
+input,
+select,
+textarea {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+input[type='date'],
+input[type='datetime-local'],
+input[type='time'],
+input[type='month'] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+}
+input[type='date']::-webkit-date-and-time-value {
+  text-align: left;
+  min-width: 0;
+  margin: 0;
+}
+
 /* Material Symbols icons */
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';

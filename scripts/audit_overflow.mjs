@@ -1,5 +1,6 @@
-import { chromium } from 'playwright'
+import { chromium, webkit } from 'playwright'
 
+const ENGINES = { chromium, webkit }
 const BASE = 'http://localhost:4173'
 const VIEWPORTS = [
   { name: '320', width: 320, height: 720 },
@@ -36,9 +37,11 @@ const checkOverflow = async (page) =>
     return { over: Math.round(over), offenders: [...new Set(offenders)].slice(0, 4) }
   })
 
+const engineName = process.env.PWBROWSER || 'chromium'
 const run = async () => {
-  const browser = await chromium.launch({ args: ['--no-sandbox'] })
+  const browser = await ENGINES[engineName].launch({ args: engineName === 'chromium' ? ['--no-sandbox'] : [] })
   let problems = 0
+  console.log(`\n===== engine: ${engineName} =====`)
   for (const vp of VIEWPORTS) {
     const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height } })
     const page = await ctx.newPage()
