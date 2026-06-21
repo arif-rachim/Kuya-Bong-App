@@ -163,7 +163,7 @@ export function Friends() {
             <Field label="Sessions to transfer">
               <Input type="number" min={1} value={xferSessions} onChange={(e) => setXferSessions(e.target.value)} />
             </Field>
-            <Banner kind="info">Transferred sessions keep the original expiry date. Kuya can reverse a transfer if it hasn't been used.</Banner>
+            <Banner kind="info">Transferred sessions keep the original expiry date.</Banner>
             <Button size="lg" onClick={submitTransfer}>Transfer</Button>
           </div>
         )}

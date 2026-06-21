@@ -54,7 +54,7 @@ export function AdminSubAdmins() {
         <Card className="space-y-sm bg-surface-container-low">
           <Field label="Appoint a registered user as sub-admin">
             <Select value={pick} onChange={(e) => setPick(e.target.value)}>
-              <option value="">— Select a patient —</option>
+              <option value="">— Select a user —</option>
               {patients.map((p) => (
                 <option key={p.id} value={p.id}>{p.name} ({p.email})</option>
               ))}
