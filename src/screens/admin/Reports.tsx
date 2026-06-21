@@ -71,7 +71,7 @@ export function AdminReports() {
               {canProducts && <option value="products">Products (sales)</option>}
             </Select>
           </Field>
-          <div className="grid grid-cols-1 gap-sm sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-sm">
             <Field label="From">
               <Input type="date" value={fromDate} max={toDate} onChange={(e) => setFromDate(e.target.value)} />
             </Field>
