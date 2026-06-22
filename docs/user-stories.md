@@ -1,9 +1,9 @@
 # Kuya Bong App — User Stories (MVP)
 
-Based on the consolidated *Product Concept and Solution Blueprint v0.6* (tracking KBA-BP-20260620-003),
-including the traceable v0.4 and v0.5 update documents.
+Based on the current *Product Concept and Solution Blueprint v0.7* (tracking KBA-BP-20260622-001),
+with v0.3-v0.6 retained as traceable predecessor documents.
 Organized simply per feature, with a **Positive Flow** (success) and **Negative Flow** (failure / edge case).
-Roles: **Patient**, **Admin (Kuya Bong / Master Admin)**, and **Sub-Admin**.
+Roles: **Patient / Normal User**, **Master Admin (Kuya Bong)**, **Sub-Admin**, and **Physiotherapist**.
 
 > **v0.3 update:** Sections 14–18 cover blueprint Section 25 — service types, therapists,
 > service-duration-driven slots, conflict prevention, and cancellation reasons. Sections 4, 5,
@@ -16,6 +16,9 @@ Roles: **Patient**, **Admin (Kuya Bong / Master Admin)**, and **Sub-Admin**.
 > **v0.5/v0.6 update:** Sections 25–28 cover product photos, expanded Family linking, confirmed
 > Friends with package-credit transfer, household reporting, and central Sub-Admin permissions.
 > v0.6 supersedes v0.5 Trusted Contacts with Friends.
+>
+> **v0.7 update:** Sections 15, 29, and 30 make Physiotherapist a registered-user role and add
+> non-destructive user deactivation. v0.7 is authoritative where earlier wording conflicts.
 
 ---
 
@@ -224,17 +227,19 @@ Roles: **Patient**, **Admin (Kuya Bong / Master Admin)**, and **Sub-Admin**.
 
 ---
 
-## 15. Admin — Therapist Management
+## 15. Physiotherapist Role Management (v0.7)
 
 ### Positive
-- As an admin, I want to add and edit therapist names so that I can support myself plus occasional therapists (e.g. my brother).
-- As an admin, I want to activate or deactivate a therapist so that only available therapists can be assigned.
-- As an admin, I want to assign a therapist to an appointment so that I know who delivers each session.
-- As an admin, I want to view appointments filtered by therapist so that I can see each therapist's schedule.
+- As the Master Admin, I want to appoint a registered user as a Physiotherapist so that the person can authenticate and access an owned schedule.
+- As the Master Admin, I want to remove or deactivate a Physiotherapist role without deleting appointment history so that staffing changes preserve records.
+- As an authorized admin, I want to assign a Physiotherapist to an appointment so that responsibility is explicit.
+- As a Physiotherapist, I want to view my schedule and appointments assigned to me so that I can manage my work.
+- As an authorized user, I want to filter appointments by Physiotherapist so that schedules can be reviewed.
 
 ### Negative
-- As an admin, I want to be prevented from saving a therapist with an empty name so that therapist data stays valid.
-- As an admin, I want to be warned before deactivating a therapist who has upcoming appointments so that I don't leave sessions unassigned.
+- As the Master Admin, I want free-text-only Physiotherapist creation blocked so that every Physiotherapist maps to a registered user identity.
+- As a Physiotherapist, I want access to another Physiotherapist's appointments blocked unless I also have effective Sub-Admin permission so that schedule ownership is enforced.
+- As an admin, I want to be warned before removing/deactivating a Physiotherapist with upcoming appointments so that sessions are not left unmanaged.
 
 ---
 
@@ -396,10 +401,38 @@ The configurable permissions are: Manage Booking, Appointment Management, Manage
 
 ---
 
-## 29. Notes
-- Appointment statuses: Available, Pending Approval, Confirmed, Rescheduled, Cancelled (by Patient/Admin), Completed, No-Show.
+## 29. User Deactivation (v0.7)
+
+### Positive
+- As the Master Admin, I want to deactivate a user for a business or security reason so that access can be stopped without destroying records.
+- As the Master Admin, I want deactivation to make the user's Sub-Admin and Physiotherapist privileges ineffective so that no privileged access survives account deactivation.
+- As an auditor, I want the deactivation actor, timestamp, reason, and affected role assignments recorded so that the action is traceable.
+
+### Negative
+- As a deactivated user, I want login and new booking creation blocked so that deactivation is effective.
+- As the system owner, I want deactivation prevented from deleting or rewriting appointments, packages, product sales, financial records, or role history so that business history remains intact.
+- As the Master Admin, I want reactivation behavior treated as unresolved until Q-15 is approved so that an assumption does not become permanent policy.
+
+---
+
+## 30. Physiotherapist Schedule & Appointment Actions (v0.7)
+
+### Positive
+- As a Physiotherapist, I want a My Schedule view containing only my assigned appointments so that I can focus on my work.
+- As a Physiotherapist, I want appointment details to show patient, service, clinic, date, time, and permitted actions so that I have operational context.
+- As the system owner, I want actions by a Physiotherapist recorded with the actor and appointment so that changes are auditable.
+
+### Negative
+- As a Physiotherapist, I want unassigned appointments inaccessible unless I hold additional effective Sub-Admin permission so that patient and schedule data is least-privilege.
+- As a Physiotherapist, I want availability creation and cancellation/rescheduling behavior held behind explicit policy decisions Q-03 and Q-04 so that unresolved authority is not assumed.
+- As the system owner, I want an overlapping appointment for the same Physiotherapist blocked across all clinics so that a person cannot be double-booked.
+
+---
+
+## 31. Notes
+- Appointment statuses: Available, Pending Approval, Confirmed, Rescheduled, Cancelled by Patient, Cancelled by Admin, Cancelled by Physiotherapist, Completed, No-Show.
 - **v0.3 appointment data includes:** service type, therapist, calculated end time, cancellation reason, cancelled-by (patient/admin), and optional cancellation note. Booking source expands to App / phone / manual admin / other channel.
-- **Confirmed in v0.3 (Section 25):** service types (with durations driving slot logic), therapists (managed + assigned), and required/managed cancellation reasons.
-- **v0.6 current open questions:** (1) partial or full remaining Friend credit transfer; (2) transfer unit - sessions, money, or both; (3) onward re-transfer; (4) Kuya cancellation/reversal; (5) immediate effect of Sub-Admin permission changes; (6) whether report visibility strictly follows the two report permissions; (7) announcement audience - all or selected users; (8) PDF-only or future Excel/CSV report sharing.
+- **v0.7 supersession:** Service-duration and cancellation-reason requirements remain, but therapist free-text/master-data wording is replaced by the registered-user Physiotherapist role.
+- **v0.7 current open questions:** (1) v0.7 MVP versus Phase 2 scope; (2) Physiotherapist/Sub-Admin role overlap; (3) Physiotherapist self-availability; (4) direct versus approval-based Physiotherapist cancellation/rescheduling; (5) partial/full Friend transfer; (6) transfer unit; (7) onward transfer; (8) Kuya reversal; (9) immediate Sub-Admin permission effect; (10) announcement audience; (11) one versus multiple product photos; (12) service-income source; (13) package-income recognition; (14) PDF versus Excel/CSV; (15) user reactivation.
 - **Superseded:** v0.5 Trusted Contacts and their proposed booking/direct package-use behavior. v0.6 Friends and credit-transfer rules are authoritative.
 - Open items still pending from earlier: auto vs manual approval, cancellation cutoff, verification method (OTP/email/both), multiple active packages, package start date, family approval rules, and clinic/resource-level conflict checking.

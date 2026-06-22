@@ -1,18 +1,18 @@
 ---
 title: Kuya Bong Mobile App - Product Concept and Solution Blueprint
-document_version: "0.6"
+document_version: "0.7"
 status: Consolidated working requirements; open questions remain
-tracking_number: KBA-BP-20260620-003
-source_pdf: Kuya_Bong_Product_Concept_and_Solution_Blueprint.pdf plus Blueprint Updates v0.4-v0.6
-updated: 2026-06-20
+tracking_number: KBA-BP-20260622-001
+source_pdf: Kuya_Bong_Product_Concept_and_Solution_Blueprint_v0.7.pdf
+updated: 2026-06-22
 ---
 
 # Kuya Bong Mobile App
 
 Product Concept and Solution Blueprint
 
-> Current tracking number: KBA-BP-20260620-003
-> Consolidates the v0.3 source blueprint with additive updates v0.4, v0.5, and v0.6. If update wording conflicts, the latest version takes precedence.
+> Current tracking number: KBA-BP-20260622-001
+> v0.7 is the current full blueprint and supersedes conflicting wording in v0.3-v0.6. See the dedicated v0.7 Markdown companion for the clean current specification.
 
 ## Page 1
 
@@ -1135,3 +1135,61 @@ The logical data model must support:
 - Authorization checks for every protected operation and audit records for important admin actions.
 - Announcement lifecycle state, expiry, author, publication/withdrawal timestamps, and retained history.
 - Financial report inputs derived from completed service records and recorded product sales without rewriting historical amounts.
+
+## 27. Authoritative v0.7 Additions and Supersessions
+
+This section records the material changes introduced by the full v0.7 blueprint. If any earlier section conflicts, this section and the dedicated `Kuya_Bong_Product_Concept_and_Solution_Blueprint_v0.7.md` companion take precedence.
+
+### 27.1 Registered-user Physiotherapist role
+
+- A Physiotherapist is a registered user appointed or removed by the Master Admin.
+- Physiotherapist data must not be maintained as free-text names.
+- Physiotherapists can authenticate, view their own schedule, and access appointments assigned to them.
+- They cannot manage another Physiotherapist's appointments unless they also hold effective Sub-Admin permission.
+- Whether they can create their own availability or directly cancel/reschedule assigned appointments remains open.
+- Role overlap between Patient, Sub-Admin, and Physiotherapist remains open and requires an explicit authorization hierarchy.
+
+This supersedes earlier therapist-management wording that treated therapists as standalone name records.
+
+### 27.2 User deactivation
+
+- Master Admin can deactivate a user for business or security reasons.
+- Deactivated users cannot log in or make new bookings.
+- Deactivation must preserve appointments, packages, product sales, financial records, role history, and audit history.
+- Effective Sub-Admin and Physiotherapist privileges become inactive while the user is deactivated.
+- Whether Master Admin can later reactivate a user is open question Q-15.
+
+### 27.3 Updated appointment and audit requirements
+
+- Booking selection includes service, clinic, date, valid time, and relevant assigned Physiotherapist.
+- Cancellation actor can be Patient, Master Admin, Sub-Admin, or Physiotherapist.
+- Appointment status adds **Cancelled by Physiotherapist**.
+- Role assignment, user deactivation, appointment actions, package transfers, product changes, and report generation should be audit logged.
+
+### 27.4 Updated technical entities
+
+- **Role Assignment:** user, role type, assigning actor, assignment/removal dates, and active state.
+- **Physiotherapist:** linked User ID and active status, never only a free-text display name.
+- **User:** verification status, active/deactivated state, and role flags/assignments.
+- **Appointment Slot:** clinic, service, Physiotherapist, start/end, and availability state.
+- **Audit Log:** actor, action, affected record, timestamp, and before/after notes where needed.
+
+### 27.5 v0.7 open questions
+
+This complete v0.7 register supersedes earlier open-question registers and reuses identifiers from the new full blueprint. Do not combine it with the older Q-ID lists.
+
+1. Are all v0.7 requirements MVP, or should some be Phase 2?
+2. Can a Physiotherapist also be a Sub-Admin?
+3. Can a Physiotherapist create their own availability?
+4. Can a Physiotherapist cancel/reschedule directly, or only request Kuya approval?
+5. Are Friend transfers partial or full remaining credit only?
+6. Is transferred credit measured in sessions, money, or both?
+7. Can received credit be transferred onward?
+8. Can Kuya reverse an erroneous transfer?
+9. Do Sub-Admin permission changes take effect immediately?
+10. Are announcements sent to all users or selected groups?
+11. Should products have one main photo or multiple photos?
+12. Is service income manual, price-list based, or linked to package purchase records?
+13. Is package income recognized at sale or as sessions are consumed?
+14. Is report sharing PDF-only, or should Excel/CSV follow?
+15. Can Kuya reactivate a deactivated user?
