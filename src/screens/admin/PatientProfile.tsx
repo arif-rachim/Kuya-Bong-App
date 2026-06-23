@@ -31,10 +31,15 @@ export function AdminPatientProfile() {
   const recordPurchase = useApp((s) => s.recordPurchase)
   const deactivateUser = useApp((s) => s.deactivateUser)
   const reactivateUser = useApp((s) => s.reactivateUser)
+  const updatePatientPackageRemaining = useApp((s) => s.updatePatientPackageRemaining)
+  const removePatientPackage = useApp((s) => s.removePatientPackage)
   const isMaster = useIsMaster()
 
   const [modal, setModal] = useState<'pkg' | 'buy' | null>(null)
   const [defId, setDefId] = useState('')
+  const [initRemaining, setInitRemaining] = useState('')
+  const [editPkg, setEditPkg] = useState<{ id: string; name: string; total: number; value: string } | null>(null)
+  const [editError, setEditError] = useState<string | null>(null)
   const [buy, setBuy] = useState({ productId: '', quantity: '1', followUpDays: '30' })
   const [error, setError] = useState<string | null>(null)
 
@@ -51,9 +56,29 @@ export function AdminPatientProfile() {
 
   function doAssign() {
     if (!defId) return setError('Select a package definition.')
-    const err = assignPackage(id, defId)
+    const remaining = initRemaining.trim() === '' ? undefined : Number(initRemaining)
+    const err = assignPackage(id, defId, remaining)
     if (err) return setError(err)
-    setModal(null); setError(null); setDefId(''); toast.success('Package assigned successfully.')
+    setModal(null); setError(null); setDefId(''); setInitRemaining(''); toast.success('Package assigned successfully.')
+  }
+
+  function saveEditRemaining() {
+    if (!editPkg) return
+    const err = updatePatientPackageRemaining(editPkg.id, Number(editPkg.value))
+    if (err) return setEditError(err)
+    setEditPkg(null); setEditError(null); toast.success('Remaining sessions updated.')
+  }
+  async function deletePackage(pkgId: string, name: string) {
+    const ok = await confirm({
+      title: 'Pull back package?',
+      message: `Delete the assigned "${name}" subscription? Use this only for a wrongly assigned package. This is logged.`,
+      confirmLabel: 'Delete',
+      danger: true,
+    })
+    if (!ok) return
+    const err = removePatientPackage(pkgId)
+    if (err) return toast.error(err)
+    toast.success('Assigned package removed.')
   }
 
   function doBuy() {
@@ -176,6 +201,14 @@ export function AdminPatientProfile() {
                     </div>
                     <PackageStatusBadge status={p.status} />
                   </div>
+                  <div className="mt-sm flex gap-sm">
+                    <Button size="sm" variant="secondary" onClick={() => { setEditError(null); setEditPkg({ id: p.id, name: p.name, total: p.totalSessions, value: String(p.remaining) }) }}>
+                      <Icon name="edit" size={16} /> Edit remaining
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => deletePackage(p.id, p.name)}>
+                      <Icon name="delete" size={16} /> Pull back
+                    </Button>
+                  </div>
                 </Card>
               ))}
             </div>
@@ -228,15 +261,47 @@ export function AdminPatientProfile() {
       {/* Assign package modal */}
       <Modal open={modal === 'pkg'} onClose={() => setModal(null)} title="Assign Package">
         {error && <div className="mb-sm"><Banner kind="error">{error}</Banner></div>}
-        <Field label="Package definition">
-          <Select value={defId} onChange={(e) => setDefId(e.target.value)}>
-            <option value="">— Select —</option>
-            {packageDefs.map((d) => (
-              <option key={d.id} value={d.id}>{d.name} ({d.sessions} sessions, {d.validityDays} days)</option>
-            ))}
-          </Select>
-        </Field>
-        <Button size="lg" className="mt-md" onClick={doAssign}>Assign</Button>
+        <div className="space-y-sm">
+          <Field label="Package definition">
+            <Select
+              value={defId}
+              onChange={(e) => {
+                setDefId(e.target.value)
+                const d = packageDefs.find((x) => x.id === e.target.value)
+                setInitRemaining(d ? String(d.sessions) : '')
+              }}
+            >
+              <option value="">— Select —</option>
+              {packageDefs.map((d) => (
+                <option key={d.id} value={d.id}>{d.name} ({d.sessions} sessions, {d.validityDays} days)</option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Remaining sessions" hint="Defaults to the package total. Lower it to initialize an existing/offline package.">
+            <Input type="number" min={0} value={initRemaining} onChange={(e) => setInitRemaining(e.target.value)} />
+          </Field>
+          <Button size="lg" onClick={doAssign}>Assign</Button>
+        </div>
+      </Modal>
+
+      {/* Edit remaining sessions modal (v0.8 correction) */}
+      <Modal open={!!editPkg} onClose={() => setEditPkg(null)} title="Edit Remaining Sessions">
+        {editError && <div className="mb-sm"><Banner kind="error">{editError}</Banner></div>}
+        {editPkg && (
+          <div className="space-y-sm">
+            <p className="text-body-md text-on-surface-variant">{editPkg.name} · max {editPkg.total}</p>
+            <Field label="Remaining sessions">
+              <Input
+                type="number"
+                min={0}
+                max={editPkg.total}
+                value={editPkg.value}
+                onChange={(e) => setEditPkg((s) => (s ? { ...s, value: e.target.value } : s))}
+              />
+            </Field>
+            <Button size="lg" onClick={saveEditRemaining}>Save</Button>
+          </div>
+        )}
       </Modal>
 
       {/* Record purchase modal */}

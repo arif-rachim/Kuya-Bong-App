@@ -176,7 +176,9 @@ interface AppState {
 
   // ---- packages ----
   createPackageDef: (name: string, sessions: number, validityDays: number) => Result
-  assignPackage: (userId: string, definitionId: string) => Result
+  assignPackage: (userId: string, definitionId: string, initialRemaining?: number) => Result
+  updatePatientPackageRemaining: (packageId: string, remaining: number) => Result
+  removePatientPackage: (packageId: string) => Result
 
   // ---- family ----
   addChild: (parentUserId: string, name: string) => Result
@@ -769,24 +771,58 @@ export const useApp = create<AppState>()(
         return null
       },
 
-      assignPackage: (userId, definitionId) => {
+      assignPackage: (userId, definitionId, initialRemaining) => {
         const def = get().packageDefs.find((d) => d.id === definitionId)
         if (!def) return 'Package definition not found.'
+        // v0.8: Remaining Sessions defaults to the package count but can be edited
+        // to initialize an existing/offline subscription.
+        const remaining = initialRemaining ?? def.sessions
+        if (!Number.isFinite(remaining) || remaining < 0) return 'Remaining sessions can\'t be negative.'
+        if (remaining > def.sessions) return `Remaining sessions can't exceed the package total (${def.sessions}).`
         const assignDate = todayISO()
-        const pp: PatientPackage = {
+        const pp: PatientPackage = recomputePackage({
           id: uid('pp'),
           definitionId: def.id,
           name: def.name,
           ownerUserId: userId,
           totalSessions: def.sessions,
-          remaining: def.sessions,
+          remaining,
           assignDate,
           expiryDate: addDays(assignDate, def.validityDays),
           status: 'active',
-        }
+        })
         set((s) => ({ patientPackages: [...s.patientPackages, pp] }))
         const owner = get().users.find((u) => u.id === userId)
-        get().logAudit('Assign package', `${def.name} -> ${owner?.name ?? userId}`)
+        get().logAudit('Assign package', `${def.name} -> ${owner?.name ?? userId} (remaining ${remaining}/${def.sessions})`)
+        return null
+      },
+
+      // v0.8: correct an assigned subscription's remaining sessions (>= 0, <= total).
+      updatePatientPackageRemaining: (packageId, remaining) => {
+        const pkg = get().patientPackages.find((p) => p.id === packageId)
+        if (!pkg) return 'Package not found.'
+        if (!Number.isFinite(remaining) || remaining < 0) return 'Remaining sessions can\'t be negative.'
+        if (remaining > pkg.totalSessions) return `Remaining sessions can't exceed the package total (${pkg.totalSessions}).`
+        const old = pkg.remaining
+        set((s) => ({
+          patientPackages: s.patientPackages.map((p) =>
+            p.id === packageId ? recomputePackage({ ...p, remaining }) : p,
+          ),
+        }))
+        get().logAudit('Edit package remaining', `${pkg.name}: ${old} -> ${remaining}`)
+        return null
+      },
+
+      // v0.8: pull back / delete a wrongly assigned subscription (and its usage rows).
+      removePatientPackage: (packageId) => {
+        const pkg = get().patientPackages.find((p) => p.id === packageId)
+        if (!pkg) return 'Package not found.'
+        const usageCount = get().packageUsage.filter((u) => u.patientPackageId === packageId).length
+        set((s) => ({
+          patientPackages: s.patientPackages.filter((p) => p.id !== packageId),
+          packageUsage: s.packageUsage.filter((u) => u.patientPackageId !== packageId),
+        }))
+        get().logAudit('Delete assigned package', `${pkg.name} (removed ${usageCount} usage record(s))`)
         return null
       },
 
