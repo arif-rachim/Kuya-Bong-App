@@ -4,6 +4,7 @@ import { AuthShell } from '../../components/AuthShell'
 import { Logo } from '../../components/Logo'
 import { Button } from '../../components/ui'
 import { useApp } from '../../store/appStore'
+import { homePathFor } from '../../store/selectors'
 
 export function Welcome() {
   const navigate = useNavigate()
@@ -11,7 +12,8 @@ export function Welcome() {
 
   function demo(role: 'patient' | 'admin') {
     loginAs(role)
-    navigate(role === 'admin' ? '/admin/dashboard' : '/patient/home', { replace: true })
+    const s = useApp.getState()
+    navigate(homePathFor(s.users.find((u) => u.id === s.currentUserId) ?? null, s.therapists), { replace: true })
   }
 
   return (

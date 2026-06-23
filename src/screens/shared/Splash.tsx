@@ -2,19 +2,18 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Logo } from '../../components/Logo'
 import { useApp } from '../../store/appStore'
+import { homePathFor } from '../../store/selectors'
 
 export function Splash() {
   const navigate = useNavigate()
-  const role = useApp((s) => s.users.find((u) => u.id === s.currentUserId)?.role)
+  const path = useApp((s) => homePathFor(s.users.find((u) => u.id === s.currentUserId) ?? null, s.therapists))
 
   useEffect(() => {
     const t = setTimeout(() => {
-      if (role === 'admin') navigate('/admin/dashboard', { replace: true })
-      else if (role === 'patient') navigate('/patient/home', { replace: true })
-      else navigate('/welcome', { replace: true })
+      navigate(path, { replace: true })
     }, 900)
     return () => clearTimeout(t)
-  }, [role, navigate])
+  }, [path, navigate])
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-primary text-on-primary">

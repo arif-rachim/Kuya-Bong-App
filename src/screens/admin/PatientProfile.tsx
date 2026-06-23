@@ -6,7 +6,9 @@ import { AppointmentStatusBadge, ClinicBadge, PackageStatusBadge } from '../../c
 import { Modal } from '../../components/Modal'
 import { Icon } from '../../components/Icon'
 import { toast } from '../../components/Toast'
+import { confirm } from '../../components/Confirm'
 import { useApp } from '../../store/appStore'
+import { useIsMaster } from '../../store/selectors'
 import { formatDate, formatPrice } from '../../lib/date'
 
 export function AdminPatientProfile() {
@@ -27,6 +29,9 @@ export function AdminPatientProfile() {
   const purchases = allPurchases.filter((p) => p.patientUserId === id)
   const assignPackage = useApp((s) => s.assignPackage)
   const recordPurchase = useApp((s) => s.recordPurchase)
+  const deactivateUser = useApp((s) => s.deactivateUser)
+  const reactivateUser = useApp((s) => s.reactivateUser)
+  const isMaster = useIsMaster()
 
   const [modal, setModal] = useState<'pkg' | 'buy' | null>(null)
   const [defId, setDefId] = useState('')
@@ -81,7 +86,51 @@ export function AdminPatientProfile() {
               <Icon name="mail" size={16} /> {user.email}
             </p>
           </div>
+          {user.active === false && (
+            <span className="shrink-0 self-start rounded-full bg-error-container px-sm py-xs font-label-md text-label-md text-on-error-container">
+              Deactivated
+            </span>
+          )}
         </Card>
+
+        {isMaster && (
+          user.active === false ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="w-full"
+              onClick={async () => {
+                const ok = await confirm({ title: 'Reactivate user?', message: `Restore access for ${user.name}?`, confirmLabel: 'Reactivate' })
+                if (!ok) return
+                const err = reactivateUser(id)
+                if (err) return toast.error(err)
+                toast.success('User reactivated.')
+              }}
+            >
+              <Icon name="person_check" size={18} /> Reactivate User
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="danger"
+              className="w-full"
+              onClick={async () => {
+                const ok = await confirm({
+                  title: 'Deactivate user?',
+                  message: `${user.name} won't be able to log in or book, but all their history is kept.`,
+                  confirmLabel: 'Deactivate',
+                  danger: true,
+                })
+                if (!ok) return
+                const err = deactivateUser(id)
+                if (err) return toast.error(err)
+                toast.success('User deactivated.')
+              }}
+            >
+              <Icon name="person_off" size={18} /> Deactivate User
+            </Button>
+          )
+        )}
 
         <div className="grid grid-cols-2 gap-sm">
           <Button size="sm" variant="secondary" className="text-center" onClick={() => { setModal('pkg'); setError(null) }}>

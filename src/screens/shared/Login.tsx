@@ -4,6 +4,7 @@ import { TopBar } from '../../components/TopBar'
 import { AuthShell } from '../../components/AuthShell'
 import { Banner, Button, Field, Input } from '../../components/ui'
 import { useApp } from '../../store/appStore'
+import { homePathFor } from '../../store/selectors'
 
 export function Login() {
   const navigate = useNavigate()
@@ -16,8 +17,8 @@ export function Login() {
     e.preventDefault()
     const err = login(email, password)
     if (err) return setError(err)
-    const role = useApp.getState().users.find((u) => u.id === useApp.getState().currentUserId)?.role
-    navigate(role === 'admin' ? '/admin/dashboard' : '/patient/home', { replace: true })
+    const s = useApp.getState()
+    navigate(homePathFor(s.users.find((u) => u.id === s.currentUserId) ?? null, s.therapists), { replace: true })
   }
 
   return (

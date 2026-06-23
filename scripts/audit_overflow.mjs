@@ -16,8 +16,9 @@ const adminRoutes = [
   'admin/patients', 'admin/packages', 'admin/products', 'admin/follow-ups',
   'admin/services', 'admin/therapists', 'admin/cancellation-reasons',
   'admin/announcements', 'admin/reports', 'admin/household',
-  'admin/sub-admins', 'admin/audit', 'admin/transfers', 'admin/settings',
+  'admin/sub-admins', 'admin/audit', 'admin/settings',
 ]
+const physioRoutes = ['physio/schedule', 'physio/profile']
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 const checkOverflow = async (page) =>
@@ -65,6 +66,14 @@ const run = async () => {
     await page.getByText('As Admin', { exact: true }).click().catch(() => {})
     await sleep(600)
     for (const r of adminRoutes) await visit(r)
+    // physiotherapist (login via form)
+    await page.goto(`${BASE}/#/login`, { waitUntil: 'networkidle' }).catch(() => {})
+    await sleep(400)
+    await page.fill('input[type="email"]', 'physio@reliefexpert.app').catch(() => {})
+    await page.fill('input[type="password"]', 'physio123').catch(() => {})
+    await page.getByRole('button', { name: /log in/i }).click().catch(() => {})
+    await sleep(700)
+    for (const r of physioRoutes) await visit(r)
     await ctx.close()
   }
   await browser.close()
