@@ -8,6 +8,7 @@ const APT_LABEL: Record<AppointmentStatus, { label: string; cls: string }> = {
   Rescheduled: { label: 'Rescheduled', cls: 'bg-secondary-container text-on-secondary-container' },
   CancelledByPatient: { label: 'Cancelled (Patient)', cls: 'bg-error-container text-on-error-container' },
   CancelledByAdmin: { label: 'Cancelled (Admin)', cls: 'bg-error-container text-on-error-container' },
+  CancelledByPhysiotherapist: { label: 'Cancelled (Physio)', cls: 'bg-error-container text-on-error-container' },
   Completed: { label: 'Completed', cls: 'bg-primary-fixed text-on-primary-fixed-variant' },
   NoShow: { label: 'No-Show', cls: 'bg-surface-container-highest text-on-surface-variant' },
 }

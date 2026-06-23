@@ -113,6 +113,9 @@ interface AppState {
   appointSubAdmin: (userId: string) => Result
   removeSubAdmin: (userId: string) => Result
   setSubAdminPermission: (capability: Capability, value: boolean) => void
+  // ---- user deactivation (v0.7 §8.1) ----
+  deactivateUser: (userId: string) => Result
+  reactivateUser: (userId: string) => Result
 
   // ---- clinics (v0.4 lifecycle) ----
   updateClinicName: (id: string, name: string) => Result
@@ -126,10 +129,12 @@ interface AppState {
   updateService: (id: string, patch: Partial<Pick<ServiceType, 'name' | 'durationMinutes' | 'notes'>>) => Result
   toggleServiceActive: (id: string) => void
 
-  // ---- therapists (Section 25.3) ----
+  // ---- therapists / physiotherapists (Section 25.3, v0.7 §7.3) ----
   createTherapist: (name: string) => Result
   updateTherapist: (id: string, name: string) => Result
   toggleTherapistActive: (id: string) => void
+  appointPhysiotherapist: (userId: string) => Result
+  removePhysiotherapist: (therapistId: string) => Result
 
   // ---- cancellation reasons (Section 25.5) ----
   createCancellationReason: (label: string) => Result
@@ -156,11 +161,11 @@ interface AppState {
   rescheduleAppointment: (
     appointmentId: string,
     target: { therapistId: string; clinicId: string; date: string; start: string },
-    by: 'patient' | 'admin',
+    by: 'patient' | 'admin' | 'physiotherapist',
   ) => Result
   cancelAppointment: (
     appointmentId: string,
-    by: 'patient' | 'admin',
+    by: 'patient' | 'admin' | 'physiotherapist',
     reasonId?: string,
     note?: string,
   ) => Result
@@ -248,12 +253,13 @@ export const useApp = create<AppState>()(
       login: (email, password) => {
         const user = get().users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase())
         if (!user || user.password !== password) return 'Incorrect email or password.'
+        if (user.active === false) return 'This account has been deactivated. Please contact the clinic.'
         set({ currentUserId: user.id })
         return null
       },
 
       loginAs: (role) => {
-        const user = get().users.find((u) => u.role === role && u.verification === 'verified')
+        const user = get().users.find((u) => u.role === role && u.verification === 'verified' && u.active !== false)
         if (user) set({ currentUserId: user.id })
       },
 
@@ -375,6 +381,25 @@ export const useApp = create<AppState>()(
         get().logAudit('Change sub-admin permission', `${capability} = ${value ? 'on' : 'off'}`)
       },
 
+      // Deactivate a user without deleting history (v0.7 BR-03). Any Sub-Admin/
+      // Physiotherapist privileges become inactive because they can no longer log in.
+      deactivateUser: (userId) => {
+        const target = get().users.find((u) => u.id === userId)
+        if (!target) return 'User not found.'
+        if (target.adminLevel === 'master') return 'The Master Admin can\'t be deactivated.'
+        set((s) => ({ users: s.users.map((u) => (u.id === userId ? { ...u, active: false } : u)) }))
+        get().logAudit('Deactivate user', `${target.name} (${target.email})`)
+        return null
+      },
+
+      reactivateUser: (userId) => {
+        const target = get().users.find((u) => u.id === userId)
+        if (!target) return 'User not found.'
+        set((s) => ({ users: s.users.map((u) => (u.id === userId ? { ...u, active: true } : u)) }))
+        get().logAudit('Reactivate user', `${target.name} (${target.email})`)
+        return null
+      },
+
       // ---------------- CLINICS ----------------
       updateClinicName: (id, name) => {
         if (!name.trim()) return 'Clinic name can\'t be empty.'
@@ -463,6 +488,32 @@ export const useApp = create<AppState>()(
 
       toggleTherapistActive: (id) =>
         set((s) => ({ therapists: s.therapists.map((t) => (t.id === id ? { ...t, active: !t.active } : t)) })),
+
+      // Appoint a registered user as a Physiotherapist (v0.7 BR-09): creates a
+      // user-linked therapist so they can log in and manage their own schedule.
+      appointPhysiotherapist: (userId) => {
+        const state = get()
+        const user = state.users.find((u) => u.id === userId)
+        if (!user) return 'User not found.'
+        if (state.therapists.some((t) => t.userId === userId && t.active))
+          return 'This user is already a physiotherapist.'
+        const therapist: Therapist = { id: uid('th'), name: user.name, active: true, userId }
+        set((s) => ({ therapists: [...s.therapists, therapist] }))
+        get().logAudit('Appoint physiotherapist', `${user.name} (${user.email})`)
+        return null
+      },
+
+      // Remove the physiotherapist role: keep the record (for historical
+      // appointments) but deactivate it and unlink the login.
+      removePhysiotherapist: (therapistId) => {
+        const t = get().therapists.find((x) => x.id === therapistId)
+        if (!t) return 'Physiotherapist not found.'
+        set((s) => ({
+          therapists: s.therapists.map((x) => (x.id === therapistId ? { ...x, active: false, userId: undefined } : x)),
+        }))
+        get().logAudit('Remove physiotherapist', t.name)
+        return null
+      },
 
       // ---------------- CANCELLATION REASONS ----------------
       createCancellationReason: (label) => {
@@ -632,7 +683,12 @@ export const useApp = create<AppState>()(
             a.id === appointmentId
               ? {
                   ...a,
-                  status: by === 'admin' ? 'CancelledByAdmin' : 'CancelledByPatient',
+                  status:
+                    by === 'admin'
+                      ? 'CancelledByAdmin'
+                      : by === 'physiotherapist'
+                        ? 'CancelledByPhysiotherapist'
+                        : 'CancelledByPatient',
                   cancelledBy: by,
                   cancellationReasonId: reasonId,
                   cancellationNote: note,
@@ -976,7 +1032,7 @@ export const useApp = create<AppState>()(
     }),
     {
       name: 'kuya-bong-store',
-      version: 8,
+      version: 9,
       // v2 introduces service types, therapists, cancellation reasons, and a
       // duration-aware availability model (replacing fixed slots). v3 adds a
       // next-week demo appointment. v4 adds a second demo patient (Ahmed) with
@@ -1047,6 +1103,25 @@ export const useApp = create<AppState>()(
           // v0.6: friends + package-credit transfer.
           if (!Array.isArray(state.friends)) state.friends = []
           if (!Array.isArray(state.creditTransfers)) state.creditTransfers = []
+        }
+        if (version < 9) {
+          // v0.7: physiotherapist-as-user demo. Add Dr. Lina, link her therapist
+          // record, and assign apt-4 to her so "My Schedule" isn't empty.
+          const users = Array.isArray(state.users) ? state.users : []
+          if (!users.some((u) => (u as Record<string, unknown>).id === 'u-physio')) {
+            const physio = seedUsers.find((u) => u.id === 'u-physio')
+            if (physio) state.users = [...users, physio]
+          }
+          state.therapists = (Array.isArray(state.therapists) ? state.therapists : []).map((t) => {
+            const th = t as Record<string, unknown>
+            return th.id === 'th-brother' ? { ...th, name: 'Dr. Lina', userId: 'u-physio', active: true } : th
+          })
+          state.appointments = (Array.isArray(state.appointments) ? state.appointments : []).map((a) => {
+            const apt = a as Record<string, unknown>
+            return apt.id === 'apt-4'
+              ? { ...apt, therapistId: 'th-brother', clinicId: 'clinic-a', start: '13:00', end: '16:00' }
+              : apt
+          })
         }
         return state as unknown as AppState
       },

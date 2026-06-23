@@ -1,7 +1,25 @@
 /** Derived selector hooks on top of useApp. */
 import { useApp } from './appStore'
 import { todayISO } from '../lib/date'
-import type { Appointment, Capability, FamilyMember, PatientPackage } from '../data/types'
+import type { Appointment, Capability, FamilyMember, PatientPackage, Therapist, User } from '../data/types'
+
+/** Where to send a user after login, based on role and physiotherapist linkage. */
+export function homePathFor(user: User | null | undefined, therapists: Therapist[]): string {
+  if (!user) return '/welcome'
+  if (user.role === 'admin') return '/admin/dashboard'
+  if (therapists.some((t) => t.userId === user.id && t.active)) return '/physio/schedule'
+  return '/patient/home'
+}
+
+/** True when the logged-in user is an active Physiotherapist (v0.7). */
+export function useIsPhysiotherapist() {
+  return useApp((s) => s.therapists.some((t) => t.userId === s.currentUserId && t.active))
+}
+
+/** Therapist record ids linked to the logged-in physiotherapist user. */
+export function usePhysioTherapistIds() {
+  return useApp((s) => s.therapists.filter((t) => t.userId === s.currentUserId).map((t) => t.id))
+}
 
 export function useCurrentUser() {
   return useApp((s) => s.users.find((u) => u.id === s.currentUserId) ?? null)

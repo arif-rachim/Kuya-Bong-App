@@ -17,6 +17,8 @@ export interface User {
   email: string
   password: string // mock only — DO NOT use in production
   verification: VerificationStatus
+  /** Master Admin can deactivate a user (blueprint v0.7 §8.1). Treated as active when undefined. */
+  active?: boolean
 }
 
 /**
@@ -99,6 +101,9 @@ export interface Therapist {
   id: string
   name: string
   active: boolean
+  /** When set, this therapist is a registered user (a Physiotherapist) who can
+   *  log in and manage only their own assigned appointments (blueprint v0.7 §7.3). */
+  userId?: string
 }
 
 /** A reason a patient or admin can pick when cancelling (blueprint Section 25.5). */
@@ -128,6 +133,7 @@ export type AppointmentStatus =
   | 'Rescheduled'
   | 'CancelledByPatient'
   | 'CancelledByAdmin'
+  | 'CancelledByPhysiotherapist'
   | 'Completed'
   | 'NoShow'
 
@@ -150,7 +156,7 @@ export interface Appointment {
   note?: string
   createdAt: string
   // ---- cancellation (Section 25.5/25.6) ----
-  cancelledBy?: 'patient' | 'admin'
+  cancelledBy?: 'patient' | 'admin' | 'physiotherapist'
   cancellationReasonId?: string
   cancellationNote?: string
 }

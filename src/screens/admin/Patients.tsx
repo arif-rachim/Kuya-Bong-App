@@ -45,7 +45,12 @@ export function AdminPatients() {
                     <p className="font-label-lg text-label-lg text-on-surface">{p.name}</p>
                     <p className="truncate text-label-md text-on-surface-variant">{p.email} · {p.mobile}</p>
                   </div>
-                  <Icon name="chevron_right" className="text-on-surface-variant" />
+                  {p.active === false && (
+                    <span className="shrink-0 rounded-full bg-error-container px-sm py-xs font-label-md text-label-md text-on-error-container">
+                      Inactive
+                    </span>
+                  )}
+                  <Icon name="chevron_right" className="shrink-0 text-on-surface-variant" />
                 </div>
               </Card>
             </Link>

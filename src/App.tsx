@@ -2,10 +2,11 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { MotionConfig } from 'framer-motion'
 import type { ReactNode } from 'react'
 import { useApp } from './store/appStore'
-import { useCurrentUser, useIsMaster, useCanAny } from './store/selectors'
+import { useCurrentUser, useIsMaster, useIsPhysiotherapist, useCanAny } from './store/selectors'
 import type { Capability } from './data/types'
 import { PatientLayout } from './layouts/PatientLayout'
 import { AdminLayout } from './layouts/AdminLayout'
+import { PhysiotherapistLayout } from './layouts/PhysiotherapistLayout'
 import { Toaster } from './components/Toast'
 import { ConfirmHost } from './components/Confirm'
 
@@ -50,6 +51,9 @@ import { AdminHouseholdReport } from './screens/admin/HouseholdReport'
 import { AdminAnnouncements } from './screens/admin/Announcements'
 import { AdminReports } from './screens/admin/Reports'
 import { AdminSettings } from './screens/admin/Settings'
+
+// physiotherapist
+import { PhysioMySchedule } from './screens/physio/MySchedule'
 import { APP_VERSION } from './version'
 
 function RequireRole({ role, children }: { role: 'patient' | 'admin'; children: ReactNode }) {
@@ -70,6 +74,15 @@ function RequireMaster({ children }: { children: ReactNode }) {
 function RequireCap({ caps, children }: { caps: Capability[]; children: ReactNode }) {
   const allowed = useCanAny(caps)
   if (!allowed) return <Navigate to="/admin/dashboard" replace />
+  return <>{children}</>
+}
+
+/** Physiotherapist-only routes. */
+function RequirePhysio({ children }: { children: ReactNode }) {
+  const user = useCurrentUser()
+  const isPhysio = useIsPhysiotherapist()
+  if (!user) return <Navigate to="/welcome" replace />
+  if (!isPhysio) return <Navigate to="/patient/home" replace />
   return <>{children}</>
 }
 
@@ -138,6 +151,20 @@ export default function App() {
         <Route path="sub-admins" element={<RequireMaster><AdminSubAdmins /></RequireMaster>} />
         <Route path="audit" element={<RequireMaster><AdminAuditLog /></RequireMaster>} />
         <Route path="settings" element={<AdminSettings />} />
+      </Route>
+
+      {/* Physiotherapist */}
+      <Route
+        path="/physio"
+        element={
+          <RequirePhysio>
+            <PhysiotherapistLayout />
+          </RequirePhysio>
+        }
+      >
+        <Route index element={<Navigate to="schedule" replace />} />
+        <Route path="schedule" element={<PhysioMySchedule />} />
+        <Route path="profile" element={<Profile />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

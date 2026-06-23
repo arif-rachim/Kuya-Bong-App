@@ -59,6 +59,15 @@ export const seedUsers: User[] = [
     password: 'patient123',
     verification: 'verified',
   },
+  {
+    id: 'u-physio',
+    role: 'patient',
+    name: 'Dr. Lina',
+    mobile: '+971505556677',
+    email: 'physio@reliefexpert.app',
+    password: 'physio123',
+    verification: 'verified',
+  },
 ]
 
 export const FAMILY_GROUP_2 = 'fam-2'
@@ -108,7 +117,8 @@ export const seedServices: ServiceType[] = [
 
 export const seedTherapists: Therapist[] = [
   { id: 'th-bong', name: 'Kuya Bong', active: true },
-  { id: 'th-brother', name: 'Kuya Bong\'s Brother', active: true },
+  // Linked to a registered user (u-physio) so this physiotherapist can log in (v0.7).
+  { id: 'th-brother', name: 'Dr. Lina', active: true, userId: 'u-physio' },
 ]
 
 // Central sub-admin permission profile (v0.6 §6). Default: daily operations on,
@@ -201,15 +211,15 @@ export function seedAppointments(): Appointment[] {
       createdAt: today,
     },
     {
-      // A second patient (Ahmed) with a next-week booking, so the cancel /
-      // reschedule demo isn't limited to a single patient.
+      // A second patient (Ahmed) with a next-week booking, assigned to the
+      // physiotherapist Dr. Lina so her "My Schedule" isn't empty for the demo.
       id: 'apt-4',
       clinicId: 'clinic-a',
       serviceTypeId: 'svc-physio',
-      therapistId: 'th-bong',
+      therapistId: 'th-brother',
       date: addDays(today, 8),
-      start: '09:00',
-      end: '12:00', // 3-hour Physiotherapy & Massage
+      start: '13:00',
+      end: '16:00', // 3-hour Physiotherapy & Massage (fits Dr. Lina's 13:00-17:00 window)
       patientUserId: 'u-pat-2',
       forMemberName: 'Ahmed Rahman',
       status: 'Confirmed',
