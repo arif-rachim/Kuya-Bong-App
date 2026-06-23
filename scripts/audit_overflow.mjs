@@ -13,7 +13,7 @@ const patientRoutes = [
 ]
 const adminRoutes = [
   'admin/dashboard', 'admin/calendar', 'admin/appointments', 'admin/manual-booking',
-  'admin/patients', 'admin/packages', 'admin/products', 'admin/follow-ups',
+  'admin/patients', 'admin/patient/u-pat-1', 'admin/packages', 'admin/products', 'admin/follow-ups',
   'admin/services', 'admin/therapists', 'admin/cancellation-reasons',
   'admin/announcements', 'admin/reports', 'admin/household',
   'admin/sub-admins', 'admin/audit', 'admin/settings',
