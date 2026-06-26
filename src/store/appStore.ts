@@ -12,6 +12,8 @@ import { persist } from 'zustand/middleware'
 import { uid } from '../lib/uid'
 import { addDays, hoursUntil, todayISO } from '../lib/date'
 import { addMinutes, findConflict, timeToMin } from '../lib/booking'
+import { isManggalehEnabled } from '../lib/manggaleh/client'
+import { mgSignOut } from '../lib/manggaleh/auth'
 import {
   FAMILY_GROUP,
   generateAvailability,
@@ -301,7 +303,10 @@ export const useApp = create<AppState>()(
         /* mock: code stays MOCK_OTP */
       },
 
-      logout: () => set({ currentUserId: null }),
+      logout: () => {
+        if (isManggalehEnabled()) mgSignOut().catch(() => {})
+        set({ currentUserId: null })
+      },
 
       updateProfile: (patch) => {
         const id = get().currentUserId

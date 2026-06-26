@@ -3,17 +3,27 @@ import { useNavigate } from 'react-router-dom'
 import { Logo } from '../../components/Logo'
 import { useApp } from '../../store/appStore'
 import { homePathFor } from '../../store/selectors'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { hydrateFromManggaleh } from '../../lib/manggaleh/hydrate'
 
 export function Splash() {
   const navigate = useNavigate()
-  const path = useApp((s) => homePathFor(s.users.find((u) => u.id === s.currentUserId) ?? null, s.therapists))
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      navigate(path, { replace: true })
-    }, 900)
-    return () => clearTimeout(t)
-  }, [path, navigate])
+    let alive = true
+    const route = () => {
+      const s = useApp.getState()
+      navigate(homePathFor(s.users.find((u) => u.id === s.currentUserId) ?? null, s.therapists), { replace: true })
+    }
+    const boot = async () => {
+      // Restore a manggaleh session (and hydrate) before routing.
+      if (isManggalehEnabled()) await hydrateFromManggaleh().catch(() => {})
+      await new Promise((r) => setTimeout(r, 700))
+      if (alive) route()
+    }
+    boot()
+    return () => { alive = false }
+  }, [navigate])
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-primary text-on-primary">

@@ -1,0 +1,55 @@
+/**
+ * Load the logged-in user's world from manggaleh into the Zustand store, so all
+ * existing screens render real backend data. Used after login and on app boot
+ * (session restore). Only active when VITE_USE_MANGGALEH is on.
+ */
+import { useApp } from '../../store/appStore'
+import { mgGetSession } from './auth'
+import * as repo from './repo'
+import type { User } from '../../data/types'
+
+export async function hydrateFromManggaleh(): Promise<boolean> {
+  const session = await mgGetSession()
+  if (!session) return false
+
+  const [
+    appUser, profile, family,
+    clinics, services, therapists, availability, reasons, packageDefs, products, announcements, perms,
+    appts, packages, friends, transfers, purchases,
+  ] = await Promise.all([
+    repo.getMyAppUser(), repo.getMyProfile(), repo.listMyFamily(),
+    repo.listClinics(), repo.listServices(), repo.listTherapists(), repo.listAvailability(),
+    repo.listCancellationReasons(), repo.listPackageDefs(), repo.listProducts(), repo.listAnnouncements(),
+    repo.getSubAdminPermissions(),
+    repo.listMyAppointments(), repo.listMyPackages(), repo.listMyFriends(), repo.listMyTransfers(), repo.listMyPurchases(),
+  ])
+
+  const me: User = {
+    id: session.id,
+    role: appUser?.role ?? 'patient',
+    adminLevel: appUser?.adminLevel,
+    name: appUser?.name ?? session.name,
+    mobile: '',
+    email: session.email,
+    password: '',
+    verification: 'verified',
+    active: appUser?.active ?? true,
+  }
+
+  useApp.setState({
+    users: [me],
+    currentUserId: session.id,
+    profiles: profile ? [profile] : [],
+    family,
+    clinics, services, therapists, availability,
+    cancellationReasons: reasons,
+    packageDefs, products, announcements,
+    subAdminPermissions: perms ?? useApp.getState().subAdminPermissions,
+    appointments: appts,
+    patientPackages: packages,
+    friends,
+    creditTransfers: transfers,
+    purchases,
+  })
+  return true
+}
