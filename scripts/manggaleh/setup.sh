@@ -12,21 +12,22 @@ P="--project realief-expert --env dev --url https://api.manggaleh.com"
 mg() { npx --yes mg "$@"; }
 
 echo "== user-owned collections (per-user RLS via --owner-column) =="
+# NOTE: --owner-column auto-creates that column, so it must NOT be repeated in --columns.
 
 mg collections create $P --name patient_profiles --owner-column user_id \
-  --columns "user_id:uuid!,date_of_birth:date,gender:text,address:text,emergency_contact:text,family_group_id:text,active:boolean"
+  --columns "date_of_birth:date,gender:text,address:text,emergency_contact:text,family_group_id:text,active:boolean"
 
 mg collections create $P --name appointments --owner-column patient_user_id \
-  --columns "clinic_id:uuid!,service_type_id:uuid!,therapist_id:uuid!,date:date!,start:text!,end:text!,patient_user_id:uuid!,for_member_id:text,for_member_name:text,status:text!,source:text,note:text,cancelled_by:text,cancellation_reason_id:uuid,cancellation_note:text"
+  --columns "clinic_id:uuid!,service_type_id:uuid!,therapist_id:uuid!,date:date!,start:text!,end:text!,for_member_id:text,for_member_name:text,status:text!,source:text,note:text,cancelled_by:text,cancellation_reason_id:uuid,cancellation_note:text"
 
 mg collections create $P --name patient_packages --owner-column owner_user_id \
-  --columns "definition_id:uuid,name:text!,owner_user_id:uuid!,total_sessions:integer!,remaining:integer!,assign_date:date!,expiry_date:date!,status:text!,source_package_id:uuid,transferred_from_user_id:uuid"
+  --columns "definition_id:uuid,name:text!,total_sessions:integer!,remaining:integer!,assign_date:date!,expiry_date:date!,status:text!,source_package_id:uuid,transferred_from_user_id:uuid"
 
 mg collections create $P --name product_purchases --owner-column patient_user_id \
-  --columns "patient_user_id:uuid!,product_id:uuid,product_name:text,unit_price_at_sale:numeric,quantity:integer,purchase_date:date!,estimated_follow_up_date:date,follow_up_status:text,notes:text"
+  --columns "product_id:uuid,product_name:text,unit_price_at_sale:numeric,quantity:integer,purchase_date:date!,estimated_follow_up_date:date,follow_up_status:text,notes:text"
 
 mg collections create $P --name friends --owner-column requester_user_id \
-  --columns "requester_user_id:uuid!,addressee_user_id:uuid!,status:text!"
+  --columns "addressee_user_id:uuid!,status:text!"
 
 echo "== shared/admin collections (read via service-key Functions; no public read in manggaleh) =="
 
