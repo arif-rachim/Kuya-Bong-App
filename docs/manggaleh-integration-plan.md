@@ -47,6 +47,23 @@ Columns below are the domain fields (snake_case). RLS notes in parentheses.
 | `audit_log` | actor_user_id, actor_name, action, detail, at |
 | `sub_admin_permissions` | singleton row: one boolean column per capability |
 
+## Architecture correction (verified against the live `realief-expert/dev`)
+Empirically tested with a signed-in user (publishable key + session):
+- **Owner-less / shared tables (clinics, service_types, therapists, products, announcements,
+  cancellation_reasons, package_definitions, therapist_availability, sub_admin_permissions)
+  are READABLE by ANY logged-in user** → catalog reads need **no Function**, just the SDK.
+- **Owner-scoped tables (appointments, patient_packages, product_purchases, friends,
+  patient_profiles) return only the caller's own rows.**
+- So the **patient experience (read catalog + own data, create own bookings/friends/transfers)
+  works with just the publishable key + user session.**
+- **Functions (service key) are only needed for admin scope:** writing shared catalog,
+  reading *all* users' data (admin lists), and cross-user/privileged writes + audit.
+
+Implication: do the patient slice first with the SDK directly; add admin Functions later.
+
+> Known migration detail: some UI hardcodes `clinicId === 'clinic-a'` for accent colors.
+> manggaleh ids are uuids, so clinic accent styling needs an explicit `accent`/index field.
+
 ## Action → manggaleh mapping (high level)
 - **Auth** (`login`, `register`, `verify`, `resetPassword`, `logout`) → `client.auth.*`. Roles/adminLevel
   stored on a `patient_profiles`/role table or via ABAC tags.
