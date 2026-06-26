@@ -21,13 +21,13 @@ mg collections create $P --name appointments --owner-column patient_user_id \
   --columns "clinic_id:uuid!,service_type_id:uuid!,therapist_id:uuid!,date:date!,start:text!,end:text!,for_member_id:text,for_member_name:text,status:text!,source:text,note:text,cancelled_by:text,cancellation_reason_id:uuid,cancellation_note:text"
 
 mg collections create $P --name patient_packages --owner-column owner_user_id \
-  --columns "definition_id:uuid,name:text!,total_sessions:integer!,remaining:integer!,assign_date:date!,expiry_date:date!,status:text!,source_package_id:uuid,transferred_from_user_id:uuid"
+  --columns "definition_id:uuid,name:text!,total_sessions:integer!,remaining:integer!,assign_date:date!,expiry_date:date!,status:text!,source_package_id:uuid,transferred_from_user_id:text"
 
 mg collections create $P --name product_purchases --owner-column patient_user_id \
   --columns "product_id:uuid,product_name:text,unit_price_at_sale:numeric,quantity:integer,purchase_date:date!,estimated_follow_up_date:date,follow_up_status:text,notes:text"
 
 mg collections create $P --name friends --owner-column requester_user_id \
-  --columns "addressee_user_id:uuid!,status:text!"
+  --columns "addressee_user_id:text!,status:text!"
 
 echo "== shared/admin collections (read via service-key Functions; no public read in manggaleh) =="
 
@@ -59,12 +59,18 @@ mg collections create $P --name cancellation_reasons \
   --columns "label:text!,active:boolean"
 
 mg collections create $P --name credit_transfers \
-  --columns "from_user_id:uuid!,to_user_id:uuid!,sessions:integer!,original_package_id:uuid,recipient_package_id:uuid,expiry_date:date,reversed:boolean"
+  --columns "from_user_id:text!,to_user_id:text!,sessions:integer!,original_package_id:uuid,recipient_package_id:uuid,expiry_date:date,reversed:boolean"
 
 mg collections create $P --name audit_log \
-  --columns "actor_user_id:uuid,actor_name:text,action:text!,detail:text,at:timestamptz!"
+  --columns "actor_user_id:text,actor_name:text,action:text!,detail:text,at:timestamptz!"
 
 mg collections create $P --name sub_admin_permissions \
   --columns "key:text^,manage_booking:boolean,appointment_management:boolean,manage_clinics:boolean,manage_therapists:boolean,manage_patients:boolean,manage_products:boolean,manage_services:boolean,manage_cancellation_reasons:boolean,manage_announcements:boolean,manage_follow_up:boolean,reports_services:boolean,reports_products:boolean"
+
+mg collections create $P --name app_users --owner-column user_id \
+  --columns "name:text!,email:text!,role:text!,admin_level:text,active:boolean"
+
+mg collections create $P --name family_members --owner-column owner_user_id \
+  --columns "name:text!,relationship:text,is_child:boolean,linked_user_id:text,parent_user_id:text,status:text!,family_group_id:text"
 
 echo "== done. verify: mg collections list $P =="

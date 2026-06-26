@@ -6,10 +6,13 @@
  */
 import { coll, COLLECTIONS } from './collections'
 import type {
-  Announcement, Appointment, CancellationReason, Clinic, CreditTransfer, Friend,
+  Announcement, Appointment, CancellationReason, Clinic, CreditTransfer, FamilyMember, Friend,
   PackageDefinition, PatientPackage, PatientProfile, Product, ProductPurchase,
   ServiceType, SubAdminPermissions, Therapist, TherapistAvailability,
 } from '../../data/types'
+
+/** The logged-in user's app-level identity + role (from app_users). */
+export interface AppUser { userId: string; name: string; email: string; role: 'patient' | 'admin'; adminLevel?: 'master' | 'sub'; active: boolean }
 
 type Row = Record<string, any>
 const PAGE = 200
@@ -79,4 +82,18 @@ export const listMyPurchases = async () => (await coll(COLLECTIONS.purchases).li
 export async function getMyProfile(): Promise<PatientProfile | null> {
   const rows = await coll(COLLECTIONS.profiles).list({ limit: 1 })
   return rows[0] ? toProfile(rows[0]) : null
+}
+
+const toFamily = (r: Row): FamilyMember => ({
+  id: r.id, familyGroupId: r.family_group_id ?? '', name: r.name,
+  relationship: r.relationship ?? 'dependent', isChild: !!r.is_child,
+  linkedUserId: r.linked_user_id ?? undefined, parentUserId: r.parent_user_id ?? undefined, status: r.status,
+})
+export const listMyFamily = async () => (await coll(COLLECTIONS.family).list({ limit: PAGE })).map(toFamily)
+
+/** The logged-in user's role row (app_users is owner-scoped → only their own). */
+export async function getMyAppUser(): Promise<AppUser | null> {
+  const rows = await coll(COLLECTIONS.appUsers).list({ limit: 1 })
+  const r = rows[0] as Row | undefined
+  return r ? { userId: r.user_id, name: r.name, email: r.email, role: r.role, adminLevel: r.admin_level ?? undefined, active: r.active !== false } : null
 }

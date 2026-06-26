@@ -13,6 +13,20 @@ export interface Announcements {
   updated_by?: string | null;
 }
 
+export interface AppUsers {
+  id: string;
+  user_id: string;
+  created_by?: string | null;
+  name: string;
+  email: string;
+  role: string;
+  admin_level?: string | null;
+  active?: boolean | null;
+  created_at: string;
+  updated_at: string;
+  updated_by?: string | null;
+}
+
 export interface Appointments {
   id: string;
   patient_user_id: string;
@@ -81,6 +95,22 @@ export interface CreditTransfers {
   recipient_package_id?: string | null;
   expiry_date?: string | null;
   reversed?: boolean | null;
+  created_at: string;
+  updated_at: string;
+  updated_by?: string | null;
+}
+
+export interface FamilyMembers {
+  id: string;
+  owner_user_id: string;
+  created_by?: string | null;
+  name: string;
+  relationship?: string | null;
+  is_child?: boolean | null;
+  linked_user_id?: string | null;
+  parent_user_id?: string | null;
+  status: string;
+  family_group_id?: string | null;
   created_at: string;
   updated_at: string;
   updated_by?: string | null;
@@ -244,11 +274,13 @@ export interface Therapists {
 
 export interface Collections {
   announcements: Announcements;
+  app_users: AppUsers;
   appointments: Appointments;
   audit_log: AuditLog;
   cancellation_reasons: CancellationReasons;
   clinics: Clinics;
   credit_transfers: CreditTransfers;
+  family_members: FamilyMembers;
   friends: Friends;
   package_definitions: PackageDefinitions;
   package_usage: PackageUsage;

@@ -23,6 +23,8 @@ export const COLLECTIONS = {
   creditTransfers: 'credit_transfers',
   auditLog: 'audit_log',
   subAdminPermissions: 'sub_admin_permissions',
+  appUsers: 'app_users',
+  family: 'family_members',
 } as const
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS]
