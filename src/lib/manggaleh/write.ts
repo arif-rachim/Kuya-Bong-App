@@ -97,6 +97,16 @@ export async function deletePackageFn(input: {
   if (r.error || !r.ok) throw new Error(r.error || 'Could not delete the package.')
 }
 
+/** Admin records a product purchase for a patient (price snapshot server-side). Returns the new row + snapshot. */
+export async function recordPurchaseFn(input: {
+  patientUserId: string; productId: string; quantity: number; followUpDays?: number; notes?: string
+  actorUserId?: string; actorName?: string; ownerName?: string
+}): Promise<{ id: string; productName: string; unitPriceAtSale: number; purchaseDate: string; estimatedFollowUpDate: string | null }> {
+  const r = await invokeFn<{ id?: string; productName?: string; unitPriceAtSale?: string | number; purchaseDate?: string; estimatedFollowUpDate?: string | null; error?: string }>('record_purchase', input)
+  if (r.error || !r.id) throw new Error(r.error || 'Could not record the purchase.')
+  return { id: r.id, productName: r.productName!, unitPriceAtSale: Number(r.unitPriceAtSale), purchaseDate: r.purchaseDate!, estimatedFollowUpDate: r.estimatedFollowUpDate ?? null }
+}
+
 /** Add a child under the signed-in patient (owner-scoped). Returns the new row id. */
 export async function addChildMember(userId: string, name: string): Promise<string> {
   const row = await coll(COLLECTIONS.family).insert({

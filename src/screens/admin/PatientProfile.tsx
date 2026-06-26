@@ -11,8 +11,8 @@ import { useApp } from '../../store/appStore'
 import { useIsMaster } from '../../store/selectors'
 import { formatDate, formatPrice } from '../../lib/date'
 import { isManggalehEnabled } from '../../lib/manggaleh/client'
-import { assignPackageFn, updatePackageRemainingFn, deletePackageFn } from '../../lib/manggaleh/write'
-import type { PatientPackage, PackageStatus } from '../../data/types'
+import { assignPackageFn, updatePackageRemainingFn, deletePackageFn, recordPurchaseFn } from '../../lib/manggaleh/write'
+import type { PatientPackage, PackageStatus, ProductPurchase } from '../../data/types'
 
 export function AdminPatientProfile() {
   const { id = '' } = useParams()
@@ -136,16 +136,35 @@ export function AdminPatientProfile() {
     toast.success('Assigned package removed.')
   }
 
-  function doBuy() {
+  function resetBuy() {
+    setModal(null); setError(null); setBuy({ productId: '', quantity: '1', followUpDays: '30' })
+  }
+
+  async function doBuy() {
     if (!buy.productId) return setError('Select a product.')
-    const err = recordPurchase({
-      patientUserId: id,
-      productId: buy.productId,
-      quantity: Number(buy.quantity) || 1,
-      followUpDays: Number(buy.followUpDays) || undefined,
-    })
+    const quantity = Number(buy.quantity) || 1
+    const followUpDays = Number(buy.followUpDays) || undefined
+    if (isManggalehEnabled()) {
+      try {
+        const r = await recordPurchaseFn({
+          patientUserId: id, productId: buy.productId, quantity, followUpDays,
+          actorUserId: actor?.id, actorName: actor?.name, ownerName: user?.name,
+        })
+        const purchase: ProductPurchase = {
+          id: r.id, patientUserId: id, productId: buy.productId, productName: r.productName,
+          unitPriceAtSale: r.unitPriceAtSale, quantity, purchaseDate: r.purchaseDate,
+          estimatedFollowUpDate: r.estimatedFollowUpDate ?? undefined, followUpStatus: 'NotDue',
+        }
+        useApp.setState((s) => ({ purchases: [...s.purchases, purchase] }))
+        resetBuy(); toast.success('Purchase recorded.')
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not record the purchase.')
+      }
+      return
+    }
+    const err = recordPurchase({ patientUserId: id, productId: buy.productId, quantity, followUpDays })
     if (err) return setError(err)
-    setModal(null); setError(null); setBuy({ productId: '', quantity: '1', followUpDays: '30' }); toast.success('Purchase recorded.')
+    resetBuy(); toast.success('Purchase recorded.')
   }
 
   return (
