@@ -8,6 +8,8 @@ import { confirm } from '../../components/Confirm'
 import { useApp } from '../../store/appStore'
 import { useCan, useCanAny } from '../../store/selectors'
 import { todayISO } from '../../lib/date'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { setAppointmentStatusFn } from '../../lib/manggaleh/write'
 
 export function AdminDashboard() {
   const navigate = useNavigate()
@@ -20,6 +22,7 @@ export function AdminDashboard() {
   const therapists = useApp((s) => s.therapists)
   const approve = useApp((s) => s.approveAppointment)
   const reject = useApp((s) => s.rejectAppointment)
+  const actor = useApp((s) => s.users.find((u) => u.id === s.currentUserId))
   const canAppointments = useCan('appointmentManagement')
   const canServices = useCan('manageServices')
   const canTherapists = useCan('manageTherapists')
@@ -47,6 +50,16 @@ export function AdminDashboard() {
       confirmLabel: 'Approve',
     })
     if (!ok) return
+    if (isManggalehEnabled()) {
+      try {
+        await setAppointmentStatusFn({ appointmentId: id, action: 'approve', actorUserId: actor?.id, actorName: actor?.name })
+        useApp.setState((s) => ({ appointments: s.appointments.map((a) => (a.id === id ? { ...a, status: 'Confirmed' } : a)) }))
+        toast.success('Booking approved.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not approve the booking.')
+      }
+      return
+    }
     approve(id)
     toast.success('Booking approved.')
   }
@@ -59,6 +72,16 @@ export function AdminDashboard() {
       danger: true,
     })
     if (!ok) return
+    if (isManggalehEnabled()) {
+      try {
+        await setAppointmentStatusFn({ appointmentId: id, action: 'reject', actorUserId: actor?.id, actorName: actor?.name })
+        useApp.setState((s) => ({ appointments: s.appointments.map((a) => (a.id === id ? { ...a, status: 'CancelledByAdmin', cancelledBy: 'admin' } : a)) }))
+        toast.info('Booking rejected.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not reject the booking.')
+      }
+      return
+    }
     reject(id)
     toast.info('Booking rejected.')
   }

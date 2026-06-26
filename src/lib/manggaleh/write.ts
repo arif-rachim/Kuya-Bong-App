@@ -107,6 +107,25 @@ export async function recordPurchaseFn(input: {
   return { id: r.id, productName: r.productName!, unitPriceAtSale: Number(r.unitPriceAtSale), purchaseDate: r.purchaseDate!, estimatedFollowUpDate: r.estimatedFollowUpDate ?? null }
 }
 
+/** Admin appointment lifecycle on any patient's appointment. "complete" can deduct a package session. */
+export async function setAppointmentStatusFn(input: {
+  appointmentId: string; action: 'approve' | 'reject' | 'complete' | 'noshow' | 'cancel'
+  patientPackageId?: string; reasonId?: string; note?: string; actorUserId?: string; actorName?: string
+}): Promise<{ status: string; remaining?: number }> {
+  const r = await invokeFn<{ ok?: boolean; status?: string; remaining?: number; error?: string }>('set_appointment_status', input)
+  if (r.error || !r.ok) throw new Error(r.error || 'Could not update the appointment.')
+  return { status: r.status!, remaining: r.remaining }
+}
+
+/** Admin reschedules any patient's appointment (conflict-checked server-side). */
+export async function adminRescheduleFn(input: {
+  appointmentId: string; therapistId: string; clinicId: string; date: string; start: string; end: string
+  actorUserId?: string; actorName?: string
+}): Promise<void> {
+  const r = await invokeFn<{ ok?: boolean; error?: string }>('admin_reschedule_appointment', input)
+  if (r.error || !r.ok) throw new Error(r.error || 'Could not reschedule the appointment.')
+}
+
 /** Master admin deactivates/reactivates a user (cross-user write on app_users). */
 export async function setUserActiveFn(input: {
   targetUserId: string; active: boolean; actorUserId?: string; actorName?: string
