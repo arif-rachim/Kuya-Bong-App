@@ -198,6 +198,35 @@ export const deleteAnnouncementFn = (id: string) =>
 export const createPackageDefFn = (d: { name: string; sessions: number; validityDays: number }) =>
   catalogWrite({ collection: 'package_definitions', op: 'insert', data: { name: d.name, sessions: d.sessions, validity_days: d.validityDays }, label: 'Create package definition' }).then((r) => r.id!)
 
+// ---------------- ROLES & PERMISSIONS ----------------
+
+/** Master admin appoints a registered patient as a sub-admin. */
+export async function appointSubAdminFn(userId: string): Promise<void> {
+  const r = await invokeFn<{ ok?: boolean; error?: string }>('set_user_role', { targetUserId: userId, role: 'admin', adminLevel: 'sub' })
+  if (r.error || !r.ok) throw new Error(r.error || 'Could not appoint the sub-admin.')
+}
+
+/** Master admin revokes a sub-admin's access (back to patient). */
+export async function removeSubAdminFn(userId: string): Promise<void> {
+  const r = await invokeFn<{ ok?: boolean; error?: string }>('set_user_role', { targetUserId: userId, role: 'patient', adminLevel: null })
+  if (r.error || !r.ok) throw new Error(r.error || 'Could not remove the sub-admin.')
+}
+
+/** Master admin toggles a single sub-admin capability (camelCase key → snake_case column). */
+export async function setPermissionFn(capability: string, value: boolean): Promise<void> {
+  const column = capability.replace(/[A-Z]/g, (c) => '_' + c.toLowerCase())
+  const r = await invokeFn<{ ok?: boolean; error?: string }>('set_permission', { column, value })
+  if (r.error || !r.ok) throw new Error(r.error || 'Could not update the permission.')
+}
+
+/** Appoint a registered user as a physiotherapist (inserts a linked therapist row). Returns its id. */
+export const appointPhysiotherapistFn = (userId: string, name: string) =>
+  catalogWrite({ collection: 'therapists', op: 'insert', data: { name, active: true, user_id: userId }, label: 'Appoint physiotherapist' }).then((r) => r.id!)
+
+/** Remove the physiotherapist role: deactivate the therapist and unlink its login. */
+export const removePhysiotherapistFn = (therapistId: string) =>
+  catalogWrite({ collection: 'therapists', op: 'update', id: therapistId, data: { active: false, user_id: null }, label: 'Remove physiotherapist' })
+
 /** Master admin deactivates/reactivates a user (cross-user write on app_users). */
 export async function setUserActiveFn(input: {
   targetUserId: string; active: boolean; actorUserId?: string; actorName?: string

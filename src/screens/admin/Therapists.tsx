@@ -9,7 +9,7 @@ import { cn } from '../../lib/cn'
 import { useApp } from '../../store/appStore'
 import type { Therapist } from '../../data/types'
 import { isManggalehEnabled } from '../../lib/manggaleh/client'
-import { createTherapistFn, updateTherapistFn, setTherapistActiveFn } from '../../lib/manggaleh/write'
+import { createTherapistFn, updateTherapistFn, setTherapistActiveFn, appointPhysiotherapistFn, removePhysiotherapistFn } from '../../lib/manggaleh/write'
 
 export function AdminTherapists() {
   const therapists = useApp((s) => s.therapists)
@@ -31,12 +31,40 @@ export function AdminTherapists() {
     (u) => u.adminLevel !== 'master' && u.active !== false && !therapists.some((t) => t.userId === u.id && t.active),
   )
 
-  function appoint() {
+  async function appoint() {
     if (!pick) return toast.error('Choose a registered user first.')
+    const user = users.find((u) => u.id === pick)
+    if (isManggalehEnabled()) {
+      if (therapists.some((t) => t.userId === pick && t.active)) return toast.error('This user is already a physiotherapist.')
+      try {
+        const id = await appointPhysiotherapistFn(pick, user?.name ?? 'Physiotherapist')
+        useApp.setState((s) => ({ therapists: [...s.therapists, { id, name: user?.name ?? 'Physiotherapist', active: true, userId: pick }] }))
+        setPick(''); toast.success('Physiotherapist appointed.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not appoint the physiotherapist.')
+      }
+      return
+    }
     const err = appointPhysiotherapist(pick)
     if (err) return toast.error(err)
     setPick('')
     toast.success('Physiotherapist appointed.')
+  }
+
+  async function removeRole(t: Therapist) {
+    if (isManggalehEnabled()) {
+      try {
+        await removePhysiotherapistFn(t.id)
+        useApp.setState((s) => ({ therapists: s.therapists.map((x) => (x.id === t.id ? { ...x, active: false, userId: undefined } : x)) }))
+        toast.success('Physiotherapist role removed.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not remove the role.')
+      }
+      return
+    }
+    const err = removePhysiotherapist(t.id)
+    if (err) return toast.error(err)
+    toast.success('Physiotherapist role removed.')
   }
 
   function openCreate() {
@@ -179,9 +207,7 @@ export function AdminTherapists() {
                         danger: true,
                       })
                       if (!ok) return
-                      const err = removePhysiotherapist(t.id)
-                      if (err) return toast.error(err)
-                      toast.success('Physiotherapist role removed.')
+                      await removeRole(t)
                     }}
                   >
                     Remove role
