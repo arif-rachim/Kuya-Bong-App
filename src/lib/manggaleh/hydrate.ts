@@ -51,5 +51,24 @@ export async function hydrateFromManggaleh(): Promise<boolean> {
     creditTransfers: transfers,
     purchases,
   })
+
+  // Admins (and sub-admins) additionally load ALL cross-user data via a
+  // service-key Function (own-scoped reads only return their own rows).
+  if (me.role === 'admin') {
+    try {
+      const a = await repo.adminBootstrap()
+      // make sure the logged-in admin is present in the user list
+      const users = a.users.some((u) => u.id === me.id) ? a.users : [me, ...a.users]
+      useApp.setState({
+        users,
+        appointments: a.appointments,
+        patientPackages: a.patientPackages,
+        packageUsage: a.packageUsage,
+        purchases: a.purchases,
+        creditTransfers: a.creditTransfers,
+        auditLog: a.auditLog,
+      })
+    } catch { /* keep own-scoped data if the admin function is unavailable */ }
+  }
   return true
 }

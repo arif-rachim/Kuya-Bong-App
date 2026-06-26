@@ -5,10 +5,11 @@
  * return only the caller's own rows.
  */
 import { coll, COLLECTIONS } from './collections'
+import { invokeFn } from './fns'
 import type {
-  Announcement, Appointment, CancellationReason, Clinic, CreditTransfer, FamilyMember, Friend,
-  PackageDefinition, PatientPackage, PatientProfile, Product, ProductPurchase,
-  ServiceType, SubAdminPermissions, Therapist, TherapistAvailability,
+  Announcement, Appointment, AuditEntry, CancellationReason, Clinic, CreditTransfer, FamilyMember, Friend,
+  PackageDefinition, PackageUsage, PatientPackage, PatientProfile, Product, ProductPurchase,
+  ServiceType, SubAdminPermissions, Therapist, TherapistAvailability, User,
 } from '../../data/types'
 
 /** The logged-in user's app-level identity + role (from app_users). */
@@ -96,4 +97,26 @@ export async function getMyAppUser(): Promise<AppUser | null> {
   const rows = await coll(COLLECTIONS.appUsers).list({ limit: 1 })
   const r = rows[0] as Row | undefined
   return r ? { userId: r.user_id, name: r.name, email: r.email, role: r.role, adminLevel: r.admin_level ?? undefined, active: r.active !== false } : null
+}
+
+// ---------- admin scope (via service-key Function, bypasses RLS) ----------
+const appUserToUser = (r: Row): User => ({ id: r.user_id, role: r.role, adminLevel: r.admin_level ?? undefined, name: r.name, mobile: '', email: r.email, password: '', verification: 'verified', active: r.active !== false })
+const toUsage = (r: Row): PackageUsage => ({ id: r.id, patientPackageId: r.patient_package_id, appointmentId: r.appointment_id ?? '', memberName: r.member_name ?? '', date: d10(r.date), recordedBy: r.recorded_by ?? '' })
+const toAudit = (r: Row): AuditEntry => ({ id: r.id, at: r.at ?? r.created_at ?? '', actorUserId: r.actor_user_id ?? '', actorName: r.actor_name ?? '', action: r.action, detail: r.detail ?? '' })
+
+export interface AdminData {
+  users: User[]; appointments: Appointment[]; patientPackages: PatientPackage[]
+  packageUsage: PackageUsage[]; purchases: ProductPurchase[]; creditTransfers: CreditTransfer[]; auditLog: AuditEntry[]
+}
+export async function adminBootstrap(): Promise<AdminData> {
+  const r = await invokeFn<{ users: Row[]; appointments: Row[]; packages: Row[]; usage: Row[]; purchases: Row[]; transfers: Row[]; audit: Row[] }>('admin_bootstrap')
+  return {
+    users: r.users.map(appUserToUser),
+    appointments: r.appointments.map(toAppointment),
+    patientPackages: r.packages.map(toPatientPackage),
+    packageUsage: r.usage.map(toUsage),
+    purchases: r.purchases.map(toPurchase),
+    creditTransfers: r.transfers.map(toTransfer),
+    auditLog: r.audit.map(toAudit),
+  }
 }
