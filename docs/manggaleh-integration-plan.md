@@ -78,6 +78,25 @@ Implication: do the patient slice first with the SDK directly; add admin Functio
 - **Product photos** → `client.storage.upload()` + `getSignedUrl()` (server resize), replacing client-side dataURLs.
 - **Audit log** → written inside the privileged functions.
 
+## Serverless Function pattern (PROVEN against realief-expert/dev)
+Admin/cross-user ops run as Functions because RLS is user-centric. The function
+runtime evaluates code as **CommonJS** and the npm SDK import is unavailable, so
+Functions call the data REST API with the **SERVICE_KEY secret** via `ctx.fetch`:
+
+```js
+// functions/<name>.mjs  (CJS; pushed with: mg functions push --allow-domain api.manggaleh.com)
+module.exports = async (input, ctx) => {
+  const base = 'https://api.manggaleh.com/api/t/realief-expert/dev'
+  const res = await ctx.fetch(`${base}/data/<collection>?limit=200`, { headers: { 'x-api-key': ctx.secrets.SERVICE_KEY } })
+  return { rows: (await res.json()).data }   // POST/PATCH/DELETE for writes
+}
+```
+Setup once: `mg secrets set --name SERVICE_KEY --value <mgsk_…>`. Verified:
+`admin_list_users` returns all users (bypassing RLS). Client calls via `invokeFn(name, input)`.
+Functions to build: admin list-all (users/appointments/packages/purchases/transfers/audit),
+bookAppointment (+conflict), markCompleted (+deduct), assign/edit/remove package, transferCredit,
+friend accept, deactivate/appoint, catalog writes — all on this pattern.
+
 ## Phased rollout
 1. **Foundation (this branch):** SDK + client + config + plan. *(done)*
 2. **Auth slice:** swap `login/register/verify/resetPassword/logout` to manggaleh behind the flag; map roles.
