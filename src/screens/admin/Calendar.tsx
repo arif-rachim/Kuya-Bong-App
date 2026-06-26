@@ -8,6 +8,8 @@ import { useApp } from '../../store/appStore'
 import { useCan } from '../../store/selectors'
 import { addDays, formatDate, formatDateShort, todayISO, weekdayLabel } from '../../lib/date'
 import { timeToMin } from '../../lib/booking'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { publishAvailabilityFn, removeAvailabilityFn } from '../../lib/manggaleh/write'
 
 // 08:00 → 19:00 in 30-minute steps for the start/end pickers.
 const TIME_OPTIONS = Array.from({ length: 23 }, (_, i) => {
@@ -36,14 +38,42 @@ export function AdminCalendar() {
     .filter((w) => w.therapistId === therapistId && w.clinicId === clinicId && w.date === date)
     .sort((a, b) => a.start.localeCompare(b.start))
 
-  function addWindow() {
+  async function addWindow() {
     if (!therapistId) return toast.error('Add a therapist first (Settings → Therapists).')
+    if (isManggalehEnabled()) {
+      // mirror the store's validation client-side before the cross-user write
+      if (date < todayISO()) return toast.error('Can\'t add availability on a past date.')
+      if (timeToMin(end) <= timeToMin(start)) return toast.error('End time must be after the start time.')
+      const overlap = availability.some(
+        (w) => w.therapistId === therapistId && w.clinicId === clinicId && w.date === date &&
+          timeToMin(start) < timeToMin(w.end) && timeToMin(w.start) < timeToMin(end),
+      )
+      if (overlap) return toast.error('This therapist already has an overlapping window at this clinic.')
+      try {
+        const id = await publishAvailabilityFn({ therapistId, clinicId, date, start, end })
+        useApp.setState((s) => ({ availability: [...s.availability, { id, therapistId, clinicId, date, start, end }] }))
+        toast.success(`Availability added (${start}–${end}).`)
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not add availability.')
+      }
+      return
+    }
     const err = publishAvailability({ therapistId, clinicId, date, start, end })
     if (err) return toast.error(err)
     toast.success(`Availability added (${start}–${end}).`)
   }
 
-  function remove(id: string, label: string) {
+  async function remove(id: string, label: string) {
+    if (isManggalehEnabled()) {
+      try {
+        await removeAvailabilityFn(id)
+        useApp.setState((s) => ({ availability: s.availability.filter((w) => w.id !== id) }))
+        toast.success(`Availability removed (${label}).`)
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not remove availability.')
+      }
+      return
+    }
     const err = removeAvailability(id)
     if (err) return toast.error(err)
     toast.success(`Availability removed (${label}).`)

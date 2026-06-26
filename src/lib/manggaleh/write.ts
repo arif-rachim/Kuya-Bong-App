@@ -34,7 +34,7 @@ export async function insertAppointment(input: {
 /** Book via the server-side Function (enforces cross-patient/therapist conflict). Returns new id or throws. */
 export async function bookAppointmentFn(input: {
   patientUserId: string; clinicId: string; serviceTypeId: string; therapistId: string
-  date: string; start: string; end: string; forMemberId?: string; forMemberName: string
+  date: string; start: string; end: string; forMemberId?: string; forMemberName: string; source?: string
 }): Promise<string> {
   const r = await invokeFn<{ id?: string; error?: string }>('book_appointment', input)
   if (r.error || !r.id) throw new Error(r.error || 'Could not book the appointment.')
@@ -197,6 +197,12 @@ export const deleteAnnouncementFn = (id: string) =>
 // Package definitions
 export const createPackageDefFn = (d: { name: string; sessions: number; validityDays: number }) =>
   catalogWrite({ collection: 'package_definitions', op: 'insert', data: { name: d.name, sessions: d.sessions, validity_days: d.validityDays }, label: 'Create package definition' }).then((r) => r.id!)
+
+// Therapist availability windows
+export const publishAvailabilityFn = (d: { therapistId: string; clinicId: string; date: string; start: string; end: string }) =>
+  catalogWrite({ collection: 'therapist_availability', op: 'insert', data: { therapist_id: d.therapistId, clinic_id: d.clinicId, date: d.date, start: d.start, end: d.end }, label: 'Publish availability' }).then((r) => r.id!)
+export const removeAvailabilityFn = (id: string) =>
+  catalogWrite({ collection: 'therapist_availability', op: 'delete', id, label: 'Remove availability' })
 
 /** Admin advances a product purchase's follow-up status. */
 export async function setFollowUpStatusFn(purchaseId: string, status: string): Promise<void> {

@@ -8,7 +8,9 @@ import { cn } from '../../lib/cn'
 import { useApp } from '../../store/appStore'
 import { addDays, formatDate, formatDateShort, nowMinutes, todayISO, weekdayLabel } from '../../lib/date'
 import { computeBookingOptions, uniqueStarts } from '../../lib/booking'
-import type { BookingSource } from '../../data/types'
+import type { Appointment, BookingSource } from '../../data/types'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { bookAppointmentFn } from '../../lib/manggaleh/write'
 
 export function ManualBooking() {
   const navigate = useNavigate()
@@ -62,10 +64,28 @@ export function ManualBooking() {
     return uniqueStarts(computeBookingOptions({ ...baseArgs, date, minStartMin: date === todayISO() ? nowMinutes() : null }))
   }, [baseArgs, service, date])
 
-  function bookSlot(start: string, optTherapistId: string) {
+  async function bookSlot(start: string, optTherapistId: string, end: string) {
     if (!patientId) return toast.error('Please select a patient first.')
     if (!serviceId) return toast.error('Please select a service first.')
     const patient = patients.find((p) => p.id === patientId)
+    if (isManggalehEnabled()) {
+      try {
+        const id = await bookAppointmentFn({
+          patientUserId: patientId, clinicId, serviceTypeId: serviceId, therapistId: optTherapistId,
+          date, start, end, forMemberName: patient?.name ?? 'Patient', source,
+        })
+        const appt: Appointment = {
+          id, clinicId, serviceTypeId: serviceId, therapistId: optTherapistId, date, start, end,
+          patientUserId: patientId, forMemberName: patient?.name ?? 'Patient', status: 'Confirmed', source, createdAt: todayISO(),
+        }
+        useApp.setState((s) => ({ appointments: [...s.appointments, appt] }))
+        toast.success('Manual booking created.')
+        navigate('/admin/appointments')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not create the booking.')
+      }
+      return
+    }
     const err = book({
       serviceTypeId: serviceId,
       therapistId: optTherapistId,
@@ -175,7 +195,7 @@ export function ManualBooking() {
                   {timeOptions.map((o) => (
                     <button
                       key={o.start}
-                      onClick={() => bookSlot(o.start, o.therapistId)}
+                      onClick={() => bookSlot(o.start, o.therapistId, o.end)}
                       className="flex flex-col items-center justify-center rounded-xl border-2 border-outline-variant bg-surface-container-lowest py-sm font-headline-sm text-headline-sm text-on-surface transition-all hover:border-primary hover:bg-primary-container hover:text-on-primary-container"
                     >
                       <span>{o.start}</span>
