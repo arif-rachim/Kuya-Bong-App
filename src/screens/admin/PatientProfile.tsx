@@ -11,7 +11,7 @@ import { useApp } from '../../store/appStore'
 import { useIsMaster } from '../../store/selectors'
 import { formatDate, formatPrice } from '../../lib/date'
 import { isManggalehEnabled } from '../../lib/manggaleh/client'
-import { assignPackageFn, updatePackageRemainingFn, deletePackageFn, recordPurchaseFn } from '../../lib/manggaleh/write'
+import { assignPackageFn, updatePackageRemainingFn, deletePackageFn, recordPurchaseFn, setUserActiveFn } from '../../lib/manggaleh/write'
 import type { PatientPackage, PackageStatus, ProductPurchase } from '../../data/types'
 
 export function AdminPatientProfile() {
@@ -57,6 +57,22 @@ export function AdminPatientProfile() {
   }
 
   const clinicName = (cid: string) => clinics.find((c) => c.id === cid)?.name ?? ''
+
+  async function setActive(active: boolean) {
+    if (isManggalehEnabled()) {
+      try {
+        await setUserActiveFn({ targetUserId: id, active, actorUserId: actor?.id, actorName: actor?.name })
+        useApp.setState((s) => ({ users: s.users.map((u) => (u.id === id ? { ...u, active } : u)) }))
+        toast.success(active ? 'User reactivated.' : 'User deactivated.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not update the user.')
+      }
+      return
+    }
+    const err = active ? reactivateUser(id) : deactivateUser(id)
+    if (err) return toast.error(err)
+    toast.success(active ? 'User reactivated.' : 'User deactivated.')
+  }
 
   function resetAssign() {
     setModal(null); setError(null); setDefId(''); setInitRemaining('')
@@ -201,9 +217,7 @@ export function AdminPatientProfile() {
               onClick={async () => {
                 const ok = await confirm({ title: 'Reactivate user?', message: `Restore access for ${user.name}?`, confirmLabel: 'Reactivate' })
                 if (!ok) return
-                const err = reactivateUser(id)
-                if (err) return toast.error(err)
-                toast.success('User reactivated.')
+                await setActive(true)
               }}
             >
               <Icon name="person_check" size={18} /> Reactivate User
@@ -221,9 +235,7 @@ export function AdminPatientProfile() {
                   danger: true,
                 })
                 if (!ok) return
-                const err = deactivateUser(id)
-                if (err) return toast.error(err)
-                toast.success('User deactivated.')
+                await setActive(false)
               }}
             >
               <Icon name="person_off" size={18} /> Deactivate User

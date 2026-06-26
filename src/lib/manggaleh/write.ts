@@ -107,6 +107,14 @@ export async function recordPurchaseFn(input: {
   return { id: r.id, productName: r.productName!, unitPriceAtSale: Number(r.unitPriceAtSale), purchaseDate: r.purchaseDate!, estimatedFollowUpDate: r.estimatedFollowUpDate ?? null }
 }
 
+/** Master admin deactivates/reactivates a user (cross-user write on app_users). */
+export async function setUserActiveFn(input: {
+  targetUserId: string; active: boolean; actorUserId?: string; actorName?: string
+}): Promise<void> {
+  const r = await invokeFn<{ ok?: boolean; error?: string }>('set_user_active', input)
+  if (r.error || !r.ok) throw new Error(r.error || 'Could not update the user.')
+}
+
 /** Add a child under the signed-in patient (owner-scoped). Returns the new row id. */
 export async function addChildMember(userId: string, name: string): Promise<string> {
   const row = await coll(COLLECTIONS.family).insert({
