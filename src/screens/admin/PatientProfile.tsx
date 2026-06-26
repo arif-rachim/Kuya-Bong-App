@@ -10,6 +10,9 @@ import { confirm } from '../../components/Confirm'
 import { useApp } from '../../store/appStore'
 import { useIsMaster } from '../../store/selectors'
 import { formatDate, formatPrice } from '../../lib/date'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { assignPackageFn, updatePackageRemainingFn, deletePackageFn } from '../../lib/manggaleh/write'
+import type { PatientPackage, PackageStatus } from '../../data/types'
 
 export function AdminPatientProfile() {
   const { id = '' } = useParams()
@@ -33,6 +36,7 @@ export function AdminPatientProfile() {
   const reactivateUser = useApp((s) => s.reactivateUser)
   const updatePatientPackageRemaining = useApp((s) => s.updatePatientPackageRemaining)
   const removePatientPackage = useApp((s) => s.removePatientPackage)
+  const actor = useApp((s) => s.users.find((u) => u.id === s.currentUserId))
   const isMaster = useIsMaster()
 
   const [modal, setModal] = useState<'pkg' | 'buy' | null>(null)
@@ -54,17 +58,55 @@ export function AdminPatientProfile() {
 
   const clinicName = (cid: string) => clinics.find((c) => c.id === cid)?.name ?? ''
 
-  function doAssign() {
-    if (!defId) return setError('Select a package definition.')
-    const remaining = initRemaining.trim() === '' ? undefined : Number(initRemaining)
-    const err = assignPackage(id, defId, remaining)
-    if (err) return setError(err)
-    setModal(null); setError(null); setDefId(''); setInitRemaining(''); toast.success('Package assigned successfully.')
+  function resetAssign() {
+    setModal(null); setError(null); setDefId(''); setInitRemaining('')
   }
 
-  function saveEditRemaining() {
+  async function doAssign() {
+    if (!defId) return setError('Select a package definition.')
+    const def = packageDefs.find((d) => d.id === defId)
+    if (!def) return setError('Package definition not found.')
+    const remaining = initRemaining.trim() === '' ? undefined : Number(initRemaining)
+    if (isManggalehEnabled()) {
+      const initial = remaining ?? def.sessions
+      try {
+        const r = await assignPackageFn({
+          patientUserId: id, definitionId: def.id, name: def.name, totalSessions: def.sessions,
+          remaining: initial, validityDays: def.validityDays, actorUserId: actor?.id, actorName: actor?.name, ownerName: user?.name,
+        })
+        const pp: PatientPackage = {
+          id: r.id, definitionId: def.id, name: def.name, ownerUserId: id, totalSessions: def.sessions,
+          remaining: initial, assignDate: r.assignDate, expiryDate: r.expiryDate, status: r.status as PackageStatus,
+        }
+        useApp.setState((s) => ({ patientPackages: [...s.patientPackages, pp] }))
+        resetAssign(); toast.success('Package assigned successfully.')
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not assign the package.')
+      }
+      return
+    }
+    const err = assignPackage(id, defId, remaining)
+    if (err) return setError(err)
+    resetAssign(); toast.success('Package assigned successfully.')
+  }
+
+  async function saveEditRemaining() {
     if (!editPkg) return
-    const err = updatePatientPackageRemaining(editPkg.id, Number(editPkg.value))
+    const remaining = Number(editPkg.value)
+    if (isManggalehEnabled()) {
+      try {
+        const r = await updatePackageRemainingFn({ packageId: editPkg.id, remaining, name: editPkg.name, actorUserId: actor?.id, actorName: actor?.name })
+        const pkgId = editPkg.id
+        useApp.setState((s) => ({
+          patientPackages: s.patientPackages.map((p) => (p.id === pkgId ? { ...p, remaining, status: r.status as PackageStatus } : p)),
+        }))
+        setEditPkg(null); setEditError(null); toast.success('Remaining sessions updated.')
+      } catch (e) {
+        setEditError(e instanceof Error ? e.message : 'Could not update the package.')
+      }
+      return
+    }
+    const err = updatePatientPackageRemaining(editPkg.id, remaining)
     if (err) return setEditError(err)
     setEditPkg(null); setEditError(null); toast.success('Remaining sessions updated.')
   }
@@ -76,6 +118,19 @@ export function AdminPatientProfile() {
       danger: true,
     })
     if (!ok) return
+    if (isManggalehEnabled()) {
+      try {
+        await deletePackageFn({ packageId: pkgId, name, actorUserId: actor?.id, actorName: actor?.name })
+        useApp.setState((s) => ({
+          patientPackages: s.patientPackages.filter((p) => p.id !== pkgId),
+          packageUsage: s.packageUsage.filter((u) => u.patientPackageId !== pkgId),
+        }))
+        toast.success('Assigned package removed.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not delete the package.')
+      }
+      return
+    }
     const err = removePatientPackage(pkgId)
     if (err) return toast.error(err)
     toast.success('Assigned package removed.')

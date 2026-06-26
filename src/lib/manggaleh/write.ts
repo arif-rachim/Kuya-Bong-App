@@ -68,6 +68,35 @@ export async function updateMyName(appUserRowId: string, name: string) {
   await coll(COLLECTIONS.appUsers).update(appUserRowId, { name: name.trim() })
 }
 
+// ---------------- ADMIN WRITES (server-side Functions, service key) ----------------
+
+/** Admin assigns a package to a patient (owned by them via x-act-as-user). Returns the new row + computed dates. */
+export async function assignPackageFn(input: {
+  patientUserId: string; definitionId: string; name: string; totalSessions: number; remaining: number
+  validityDays: number; actorUserId?: string; actorName?: string; ownerName?: string
+}): Promise<{ id: string; assignDate: string; expiryDate: string; status: string }> {
+  const r = await invokeFn<{ id?: string; assignDate?: string; expiryDate?: string; status?: string; error?: string }>('assign_package', input)
+  if (r.error || !r.id) throw new Error(r.error || 'Could not assign the package.')
+  return { id: r.id, assignDate: r.assignDate!, expiryDate: r.expiryDate!, status: r.status! }
+}
+
+/** Admin corrects an assigned package's remaining sessions. Returns the recomputed status. */
+export async function updatePackageRemainingFn(input: {
+  packageId: string; remaining: number; name: string; actorUserId?: string; actorName?: string
+}): Promise<{ status: string }> {
+  const r = await invokeFn<{ ok?: boolean; status?: string; error?: string }>('update_package', input)
+  if (r.error || !r.ok) throw new Error(r.error || 'Could not update the package.')
+  return { status: r.status! }
+}
+
+/** Admin pulls back / deletes a wrongly assigned package (and its usage rows). */
+export async function deletePackageFn(input: {
+  packageId: string; name: string; actorUserId?: string; actorName?: string
+}): Promise<void> {
+  const r = await invokeFn<{ ok?: boolean; error?: string }>('delete_package', input)
+  if (r.error || !r.ok) throw new Error(r.error || 'Could not delete the package.')
+}
+
 /** Add a child under the signed-in patient (owner-scoped). Returns the new row id. */
 export async function addChildMember(userId: string, name: string): Promise<string> {
   const row = await coll(COLLECTIONS.family).insert({
