@@ -8,6 +8,8 @@ import { toast } from '../../components/Toast'
 import { confirm } from '../../components/Confirm'
 import { useApp } from '../../store/appStore'
 import { useCurrentProfile, useCurrentUser } from '../../store/selectors'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { addChildMember } from '../../lib/manggaleh/write'
 
 function initials(name: string) {
   return name
@@ -83,7 +85,16 @@ export function Family() {
   const [contact, setContact] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  function submitChild() {
+  async function submitChild() {
+    if (!name.trim()) return setError('Child\'s name can\'t be empty.')
+    if (isManggalehEnabled()) {
+      try {
+        const id = await addChildMember(user!.id, name)
+        useApp.setState((s) => ({ family: [...s.family, { id, familyGroupId: user!.id, name: name.trim(), relationship: 'child', isChild: true, parentUserId: user!.id, status: 'active' }] }))
+        reset('Child added successfully.')
+      } catch { setError('Could not add child. Please try again.') }
+      return
+    }
     const err = addChild(user!.id, name)
     if (err) return setError(err)
     reset('Child added successfully.')

@@ -9,6 +9,8 @@ import { toast } from '../../components/Toast'
 import { confirm } from '../../components/Confirm'
 import { useApp } from '../../store/appStore'
 import { useCurrentProfile, useCurrentUser } from '../../store/selectors'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { updateMyProfile } from '../../lib/manggaleh/write'
 
 function initials(name: string) {
   return name
@@ -43,7 +45,18 @@ export function Profile() {
     setForm((f) => ({ ...f, [k]: v }))
   }
 
-  function save() {
+  async function save() {
+    if (isManggalehEnabled()) {
+      try {
+        if (profile) await updateMyProfile(profile.id, { address: form.address, emergencyContact: form.emergencyContact })
+        useApp.setState((s) => ({
+          users: s.users.map((u) => (u.id === s.currentUserId ? { ...u, name: form.name.trim() } : u)),
+          profiles: s.profiles.map((p) => (p.userId === s.currentUserId ? { ...p, address: form.address, emergencyContact: form.emergencyContact } : p)),
+        }))
+        toast.success('Profile saved.')
+      } catch { toast.error('Could not save profile.') }
+      return
+    }
     const err = updateProfile(form)
     if (err) return toast.error(err)
     toast.success('Profile saved.')

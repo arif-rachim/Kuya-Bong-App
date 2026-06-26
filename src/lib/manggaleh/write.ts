@@ -51,3 +51,17 @@ export async function updateMyProfile(profileId: string, patch: { dateOfBirth?: 
     date_of_birth: patch.dateOfBirth, gender: patch.gender, address: patch.address, emergency_contact: patch.emergencyContact,
   })
 }
+
+/** Update the signed-in user's display name (app_users, owner-scoped). */
+export async function updateMyName(appUserRowId: string, name: string) {
+  await coll(COLLECTIONS.appUsers).update(appUserRowId, { name: name.trim() })
+}
+
+/** Add a child under the signed-in patient (owner-scoped). Returns the new row id. */
+export async function addChildMember(userId: string, name: string): Promise<string> {
+  const row = await coll(COLLECTIONS.family).insert({
+    name: name.trim(), relationship: 'child', is_child: true, status: 'active',
+    family_group_id: userId, parent_user_id: userId,
+  })
+  return (row as any).id
+}
