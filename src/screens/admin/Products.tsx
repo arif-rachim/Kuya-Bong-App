@@ -10,6 +10,8 @@ import { useApp } from '../../store/appStore'
 import { formatPrice } from '../../lib/date'
 import { compressImage } from '../../lib/image'
 import type { Product, ProductCategory } from '../../data/types'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { createProductFn, updateProductFn, setProductActiveFn } from '../../lib/manggaleh/write'
 
 export function AdminProducts() {
   const products = useApp((s) => s.products)
@@ -55,8 +57,29 @@ export function AdminProducts() {
   function removePhoto(idx: number) {
     setForm((f) => ({ ...f, images: f.images.filter((_, i) => i !== idx) }))
   }
-  function save() {
+  async function save() {
+    const name = form.name.trim()
     const price = Number(form.price)
+    const notes = form.notes.trim()
+    if (!name) return setError('Product name can\'t be empty.')
+    if (!(price >= 0)) return setError('Price must be 0 or more.')
+    if (isManggalehEnabled()) {
+      try {
+        if (editing) {
+          await updateProductFn(editing.id, { name, category: form.category, price, notes, images: form.images })
+          useApp.setState((s) => ({ products: s.products.map((p) => (p.id === editing.id ? { ...p, name, category: form.category, price, notes: notes || undefined, images: form.images } : p)) }))
+          toast.success('Product updated.')
+        } else {
+          const id = await createProductFn({ name, category: form.category, price, notes, images: form.images })
+          useApp.setState((s) => ({ products: [...s.products, { id, name, category: form.category, price, notes: notes || undefined, images: form.images, active: true }] }))
+          toast.success('Product added.')
+        }
+        setModal(false)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not save the product.')
+      }
+      return
+    }
     if (editing) {
       const err = updateProduct(editing.id, { name: form.name, category: form.category, price, notes: form.notes, images: form.images })
       if (err) return setError(err)
@@ -67,6 +90,21 @@ export function AdminProducts() {
       toast.success('Product added.')
     }
     setModal(false)
+  }
+
+  async function toggle(p: Product) {
+    if (isManggalehEnabled()) {
+      try {
+        await setProductActiveFn(p.id, !p.active)
+        useApp.setState((s) => ({ products: s.products.map((x) => (x.id === p.id ? { ...x, active: !p.active } : x)) }))
+        toast.success(p.active ? 'Product deactivated.' : 'Product activated.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not update the product.')
+      }
+      return
+    }
+    toggleActive(p.id)
+    toast.success(p.active ? 'Product deactivated.' : 'Product activated.')
   }
 
   return (
@@ -121,8 +159,7 @@ export function AdminProducts() {
                       danger: p.active,
                     })
                     if (!ok) return
-                    toggleActive(p.id)
-                    toast.success(p.active ? 'Product deactivated.' : 'Product activated.')
+                    await toggle(p)
                   }}
                 >
                   {p.active ? 'Deactivate' : 'Activate'}

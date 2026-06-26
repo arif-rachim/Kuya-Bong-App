@@ -126,6 +126,78 @@ export async function adminRescheduleFn(input: {
   if (r.error || !r.ok) throw new Error(r.error || 'Could not reschedule the appointment.')
 }
 
+// ---------------- CATALOG MANAGEMENT (generic admin writer) ----------------
+
+type CatalogCollection =
+  | 'clinics' | 'service_types' | 'therapists' | 'products'
+  | 'cancellation_reasons' | 'announcements' | 'package_definitions' | 'therapist_availability'
+
+/** Insert/update/delete a shared catalog row via the admin-guarded Function. */
+async function catalogWrite(input: {
+  collection: CatalogCollection; op: 'insert' | 'update' | 'delete'
+  id?: string; data?: Record<string, unknown>; label?: string
+}): Promise<{ id?: string }> {
+  const r = await invokeFn<{ id?: string; ok?: boolean; error?: string }>('catalog_write', input)
+  if (r.error) throw new Error(r.error)
+  return { id: r.id }
+}
+
+// Clinics
+export const createClinicFn = (d: { name: string; address?: string }) =>
+  catalogWrite({ collection: 'clinics', op: 'insert', data: { name: d.name, address: d.address ?? '', active: true }, label: 'Create clinic' }).then((r) => r.id!)
+export const updateClinicFn = (id: string, patch: { name?: string; address?: string }) =>
+  catalogWrite({ collection: 'clinics', op: 'update', id, data: patch, label: 'Update clinic' })
+export const setClinicActiveFn = (id: string, active: boolean) =>
+  catalogWrite({ collection: 'clinics', op: 'update', id, data: { active }, label: 'Toggle clinic active' })
+export const deleteClinicFn = (id: string) =>
+  catalogWrite({ collection: 'clinics', op: 'delete', id, label: 'Delete clinic' })
+
+// Service types
+export const createServiceFn = (d: { name: string; durationMinutes: number; notes?: string }) =>
+  catalogWrite({ collection: 'service_types', op: 'insert', data: { name: d.name, duration_minutes: d.durationMinutes, notes: d.notes ?? null, active: true }, label: 'Create service' }).then((r) => r.id!)
+export const updateServiceFn = (id: string, patch: { name?: string; durationMinutes?: number; notes?: string }) =>
+  catalogWrite({ collection: 'service_types', op: 'update', id, data: { name: patch.name, duration_minutes: patch.durationMinutes, notes: patch.notes }, label: 'Update service' })
+export const setServiceActiveFn = (id: string, active: boolean) =>
+  catalogWrite({ collection: 'service_types', op: 'update', id, data: { active }, label: 'Toggle service active' })
+
+// Therapists
+export const createTherapistFn = (name: string) =>
+  catalogWrite({ collection: 'therapists', op: 'insert', data: { name, active: true }, label: 'Create therapist' }).then((r) => r.id!)
+export const updateTherapistFn = (id: string, name: string) =>
+  catalogWrite({ collection: 'therapists', op: 'update', id, data: { name }, label: 'Update therapist' })
+export const setTherapistActiveFn = (id: string, active: boolean) =>
+  catalogWrite({ collection: 'therapists', op: 'update', id, data: { active }, label: 'Toggle therapist active' })
+
+// Products
+export const createProductFn = (d: { name: string; category: string; price: number; notes?: string; images?: string[] }) =>
+  catalogWrite({ collection: 'products', op: 'insert', data: { name: d.name, category: d.category, price: d.price, notes: d.notes ?? null, image_object_ids: d.images ?? [], active: true }, label: 'Create product' }).then((r) => r.id!)
+export const updateProductFn = (id: string, patch: { name?: string; category?: string; price?: number; notes?: string; images?: string[] }) =>
+  catalogWrite({ collection: 'products', op: 'update', id, data: { name: patch.name, category: patch.category, price: patch.price, notes: patch.notes, image_object_ids: patch.images }, label: 'Update product' })
+export const setProductActiveFn = (id: string, active: boolean) =>
+  catalogWrite({ collection: 'products', op: 'update', id, data: { active }, label: 'Toggle product active' })
+
+// Cancellation reasons
+export const createReasonFn = (label: string) =>
+  catalogWrite({ collection: 'cancellation_reasons', op: 'insert', data: { label, active: true }, label: 'Create cancellation reason' }).then((r) => r.id!)
+export const updateReasonFn = (id: string, label: string) =>
+  catalogWrite({ collection: 'cancellation_reasons', op: 'update', id, data: { label }, label: 'Update cancellation reason' })
+export const setReasonActiveFn = (id: string, active: boolean) =>
+  catalogWrite({ collection: 'cancellation_reasons', op: 'update', id, data: { active }, label: 'Toggle cancellation reason' })
+export const deleteReasonFn = (id: string) =>
+  catalogWrite({ collection: 'cancellation_reasons', op: 'delete', id, label: 'Delete cancellation reason' })
+
+// Announcements
+export const createAnnouncementFn = (d: { title: string; message: string; expiryDate: string }) =>
+  catalogWrite({ collection: 'announcements', op: 'insert', data: { title: d.title, message: d.message, expiry_date: d.expiryDate, published: true }, label: 'Create announcement' }).then((r) => r.id!)
+export const unpublishAnnouncementFn = (id: string) =>
+  catalogWrite({ collection: 'announcements', op: 'update', id, data: { published: false }, label: 'Unpublish announcement' })
+export const deleteAnnouncementFn = (id: string) =>
+  catalogWrite({ collection: 'announcements', op: 'delete', id, label: 'Delete announcement' })
+
+// Package definitions
+export const createPackageDefFn = (d: { name: string; sessions: number; validityDays: number }) =>
+  catalogWrite({ collection: 'package_definitions', op: 'insert', data: { name: d.name, sessions: d.sessions, validity_days: d.validityDays }, label: 'Create package definition' }).then((r) => r.id!)
+
 /** Master admin deactivates/reactivates a user (cross-user write on app_users). */
 export async function setUserActiveFn(input: {
   targetUserId: string; active: boolean; actorUserId?: string; actorName?: string

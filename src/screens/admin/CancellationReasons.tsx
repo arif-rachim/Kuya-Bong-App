@@ -8,6 +8,8 @@ import { confirm } from '../../components/Confirm'
 import { cn } from '../../lib/cn'
 import { useApp } from '../../store/appStore'
 import type { CancellationReason } from '../../data/types'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { createReasonFn, updateReasonFn, setReasonActiveFn } from '../../lib/manggaleh/write'
 
 export function AdminCancellationReasons() {
   const reasons = useApp((s) => s.cancellationReasons)
@@ -32,7 +34,26 @@ export function AdminCancellationReasons() {
     setError(null)
     setModal(true)
   }
-  function save() {
+  async function save() {
+    const text = label.trim()
+    if (!text) return setError('Reason can\'t be empty.')
+    if (isManggalehEnabled()) {
+      try {
+        if (editing) {
+          await updateReasonFn(editing.id, text)
+          useApp.setState((s) => ({ cancellationReasons: s.cancellationReasons.map((r) => (r.id === editing.id ? { ...r, label: text } : r)) }))
+          toast.success('Reason updated.')
+        } else {
+          const id = await createReasonFn(text)
+          useApp.setState((s) => ({ cancellationReasons: [...s.cancellationReasons, { id, label: text, active: true }] }))
+          toast.success('Reason added.')
+        }
+        setModal(false)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not save the reason.')
+      }
+      return
+    }
     if (editing) {
       const err = updateReason(editing.id, label)
       if (err) return setError(err)
@@ -43,6 +64,21 @@ export function AdminCancellationReasons() {
       toast.success('Reason added.')
     }
     setModal(false)
+  }
+
+  async function toggle(r: CancellationReason) {
+    if (isManggalehEnabled()) {
+      try {
+        await setReasonActiveFn(r.id, !r.active)
+        useApp.setState((s) => ({ cancellationReasons: s.cancellationReasons.map((x) => (x.id === r.id ? { ...x, active: !r.active } : x)) }))
+        toast.success(r.active ? 'Reason deactivated.' : 'Reason activated.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not update the reason.')
+      }
+      return
+    }
+    toggleActive(r.id)
+    toast.success(r.active ? 'Reason deactivated.' : 'Reason activated.')
   }
 
   return (
@@ -85,8 +121,7 @@ export function AdminCancellationReasons() {
                       danger: r.active,
                     })
                     if (!ok) return
-                    toggleActive(r.id)
-                    toast.success(r.active ? 'Reason deactivated.' : 'Reason activated.')
+                    await toggle(r)
                   }}
                 >
                   {r.active ? 'Deactivate' : 'Activate'}

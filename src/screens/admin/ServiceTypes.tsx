@@ -8,6 +8,8 @@ import { confirm } from '../../components/Confirm'
 import { cn } from '../../lib/cn'
 import { useApp } from '../../store/appStore'
 import type { ServiceType } from '../../data/types'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { createServiceFn, updateServiceFn, setServiceActiveFn } from '../../lib/manggaleh/write'
 
 /** Format a duration in minutes as a short, human-readable label (e.g. "3h", "2h 30m", "45m"). */
 function formatDuration(minutes: number): string {
@@ -43,8 +45,29 @@ export function AdminServiceTypes() {
     setError(null)
     setModal(true)
   }
-  function save() {
+  async function save() {
+    const name = form.name.trim()
     const durationMinutes = Number(form.duration)
+    const notes = form.notes.trim()
+    if (!name) return setError('Service name can\'t be empty.')
+    if (!(durationMinutes > 0)) return setError('Duration must be greater than 0.')
+    if (isManggalehEnabled()) {
+      try {
+        if (editing) {
+          await updateServiceFn(editing.id, { name, durationMinutes, notes })
+          useApp.setState((s) => ({ services: s.services.map((sv) => (sv.id === editing.id ? { ...sv, name, durationMinutes, notes: notes || undefined } : sv)) }))
+          toast.success('Service updated.')
+        } else {
+          const id = await createServiceFn({ name, durationMinutes, notes })
+          useApp.setState((s) => ({ services: [...s.services, { id, name, durationMinutes, notes: notes || undefined, active: true }] }))
+          toast.success('Service added.')
+        }
+        setModal(false)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not save the service.')
+      }
+      return
+    }
     if (editing) {
       const err = updateService(editing.id, { name: form.name, durationMinutes, notes: form.notes })
       if (err) return setError(err)
@@ -55,6 +78,21 @@ export function AdminServiceTypes() {
       toast.success('Service added.')
     }
     setModal(false)
+  }
+
+  async function toggle(sv: ServiceType) {
+    if (isManggalehEnabled()) {
+      try {
+        await setServiceActiveFn(sv.id, !sv.active)
+        useApp.setState((s) => ({ services: s.services.map((x) => (x.id === sv.id ? { ...x, active: !sv.active } : x)) }))
+        toast.success(sv.active ? 'Service deactivated.' : 'Service activated.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not update the service.')
+      }
+      return
+    }
+    toggleActive(sv.id)
+    toast.success(sv.active ? 'Service deactivated.' : 'Service activated.')
   }
 
   return (
@@ -103,8 +141,7 @@ export function AdminServiceTypes() {
                       danger: sv.active,
                     })
                     if (!ok) return
-                    toggleActive(sv.id)
-                    toast.success(sv.active ? 'Service deactivated.' : 'Service activated.')
+                    await toggle(sv)
                   }}
                 >
                   {sv.active ? 'Deactivate' : 'Activate'}
