@@ -2,11 +2,24 @@
 // price (BR-19), inserts product_purchases OWNED BY the patient (x-act-as-user),
 // and writes an audit_log entry (service key).
 // input: { patientUserId, productId, quantity, followUpDays?, notes?,
-//          actorUserId?, actorName?, ownerName? }
+//          ownerName?, __callerToken }
+const base = 'https://api.manggaleh.com/api/t/realief-expert/dev'
+async function getCaller(ctx, token) {
+  if (!token) return null
+  const key = ctx.secrets.SERVICE_KEY
+  const s = await (await ctx.fetch(`${base}/auth/get-session`, { headers: { 'x-api-key': key, authorization: `Bearer ${token}` } })).json()
+  const id = s && s.user && s.user.id
+  if (!id) return null
+  const rows = (await (await ctx.fetch(`${base}/data/app_users?limit=200`, { headers: { 'x-api-key': key } })).json()).data || []
+  const me = rows.find((u) => u.user_id === id)
+  return { id, name: me ? me.name : null, role: me ? me.role : null, level: me ? me.admin_level : null }
+}
+
 module.exports = async (input, ctx) => {
-  const base = 'https://api.manggaleh.com/api/t/realief-expert/dev'
   const key = ctx.secrets.SERVICE_KEY
   const i = input || {}
+  const caller = await getCaller(ctx, i.__callerToken)
+  if (!caller || caller.role !== 'admin') return { error: 'Not authorized.' }
   if (!i.patientUserId || !i.productId) return { error: 'Missing fields.' }
   const qty = Number(i.quantity) || 1
   if (qty <= 0) return { error: 'Quantity must be greater than 0.' }
@@ -33,7 +46,7 @@ module.exports = async (input, ctx) => {
     method: 'POST',
     headers: { 'x-api-key': key, 'content-type': 'application/json' },
     body: JSON.stringify({
-      actor_user_id: i.actorUserId || null, actor_name: i.actorName || 'Admin',
+      actor_user_id: caller.id, actor_name: caller.name || 'Admin',
       action: 'Record purchase', detail: `${prod.name} x${qty} -> ${i.ownerName || i.patientUserId}`,
       at: new Date().toISOString(),
     }),
