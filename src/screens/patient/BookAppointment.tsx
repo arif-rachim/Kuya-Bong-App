@@ -10,6 +10,9 @@ import { useApp } from '../../store/appStore'
 import { useCurrentProfile, useCurrentUser } from '../../store/selectors'
 import { addDays, formatDate, formatDateShort, todayISO, nowMinutes, weekdayLabel } from '../../lib/date'
 import { computeBookingOptions, uniqueStarts, type BookingOption } from '../../lib/booking'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { insertAppointment } from '../../lib/manggaleh/write'
+import type { Appointment } from '../../data/types'
 
 type Step = 'service' | 'clinic' | 'date' | 'time' | 'review' | 'done'
 const STEP_INDEX: Record<Step, number> = { service: 0, clinic: 1, date: 2, time: 3, review: 3, done: 4 }
@@ -83,10 +86,29 @@ export function BookAppointment() {
     .map((p) => ({ period: p, items: timeOptions.filter((o) => slotPeriod(o.start) === p) }))
     .filter((g) => g.items.length)
 
-  function confirm() {
+  async function confirm() {
     setError(null)
     if (!picked) return
     const member = family.find((m) => m.id === forMember)
+    const forMemberName = member?.name ?? user?.name ?? 'Patient'
+    if (isManggalehEnabled()) {
+      try {
+        const id = await insertAppointment({
+          clinicId, serviceTypeId: serviceId, therapistId: picked.therapistId,
+          date, start: picked.start, end: picked.end, forMemberId: member?.id, forMemberName, status: 'Confirmed',
+        })
+        const appt: Appointment = {
+          id, clinicId, serviceTypeId: serviceId, therapistId: picked.therapistId, date,
+          start: picked.start, end: picked.end, patientUserId: user?.id ?? '', forMemberId: member?.id,
+          forMemberName, status: 'Confirmed', source: 'App', createdAt: todayISO(),
+        }
+        useApp.setState((s) => ({ appointments: [...s.appointments, appt] }))
+        setStep('done')
+      } catch {
+        setError('Could not book the appointment. Please try again.')
+      }
+      return
+    }
     const err = book({
       serviceTypeId: serviceId,
       therapistId: picked.therapistId,
@@ -94,7 +116,7 @@ export function BookAppointment() {
       date,
       start: picked.start,
       forMemberId: member?.id,
-      forMemberName: member?.name ?? user?.name ?? 'Patient',
+      forMemberName,
     })
     if (err) return setError(err)
     setStep('done')

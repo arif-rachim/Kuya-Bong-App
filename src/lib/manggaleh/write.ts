@@ -16,6 +16,35 @@ export async function registerPatient(input: { name: string; email: string; pass
   return user
 }
 
+/** Insert an appointment for the signed-in patient (owner auto-set). Returns the new row id. */
+export async function insertAppointment(input: {
+  clinicId: string; serviceTypeId: string; therapistId: string; date: string; start: string; end: string
+  forMemberId?: string; forMemberName: string; status: string
+}): Promise<string> {
+  const row = await coll(COLLECTIONS.appointments).insert({
+    clinic_id: input.clinicId, service_type_id: input.serviceTypeId, therapist_id: input.therapistId,
+    date: input.date, start: input.start, end: input.end,
+    for_member_id: input.forMemberId ?? null, for_member_name: input.forMemberName,
+    status: input.status, source: 'App',
+  })
+  return (row as any).id
+}
+
+/** Cancel one of the signed-in patient's own appointments. */
+export async function cancelMyAppointment(id: string, reasonId?: string, note?: string) {
+  await coll(COLLECTIONS.appointments).update(id, {
+    status: 'CancelledByPatient', cancelled_by: 'patient',
+    cancellation_reason_id: reasonId ?? null, cancellation_note: note ?? null,
+  })
+}
+
+/** Reschedule one of the signed-in patient's own appointments. */
+export async function rescheduleMyAppointment(id: string, t: { therapistId: string; clinicId: string; date: string; start: string; end: string }) {
+  await coll(COLLECTIONS.appointments).update(id, {
+    status: 'Rescheduled', therapist_id: t.therapistId, clinic_id: t.clinicId, date: t.date, start: t.start, end: t.end,
+  })
+}
+
 /** Update the signed-in patient's own profile. */
 export async function updateMyProfile(profileId: string, patch: { dateOfBirth?: string; gender?: string; address?: string; emergencyContact?: string }) {
   await coll(COLLECTIONS.profiles).update(profileId, {
