@@ -198,6 +198,12 @@ export const deleteAnnouncementFn = (id: string) =>
 export const createPackageDefFn = (d: { name: string; sessions: number; validityDays: number }) =>
   catalogWrite({ collection: 'package_definitions', op: 'insert', data: { name: d.name, sessions: d.sessions, validity_days: d.validityDays }, label: 'Create package definition' }).then((r) => r.id!)
 
+/** Admin advances a product purchase's follow-up status. */
+export async function setFollowUpStatusFn(purchaseId: string, status: string): Promise<void> {
+  const r = await invokeFn<{ ok?: boolean; error?: string }>('set_follow_up_status', { purchaseId, status })
+  if (r.error || !r.ok) throw new Error(r.error || 'Could not update the follow-up status.')
+}
+
 // ---------------- ROLES & PERMISSIONS ----------------
 
 /** Master admin appoints a registered patient as a sub-admin. */

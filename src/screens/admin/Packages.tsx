@@ -7,6 +7,9 @@ import { Icon } from '../../components/Icon'
 import { toast } from '../../components/Toast'
 import { useApp } from '../../store/appStore'
 import { formatDate } from '../../lib/date'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { createPackageDefFn, assignPackageFn } from '../../lib/manggaleh/write'
+import type { PatientPackage, PackageStatus } from '../../data/types'
 
 export function AdminPackages() {
   const defs = useApp((s) => s.packageDefs)
@@ -14,6 +17,7 @@ export function AdminPackages() {
   const users = useApp((s) => s.users)
   const createDef = useApp((s) => s.createPackageDef)
   const assignPackage = useApp((s) => s.assignPackage)
+  const actor = useApp((s) => s.users.find((u) => u.id === s.currentUserId))
 
   const [createModal, setCreateModal] = useState(false)
   const [assignModal, setAssignModal] = useState(false)
@@ -23,13 +27,49 @@ export function AdminPackages() {
 
   const patientName = (uid: string) => users.find((u) => u.id === uid)?.name ?? '—'
 
-  function doCreate() {
+  async function doCreate() {
+    const name = form.name.trim()
+    const sessions = Number(form.sessions)
+    const validityDays = Number(form.validityDays)
+    if (!name) return setError('Package name can\'t be empty.')
+    if (!(sessions > 0)) return setError('Number of sessions must be greater than 0.')
+    if (!(validityDays > 0)) return setError('Validity must be greater than 0 days.')
+    if (isManggalehEnabled()) {
+      try {
+        const id = await createPackageDefFn({ name, sessions, validityDays })
+        useApp.setState((s) => ({ packageDefs: [...s.packageDefs, { id, name, sessions, validityDays }] }))
+        setCreateModal(false); setError(null); setForm({ name: '', sessions: '6', validityDays: '90' }); toast.success('Package definition created.')
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not create the package definition.')
+      }
+      return
+    }
     const err = createDef(form.name, Number(form.sessions), Number(form.validityDays))
     if (err) return setError(err)
     setCreateModal(false); setError(null); setForm({ name: '', sessions: '6', validityDays: '90' }); toast.success('Package definition created.')
   }
-  function doAssign() {
+  async function doAssign() {
     if (!assign.userId || !assign.defId) return setError('Complete patient & package.')
+    if (isManggalehEnabled()) {
+      const def = defs.find((d) => d.id === assign.defId)
+      if (!def) return setError('Package definition not found.')
+      const owner = users.find((u) => u.id === assign.userId)
+      try {
+        const r = await assignPackageFn({
+          patientUserId: assign.userId, definitionId: def.id, name: def.name, totalSessions: def.sessions,
+          remaining: def.sessions, validityDays: def.validityDays, actorUserId: actor?.id, actorName: actor?.name, ownerName: owner?.name,
+        })
+        const pp: PatientPackage = {
+          id: r.id, definitionId: def.id, name: def.name, ownerUserId: assign.userId, totalSessions: def.sessions,
+          remaining: def.sessions, assignDate: r.assignDate, expiryDate: r.expiryDate, status: r.status as PackageStatus,
+        }
+        useApp.setState((s) => ({ patientPackages: [...s.patientPackages, pp] }))
+        setAssignModal(false); setError(null); setAssign({ userId: '', defId: '' }); toast.success('Package assigned.')
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not assign the package.')
+      }
+      return
+    }
     const err = assignPackage(assign.userId, assign.defId)
     if (err) return setError(err)
     setAssignModal(false); setError(null); setAssign({ userId: '', defId: '' }); toast.success('Package assigned.')
