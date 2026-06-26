@@ -15,16 +15,16 @@ echo "== user-owned collections (per-user RLS via --owner-column) =="
 # NOTE: --owner-column auto-creates that column, so it must NOT be repeated in --columns.
 
 mg collections create $P --name patient_profiles --owner-column user_id \
-  --columns "date_of_birth:date,gender:text,address:text,emergency_contact:text,family_group_id:text,active:boolean"
+  --columns "date_of_birth:text,gender:text,address:text,emergency_contact:text,family_group_id:text,active:boolean"
 
 mg collections create $P --name appointments --owner-column patient_user_id \
-  --columns "clinic_id:uuid!,service_type_id:uuid!,therapist_id:uuid!,date:date!,start:text!,end:text!,for_member_id:text,for_member_name:text,status:text!,source:text,note:text,cancelled_by:text,cancellation_reason_id:uuid,cancellation_note:text"
+  --columns "clinic_id:uuid!,service_type_id:uuid!,therapist_id:uuid!,date:text!,start:text!,end:text!,for_member_id:text,for_member_name:text,status:text!,source:text,note:text,cancelled_by:text,cancellation_reason_id:uuid,cancellation_note:text"
 
 mg collections create $P --name patient_packages --owner-column owner_user_id \
-  --columns "definition_id:uuid,name:text!,total_sessions:integer!,remaining:integer!,assign_date:date!,expiry_date:date!,status:text!,source_package_id:uuid,transferred_from_user_id:text"
+  --columns "definition_id:uuid,name:text!,total_sessions:integer!,remaining:integer!,assign_date:text!,expiry_date:text!,status:text!,source_package_id:uuid,transferred_from_user_id:text"
 
 mg collections create $P --name product_purchases --owner-column patient_user_id \
-  --columns "product_id:uuid,product_name:text,unit_price_at_sale:numeric,quantity:integer,purchase_date:date!,estimated_follow_up_date:date,follow_up_status:text,notes:text"
+  --columns "product_id:uuid,product_name:text,unit_price_at_sale:numeric,quantity:integer,purchase_date:text!,estimated_follow_up_date:text,follow_up_status:text,notes:text"
 
 mg collections create $P --name friends --owner-column requester_user_id \
   --columns "addressee_user_id:text!,status:text!"
@@ -41,25 +41,25 @@ mg collections create $P --name therapists \
   --columns "name:text!,active:boolean,user_id:uuid"
 
 mg collections create $P --name therapist_availability \
-  --columns "therapist_id:uuid!,clinic_id:uuid!,date:date!,start:text!,end:text!"
+  --columns "therapist_id:uuid!,clinic_id:uuid!,date:text!,start:text!,end:text!"
 
 mg collections create $P --name package_definitions \
   --columns "name:text!,sessions:integer!,validity_days:integer!"
 
 mg collections create $P --name package_usage \
-  --columns "patient_package_id:uuid!,appointment_id:uuid,member_name:text,date:date!,recorded_by:text"
+  --columns "patient_package_id:uuid!,appointment_id:uuid,member_name:text,date:text!,recorded_by:text"
 
 mg collections create $P --name products \
   --columns "name:text!,category:text,price:numeric!,active:boolean,notes:text,image_object_ids:jsonb"
 
 mg collections create $P --name announcements \
-  --columns "title:text!,message:text!,expiry_date:date!,published:boolean"
+  --columns "title:text!,message:text!,expiry_date:text!,published:boolean"
 
 mg collections create $P --name cancellation_reasons \
   --columns "label:text!,active:boolean"
 
 mg collections create $P --name credit_transfers \
-  --columns "from_user_id:text!,to_user_id:text!,sessions:integer!,original_package_id:uuid,recipient_package_id:uuid,expiry_date:date,reversed:boolean"
+  --columns "from_user_id:text!,to_user_id:text!,sessions:integer!,original_package_id:uuid,recipient_package_id:uuid,expiry_date:text,reversed:boolean"
 
 mg collections create $P --name audit_log \
   --columns "actor_user_id:text,actor_name:text,action:text!,detail:text,at:timestamptz!"

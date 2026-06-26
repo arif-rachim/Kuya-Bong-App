@@ -11,7 +11,7 @@ import { useCurrentProfile, useCurrentUser } from '../../store/selectors'
 import { addDays, formatDate, formatDateShort, todayISO, nowMinutes, weekdayLabel } from '../../lib/date'
 import { computeBookingOptions, uniqueStarts, type BookingOption } from '../../lib/booking'
 import { isManggalehEnabled } from '../../lib/manggaleh/client'
-import { insertAppointment } from '../../lib/manggaleh/write'
+import { bookAppointmentFn } from '../../lib/manggaleh/write'
 import type { Appointment } from '../../data/types'
 
 type Step = 'service' | 'clinic' | 'date' | 'time' | 'review' | 'done'
@@ -93,9 +93,9 @@ export function BookAppointment() {
     const forMemberName = member?.name ?? user?.name ?? 'Patient'
     if (isManggalehEnabled()) {
       try {
-        const id = await insertAppointment({
-          clinicId, serviceTypeId: serviceId, therapistId: picked.therapistId,
-          date, start: picked.start, end: picked.end, forMemberId: member?.id, forMemberName, status: 'Confirmed',
+        const id = await bookAppointmentFn({
+          patientUserId: user?.id ?? '', clinicId, serviceTypeId: serviceId, therapistId: picked.therapistId,
+          date, start: picked.start, end: picked.end, forMemberId: member?.id, forMemberName,
         })
         const appt: Appointment = {
           id, clinicId, serviceTypeId: serviceId, therapistId: picked.therapistId, date,
@@ -104,8 +104,8 @@ export function BookAppointment() {
         }
         useApp.setState((s) => ({ appointments: [...s.appointments, appt] }))
         setStep('done')
-      } catch {
-        setError('Could not book the appointment. Please try again.')
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not book the appointment. Please try again.')
       }
       return
     }

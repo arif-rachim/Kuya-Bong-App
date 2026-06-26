@@ -4,6 +4,7 @@
  * writes (assign package, transfer credit, manage catalog) need Functions.
  */
 import { coll, COLLECTIONS } from './collections'
+import { invokeFn } from './fns'
 import { mgSignUp } from './auth'
 import type { MgUser } from './auth'
 
@@ -28,6 +29,16 @@ export async function insertAppointment(input: {
     status: input.status, source: 'App',
   })
   return (row as any).id
+}
+
+/** Book via the server-side Function (enforces cross-patient/therapist conflict). Returns new id or throws. */
+export async function bookAppointmentFn(input: {
+  patientUserId: string; clinicId: string; serviceTypeId: string; therapistId: string
+  date: string; start: string; end: string; forMemberId?: string; forMemberName: string
+}): Promise<string> {
+  const r = await invokeFn<{ id?: string; error?: string }>('book_appointment', input)
+  if (r.error || !r.id) throw new Error(r.error || 'Could not book the appointment.')
+  return r.id
 }
 
 /** Cancel one of the signed-in patient's own appointments. */
