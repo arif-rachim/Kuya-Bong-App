@@ -15,13 +15,13 @@ export async function hydrateFromManggaleh(): Promise<boolean> {
   const [
     appUser, profile, family,
     clinics, services, therapists, availability, reasons, packageDefs, products, announcements, perms,
-    appts, packages, friends, transfers, purchases,
+    appts, packages, friendsOv, transfers, purchases,
   ] = await Promise.all([
     repo.getMyAppUser(), repo.getMyProfile(), repo.listMyFamily(),
     repo.listClinics(), repo.listServices(), repo.listTherapists(), repo.listAvailability(),
     repo.listCancellationReasons(), repo.listPackageDefs(), repo.listProducts(), repo.listAnnouncements(),
     repo.getSubAdminPermissions(),
-    repo.listMyAppointments(), repo.listMyPackages(), repo.listMyFriends(), repo.listMyTransfers(), repo.listMyPurchases(),
+    repo.listMyAppointments(), repo.listMyPackages(), repo.friendsOverview(), repo.listMyTransfers(), repo.listMyPurchases(),
   ])
 
   const me: User = {
@@ -36,8 +36,14 @@ export async function hydrateFromManggaleh(): Promise<boolean> {
     active: appUser?.active ?? true,
   }
 
+  // The patient can't read other users, so the Friends screen needs stub user
+  // records (id + name) for the people they're linked to.
+  const friendStubs: User[] = friendsOv.friendUsers.map((f) => ({
+    id: f.id, role: 'patient', name: f.name, mobile: '', email: '', password: '', verification: 'verified', active: true,
+  }))
+
   useApp.setState({
-    users: [me],
+    users: [me, ...friendStubs],
     currentUserId: session.id,
     profiles: profile ? [profile] : [],
     family,
@@ -47,7 +53,7 @@ export async function hydrateFromManggaleh(): Promise<boolean> {
     subAdminPermissions: perms ?? useApp.getState().subAdminPermissions,
     appointments: appts,
     patientPackages: packages,
-    friends,
+    friends: friendsOv.friends,
     creditTransfers: transfers,
     purchases,
   })

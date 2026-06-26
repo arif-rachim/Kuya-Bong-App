@@ -9,6 +9,9 @@ import { confirm } from '../../components/Confirm'
 import { useApp } from '../../store/appStore'
 import { useCurrentUser } from '../../store/selectors'
 import { formatDate, todayISO } from '../../lib/date'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { friendRequestFn, friendRespondFn, transferCreditFn } from '../../lib/manggaleh/write'
+import type { Friend, User } from '../../data/types'
 
 export function Friends() {
   const me = useCurrentUser()
@@ -39,12 +42,56 @@ export function Friends() {
     f.requesterUserId === me?.id ? f.addresseeUserId : f.requesterUserId
   const myActivePackages = patientPackages.filter((p) => p.ownerUserId === me?.id && p.remaining > 0 && p.expiryDate >= todayISO())
 
-  function submitAdd() {
+  async function submitAdd() {
+    if (isManggalehEnabled()) {
+      try {
+        const r = await friendRequestFn(contact)
+        const link: Friend = { id: r.id, requesterUserId: me?.id ?? '', addresseeUserId: r.addresseeUserId, status: 'pending' }
+        const stub: User = { id: r.addresseeUserId, role: 'patient', name: r.addresseeName, mobile: '', email: '', password: '', verification: 'verified', active: true }
+        useApp.setState((s) => ({
+          friends: [...s.friends, link],
+          users: s.users.some((u) => u.id === r.addresseeUserId) ? s.users : [...s.users, stub],
+        }))
+        setContact(''); setAddOpen(false); toast.success('Friend request sent.')
+      } catch (e) {
+        setAddError(e instanceof Error ? e.message : 'Could not send the friend request.')
+      }
+      return
+    }
     const err = requestFriend(contact)
     if (err) return setAddError(err)
     setContact('')
     setAddOpen(false)
     toast.success('Friend request sent.')
+  }
+
+  async function accept(f: Friend) {
+    if (isManggalehEnabled()) {
+      try {
+        await friendRespondFn(f.id, 'accept')
+        useApp.setState((s) => ({ friends: s.friends.map((x) => (x.id === f.id ? { ...x, status: 'active' } : x)) }))
+        toast.success('Friend added.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not accept the request.')
+      }
+      return
+    }
+    acceptFriend(f.id); toast.success('Friend added.')
+  }
+
+  async function respondRemove(f: Friend, kind: 'decline' | 'remove') {
+    if (isManggalehEnabled()) {
+      try {
+        await friendRespondFn(f.id, kind)
+        useApp.setState((s) => ({ friends: s.friends.filter((x) => x.id !== f.id) }))
+        toast[kind === 'decline' ? 'info' : 'success'](kind === 'decline' ? 'Request declined.' : 'Friend removed.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not update the friend request.')
+      }
+      return
+    }
+    if (kind === 'decline') { declineFriend(f.id); toast.info('Request declined.') }
+    else { removeFriend(f.id); toast.success('Friend removed.') }
   }
 
   function openTransfer(userId: string, name: string) {
@@ -53,9 +100,23 @@ export function Friends() {
     setXferSessions('1')
     setXferError(null)
   }
-  function submitTransfer() {
+  async function submitTransfer() {
     if (!xferTo) return
-    const err = transferCredit({ fromPackageId: xferPkgId, toUserId: xferTo.userId, sessions: Number(xferSessions) })
+    const sessions = Number(xferSessions)
+    if (isManggalehEnabled()) {
+      const pkgId = xferPkgId
+      try {
+        const r = await transferCreditFn({ fromPackageId: pkgId, toUserId: xferTo.userId, sessions })
+        useApp.setState((s) => ({
+          patientPackages: s.patientPackages.map((p) => (p.id === pkgId ? { ...p, remaining: r.fromRemaining, status: r.fromRemaining <= 0 ? 'used' : p.status } : p)),
+        }))
+        setXferTo(null); toast.success('Package credit transferred.')
+      } catch (e) {
+        setXferError(e instanceof Error ? e.message : 'Could not transfer the credit.')
+      }
+      return
+    }
+    const err = transferCredit({ fromPackageId: xferPkgId, toUserId: xferTo.userId, sessions })
     if (err) return setXferError(err)
     setXferTo(null)
     toast.success('Package credit transferred.')
@@ -77,8 +138,8 @@ export function Friends() {
               <Card key={f.id} className="flex items-center justify-between gap-sm">
                 <p className="min-w-0 truncate font-label-lg text-label-lg text-on-surface">{userName(otherId(f))}</p>
                 <div className="flex shrink-0 gap-sm">
-                  <Button size="sm" onClick={() => { acceptFriend(f.id); toast.success('Friend added.') }}>Accept</Button>
-                  <Button size="sm" variant="secondary" onClick={() => { declineFriend(f.id); toast.info('Request declined.') }}>Decline</Button>
+                  <Button size="sm" onClick={() => accept(f)}>Accept</Button>
+                  <Button size="sm" variant="secondary" onClick={() => respondRemove(f, 'decline')}>Decline</Button>
                 </div>
               </Card>
             ))}
@@ -110,8 +171,7 @@ export function Friends() {
                     onClick={async () => {
                       const ok = await confirm({ title: 'Remove friend?', message: `Remove ${userName(otherId(f))} from your friends?`, confirmLabel: 'Remove', danger: true })
                       if (!ok) return
-                      removeFriend(f.id)
-                      toast.success('Friend removed.')
+                      await respondRemove(f, 'remove')
                     }}
                   >
                     Remove

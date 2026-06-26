@@ -210,6 +210,28 @@ export async function setFollowUpStatusFn(purchaseId: string, status: string): P
   if (r.error || !r.ok) throw new Error(r.error || 'Could not update the follow-up status.')
 }
 
+// ---------------- FRIENDS & CREDIT TRANSFER ----------------
+
+/** Send a friend request by the friend's email. Returns the new link + the friend's id/name. */
+export async function friendRequestFn(email: string): Promise<{ id: string; addresseeUserId: string; addresseeName: string }> {
+  const r = await invokeFn<{ id?: string; addresseeUserId?: string; addresseeName?: string; error?: string }>('friend_request', { email })
+  if (r.error || !r.id) throw new Error(r.error || 'Could not send the friend request.')
+  return { id: r.id, addresseeUserId: r.addresseeUserId!, addresseeName: r.addresseeName! }
+}
+
+/** Accept / decline an incoming request, or remove a friend. */
+export async function friendRespondFn(friendId: string, action: 'accept' | 'decline' | 'remove'): Promise<void> {
+  const r = await invokeFn<{ ok?: boolean; error?: string }>('friend_respond', { friendId, action })
+  if (r.error || !r.ok) throw new Error(r.error || 'Could not update the friend request.')
+}
+
+/** Transfer package sessions to a confirmed friend. Returns the caller's new remaining. */
+export async function transferCreditFn(input: { fromPackageId: string; toUserId: string; sessions: number }): Promise<{ fromRemaining: number; recipientPackageId: string }> {
+  const r = await invokeFn<{ ok?: boolean; fromRemaining?: number; recipientPackageId?: string; error?: string }>('transfer_credit', input)
+  if (r.error || !r.ok) throw new Error(r.error || 'Could not transfer the credit.')
+  return { fromRemaining: r.fromRemaining!, recipientPackageId: r.recipientPackageId! }
+}
+
 // ---------------- ROLES & PERMISSIONS ----------------
 
 /** Master admin appoints a registered patient as a sub-admin. */

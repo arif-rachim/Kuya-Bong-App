@@ -92,6 +92,16 @@ const toFamily = (r: Row): FamilyMember => ({
 })
 export const listMyFamily = async () => (await coll(COLLECTIONS.family).list({ limit: PAGE })).map(toFamily)
 
+/**
+ * The caller's friend links in both directions + the display names of those
+ * friends. Owner-scoped RLS hides incoming requests (owned by the requester)
+ * and other users' names, so this goes through a Function. See functions/.
+ */
+export async function friendsOverview(): Promise<{ friends: Friend[]; friendUsers: { id: string; name: string }[] }> {
+  const r = await invokeFn<{ friends: Friend[]; friendUsers: { id: string; name: string }[] }>('friends_overview')
+  return { friends: r.friends ?? [], friendUsers: r.friendUsers ?? [] }
+}
+
 /** The logged-in user's role row (app_users is owner-scoped → only their own). */
 export async function getMyAppUser(): Promise<AppUser | null> {
   const rows = await coll(COLLECTIONS.appUsers).list({ limit: 1 })
