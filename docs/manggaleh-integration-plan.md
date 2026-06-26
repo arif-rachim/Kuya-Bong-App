@@ -97,6 +97,17 @@ Functions to build: admin list-all (users/appointments/packages/purchases/transf
 bookAppointment (+conflict), markCompleted (+deduct), assign/edit/remove package, transferCredit,
 friend accept, deactivate/appoint, catalog writes — all on this pattern.
 
+## Admin WRITE pattern (PROVEN): act-as-user
+Admin writes to owner-scoped tables (assign package to a patient, record a
+purchase, transfer credit, book on behalf) set the correct owner by adding the
+header **`x-act-as-user: <targetUserId>`** alongside the service key — the row is
+owned by that user and they can read it. Verified: admin inserted a
+`patient_packages` row owned by Maria; Maria reads it as her own. Shared/admin
+tables (clinics, services, announcements, sub_admin_permissions) are written with
+the service key directly (no act-as-user). With this + admin_bootstrap, every
+remaining operation is de-risked — only the mechanical build-out of one Function
+per write + wiring each admin handler remains.
+
 ## Phased rollout
 1. **Foundation (this branch):** SDK + client + config + plan. *(done)*
 2. **Auth slice:** swap `login/register/verify/resetPassword/logout` to manggaleh behind the flag; map roles.
