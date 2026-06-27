@@ -210,6 +210,21 @@ export async function setFollowUpStatusFn(purchaseId: string, status: string): P
   if (r.error || !r.ok) throw new Error(r.error || 'Could not update the follow-up status.')
 }
 
+// ---------------- FAMILY (adult link) ----------------
+
+/** Link a registered adult (by email) as family. Returns the new row + the adult's id/name. */
+export async function linkAdultFn(email: string): Promise<{ id: string; linkedUserId: string; name: string }> {
+  const r = await invokeFn<{ id?: string; linkedUserId?: string; name?: string; error?: string }>('family_link_adult', { email })
+  if (r.error || !r.id) throw new Error(r.error || 'Could not send the link request.')
+  return { id: r.id, linkedUserId: r.linkedUserId!, name: r.name! }
+}
+
+/** Accept / decline an incoming adult-link request, or remove a family member. */
+export async function familyRespondFn(familyMemberId: string, action: 'accept' | 'decline' | 'remove'): Promise<void> {
+  const r = await invokeFn<{ ok?: boolean; error?: string }>('family_respond', { familyMemberId, action })
+  if (r.error || !r.ok) throw new Error(r.error || 'Could not update the family member.')
+}
+
 // ---------------- FRIENDS & CREDIT TRANSFER ----------------
 
 /** Send a friend request by the friend's email. Returns the new link + the friend's id/name. */

@@ -93,6 +93,16 @@ const toFamily = (r: Row): FamilyMember => ({
 export const listMyFamily = async () => (await coll(COLLECTIONS.family).list({ limit: PAGE })).map(toFamily)
 
 /**
+ * The caller's family group rows + incoming adult-link requests (owned by the
+ * inviter, so invisible to owner-scoped reads), with inviter names for the
+ * Family screen. Goes through a Function. See functions/.
+ */
+export async function familyOverview(): Promise<{ family: FamilyMember[]; inviters: { familyGroupId: string; name: string }[] }> {
+  const r = await invokeFn<{ family: FamilyMember[]; inviters: { familyGroupId: string; name: string }[] }>('family_overview')
+  return { family: r.family ?? [], inviters: r.inviters ?? [] }
+}
+
+/**
  * The caller's friend links in both directions + the display names of those
  * friends. Owner-scoped RLS hides incoming requests (owned by the requester)
  * and other users' names, so this goes through a Function. See functions/.

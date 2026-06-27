@@ -6,18 +6,18 @@
 import { useApp } from '../../store/appStore'
 import { mgGetSession } from './auth'
 import * as repo from './repo'
-import type { User } from '../../data/types'
+import type { PatientProfile, User } from '../../data/types'
 
 export async function hydrateFromManggaleh(): Promise<boolean> {
   const session = await mgGetSession()
   if (!session) return false
 
   const [
-    appUser, profile, family,
+    appUser, profile, familyOv,
     clinics, services, therapists, availability, reasons, packageDefs, products, announcements, perms,
     appts, packages, friendsOv, transfers, purchases,
   ] = await Promise.all([
-    repo.getMyAppUser(), repo.getMyProfile(), repo.listMyFamily(),
+    repo.getMyAppUser(), repo.getMyProfile(), repo.familyOverview(),
     repo.listClinics(), repo.listServices(), repo.listTherapists(), repo.listAvailability(),
     repo.listCancellationReasons(), repo.listPackageDefs(), repo.listProducts(), repo.listAnnouncements(),
     repo.getSubAdminPermissions(),
@@ -36,17 +36,21 @@ export async function hydrateFromManggaleh(): Promise<boolean> {
     active: appUser?.active ?? true,
   }
 
-  // The patient can't read other users, so the Friends screen needs stub user
-  // records (id + name) for the people they're linked to.
-  const friendStubs: User[] = friendsOv.friendUsers.map((f) => ({
-    id: f.id, role: 'patient', name: f.name, mobile: '', email: '', password: '', verification: 'verified', active: true,
-  }))
+  // The patient can't read other users, so the Friends/Family screens need stub
+  // user records (id + name) for linked friends and the adults who invited them.
+  // Family's inviterName() also resolves via a profile keyed by family group id
+  // (which equals the inviter's user id for manggaleh-registered patients).
+  const stubUser = (id: string, name: string): User => ({ id, role: 'patient', name, mobile: '', email: '', password: '', verification: 'verified', active: true })
+  const stubs = new Map<string, User>()
+  for (const f of friendsOv.friendUsers) stubs.set(f.id, stubUser(f.id, f.name))
+  for (const inv of familyOv.inviters) stubs.set(inv.familyGroupId, stubUser(inv.familyGroupId, inv.name))
+  const inviterProfiles: PatientProfile[] = familyOv.inviters.map((inv) => ({ id: `prof_${inv.familyGroupId}`, userId: inv.familyGroupId, familyGroupId: inv.familyGroupId }))
 
   useApp.setState({
-    users: [me, ...friendStubs],
+    users: [me, ...stubs.values()],
     currentUserId: session.id,
-    profiles: profile ? [profile] : [],
-    family,
+    profiles: [...(profile ? [profile] : []), ...inviterProfiles],
+    family: familyOv.family,
     clinics, services, therapists, availability,
     cancellationReasons: reasons,
     packageDefs, products, announcements,
