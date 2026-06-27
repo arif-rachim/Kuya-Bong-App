@@ -6,8 +6,9 @@ import { AuthShell } from '../../components/AuthShell'
 import { Banner, Button, Field, Input } from '../../components/ui'
 import { useApp } from '../../store/appStore'
 import { homePathFor } from '../../store/selectors'
-import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { isManggalehEnabled, isManggalehOtpEnabled } from '../../lib/manggaleh/client'
 import { registerPatient } from '../../lib/manggaleh/write'
+import { mgSendOtp } from '../../lib/manggaleh/auth'
 import { hydrateFromManggaleh } from '../../lib/manggaleh/hydrate'
 
 export function Register() {
@@ -31,6 +32,12 @@ export function Register() {
       setBusy(true)
       try {
         await registerPatient({ name: form.name, email: form.email, password: form.password })
+        if (isManggalehOtpEnabled()) {
+          // require email verification before entering the app
+          await mgSendOtp(form.email)
+          navigate(`/verify-email/${encodeURIComponent(form.email.trim().toLowerCase())}`, { replace: true })
+          return
+        }
         await hydrateFromManggaleh()
         const s = useApp.getState()
         navigate(homePathFor(s.users.find((u) => u.id === s.currentUserId) ?? null, s.therapists), { replace: true })

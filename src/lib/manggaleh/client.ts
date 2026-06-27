@@ -22,6 +22,15 @@ export function isManggalehEnabled(): boolean {
   return import.meta.env.VITE_USE_MANGGALEH === 'true' && !!config.tenant && !!config.apiKey
 }
 
+/**
+ * True when registration should require email-OTP verification. Off by default:
+ * it needs email delivery configured in manggaleh (Resend, or DEV_OTP_CODE),
+ * otherwise send-verification-otp returns 500 and registration would stall.
+ */
+export function isManggalehOtpEnabled(): boolean {
+  return isManggalehEnabled() && import.meta.env.VITE_MANGGALEH_OTP === 'true'
+}
+
 let _client: ManggalehClient | null = null
 
 /** Lazily-created singleton client (publishable key, browser-safe). */

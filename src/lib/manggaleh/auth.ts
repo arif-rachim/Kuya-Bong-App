@@ -24,11 +24,15 @@ export async function mgGetSession(): Promise<MgUser | null> {
   return (await mg().auth.getSession())?.user ?? null
 }
 
-/** Email OTP verification (mirrors the demo's mock OTP flow). */
+/**
+ * Email OTP verification at registration. We send a 'sign-in' code (the type
+ * paired with signInWithOtp) and verify it — proving the user owns the email.
+ * Requires email delivery configured in manggaleh (Resend, or DEV_OTP_CODE in dev).
+ */
 export async function mgSendOtp(email: string): Promise<void> {
-  await mg().auth.sendOtp(email, 'email-verification')
+  await mg().auth.sendOtp(email.trim().toLowerCase(), 'sign-in')
 }
 
 export async function mgVerifyOtp(email: string, otp: string): Promise<MgUser> {
-  return (await mg().auth.signInWithOtp({ email, otp })).user
+  return (await mg().auth.signInWithOtp({ email: email.trim().toLowerCase(), otp: otp.trim() })).user
 }
