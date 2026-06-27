@@ -12,6 +12,8 @@ import { compressImage } from '../../lib/image'
 import type { Product, ProductCategory } from '../../data/types'
 import { isManggalehEnabled } from '../../lib/manggaleh/client'
 import { createProductFn, updateProductFn, setProductActiveFn } from '../../lib/manggaleh/write'
+import { uploadDataUrl } from '../../lib/manggaleh/storage'
+import { StoredImage } from '../../components/StoredImage'
 
 export function AdminProducts() {
   const products = useApp((s) => s.products)
@@ -45,7 +47,9 @@ export function AdminProducts() {
     try {
       const next: string[] = []
       for (const file of Array.from(files)) {
-        next.push(await compressImage(file))
+        const dataUrl = await compressImage(file)
+        // manggaleh: upload to object storage and keep the id; mock: keep base64
+        next.push(isManggalehEnabled() ? await uploadDataUrl(dataUrl) : dataUrl)
       }
       setForm((f) => ({ ...f, images: [...f.images, ...next].slice(0, 5) }))
     } catch (e) {
@@ -123,7 +127,7 @@ export function AdminProducts() {
               <div className="flex items-start justify-between gap-sm">
                 <div className="flex min-w-0 gap-sm">
                   {p.images?.[0] ? (
-                    <img src={p.images[0]} alt={p.name} className="h-14 w-14 shrink-0 rounded-lg border border-outline-variant/30 object-cover" />
+                    <StoredImage src={p.images[0]} alt={p.name} className="h-14 w-14 shrink-0 rounded-lg border border-outline-variant/30 object-cover" />
                   ) : (
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-surface-container-high text-on-surface-variant">
                       <Icon name="image" size={22} />
@@ -198,7 +202,7 @@ export function AdminProducts() {
             <div className="flex flex-wrap gap-sm">
               {form.images.map((src, i) => (
                 <div key={i} className="relative">
-                  <img src={src} alt={`Photo ${i + 1}`} className="h-16 w-16 rounded-lg border border-outline-variant/30 object-cover" />
+                  <StoredImage src={src} alt={`Photo ${i + 1}`} className="h-16 w-16 rounded-lg border border-outline-variant/30 object-cover" />
                   <button
                     type="button"
                     onClick={() => removePhoto(i)}
