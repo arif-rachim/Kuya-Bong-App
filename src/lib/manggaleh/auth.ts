@@ -1,5 +1,6 @@
 /** Thin auth wrappers over the manggaleh SDK (returns the app-facing user shape). */
 import { mg } from './client'
+import { invokeFn } from './fns'
 
 export interface MgUser {
   id: string
@@ -25,14 +26,17 @@ export async function mgGetSession(): Promise<MgUser | null> {
 }
 
 /**
- * Email OTP verification at registration. We send a 'sign-in' code (the type
- * paired with signInWithOtp) and verify it — proving the user owns the email.
- * Requires email delivery configured in manggaleh (Resend, or DEV_OTP_CODE in dev).
+ * Email OTP verification at registration. manggaleh's built-in /auth/email-otp
+ * endpoint currently 500s, but ctx.email.send (Resend) works — so we run our own
+ * OTP via the otp_send / otp_verify Functions. The code targets the signed-in
+ * caller's own email (the account was just created + signed in by signUp).
  */
-export async function mgSendOtp(email: string): Promise<void> {
-  await mg().auth.sendOtp(email.trim().toLowerCase(), 'sign-in')
+export async function mgSendOtp(_email?: string): Promise<void> {
+  const r = await invokeFn<{ ok?: boolean; error?: string }>('otp_send')
+  if (r.error || !r.ok) throw new Error(r.error || 'Could not send the verification code.')
 }
 
-export async function mgVerifyOtp(email: string, otp: string): Promise<MgUser> {
-  return (await mg().auth.signInWithOtp({ email: email.trim().toLowerCase(), otp: otp.trim() })).user
+export async function mgVerifyOtp(_email: string, otp: string): Promise<void> {
+  const r = await invokeFn<{ ok?: boolean; error?: string }>('otp_verify', { code: otp.trim() })
+  if (r.error || !r.ok) throw new Error(r.error || 'That code is incorrect or has expired.')
 }

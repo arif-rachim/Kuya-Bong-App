@@ -64,6 +64,11 @@ mg collections create $P --name credit_transfers \
 mg collections create $P --name audit_log \
   --columns "actor_user_id:text,actor_name:text,action:text!,detail:text,at:timestamptz!"
 
+# Custom email-OTP store (manggaleh's built-in /auth/email-otp 500s; we run our
+# own via otp_send/otp_verify Functions using the working ctx.email.send).
+mg collections create $P --name email_otps \
+  --columns "email:text!,code:text!,expires_at:text!,consumed:boolean,attempts:integer"
+
 mg collections create $P --name sub_admin_permissions \
   --columns "key:text^,manage_booking:boolean,appointment_management:boolean,manage_clinics:boolean,manage_therapists:boolean,manage_patients:boolean,manage_products:boolean,manage_services:boolean,manage_cancellation_reasons:boolean,manage_announcements:boolean,manage_follow_up:boolean,reports_services:boolean,reports_products:boolean"
 
