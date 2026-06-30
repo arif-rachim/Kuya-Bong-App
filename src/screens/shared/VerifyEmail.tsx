@@ -52,7 +52,7 @@ export function VerifyEmail() {
       <div className="px-margin-mobile py-lg">
         <div className="mb-lg flex flex-col items-center text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-primary-fixed text-primary">
-            <Icon name="mark_email_read" className="text-3xl" />
+            <Icon name="mark_email_read" size={30} />
           </div>
           <p className="mt-md text-body-md text-on-surface-variant">
             We sent a verification code to <span className="font-semibold text-on-surface">{address}</span>. Enter it to

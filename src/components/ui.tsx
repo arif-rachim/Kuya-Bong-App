@@ -166,7 +166,7 @@ export function EmptyState({ icon, title, subtitle }: { icon?: string; title: st
     <div className="flex flex-col items-center justify-center px-md py-xl text-center">
       {icon && (
         <div className="mb-sm flex h-16 w-16 items-center justify-center rounded-full bg-surface-container">
-          <Icon name={icon} className="text-3xl text-outline" />
+          <Icon name={icon} size={30} className="text-outline" />
         </div>
       )}
       <p className="font-headline-sm text-headline-sm text-on-surface">{title}</p>
