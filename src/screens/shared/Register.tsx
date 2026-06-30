@@ -8,7 +8,6 @@ import { useApp } from '../../store/appStore'
 import { homePathFor } from '../../store/selectors'
 import { isManggalehEnabled, isManggalehOtpEnabled } from '../../lib/manggaleh/client'
 import { registerPatient } from '../../lib/manggaleh/write'
-import { mgSendOtp } from '../../lib/manggaleh/auth'
 import { hydrateFromManggaleh } from '../../lib/manggaleh/hydrate'
 
 export function Register() {
@@ -33,8 +32,8 @@ export function Register() {
       try {
         await registerPatient({ name: form.name, email: form.email, password: form.password })
         if (isManggalehOtpEnabled()) {
-          // require email verification before entering the app
-          await mgSendOtp(form.email)
+          // signUp already auto-emails the verification OTP — do NOT re-send here
+          // (that double-sends and overwrites the first code). Just go verify.
           navigate(`/verify-email/${encodeURIComponent(form.email.trim().toLowerCase())}`, { replace: true })
           return
         }
