@@ -17,6 +17,7 @@ import { Login } from './screens/shared/Login'
 import { Register } from './screens/shared/Register'
 import { Verify } from './screens/shared/Verify'
 import { VerifyEmail } from './screens/shared/VerifyEmail'
+import { ResetPassword } from './screens/shared/ResetPassword'
 import { ForgotPassword } from './screens/shared/ForgotPassword'
 
 // patient
@@ -100,6 +101,7 @@ export default function App() {
       <Route path="/verify/:userId" element={<Verify />} />
       <Route path="/verify-email/:email" element={<VerifyEmail />} />
       <Route path="/forgot" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Patient */}
       <Route

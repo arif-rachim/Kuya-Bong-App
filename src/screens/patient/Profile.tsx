@@ -11,6 +11,7 @@ import { useApp } from '../../store/appStore'
 import { useCurrentProfile, useCurrentUser } from '../../store/selectors'
 import { isManggalehEnabled } from '../../lib/manggaleh/client'
 import { updateMyProfile } from '../../lib/manggaleh/write'
+import { mgChangePassword } from '../../lib/manggaleh/auth'
 
 function initials(name: string) {
   return name
@@ -62,7 +63,18 @@ export function Profile() {
     toast.success('Profile saved.')
   }
 
-  function savePassword() {
+  async function savePassword() {
+    if (pw.next.length < 6) return setPwErr('New password must be at least 6 characters.')
+    if (isManggalehEnabled()) {
+      try {
+        await mgChangePassword(pw.current, pw.next)
+        setPwModal(false); setPw({ current: '', next: '' }); setPwErr(null)
+        toast.success('Password updated.')
+      } catch {
+        setPwErr('Could not change password. Check your current password.')
+      }
+      return
+    }
     const err = changePassword(pw.current, pw.next)
     if (err) return setPwErr(err)
     setPwModal(false)
