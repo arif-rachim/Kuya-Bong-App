@@ -12,7 +12,9 @@ import { cn } from '../../lib/cn'
 import { CANCEL_CUTOFF_HOURS, useApp } from '../../store/appStore'
 import { useClinicName } from '../../store/selectors'
 import { addDays, formatDate, formatDateShort, hoursUntil, nowMinutes, todayISO, weekdayLabel } from '../../lib/date'
-import { computeBookingOptions, uniqueStarts } from '../../lib/booking'
+import { addMinutes, computeBookingOptions, uniqueStarts } from '../../lib/booking'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { cancelMyAppointment, rescheduleMyAppointment } from '../../lib/manggaleh/write'
 
 export function AppointmentDetails() {
   const { id = '' } = useParams()
@@ -92,6 +94,16 @@ export function AppointmentDetails() {
       confirmLabel: 'Reschedule',
     })
     if (!ok) return
+    if (isManggalehEnabled()) {
+      const end = addMinutes(start, service?.durationMinutes ?? 0)
+      try {
+        await rescheduleMyAppointment(apt!.id, { therapistId, clinicId: apt!.clinicId, date: rsDate, start, end })
+        useApp.setState((s) => ({ appointments: s.appointments.map((a) => a.id === apt!.id ? { ...a, status: 'Rescheduled', therapistId, clinicId: apt!.clinicId, date: rsDate, start, end } : a) }))
+        setShowReschedule(false); setError(null); setModalError(null)
+        toast.success('Appointment rescheduled.')
+      } catch { setModalError('Could not reschedule. Please try again.') }
+      return
+    }
     const err = reschedule(apt!.id, { therapistId, clinicId: apt!.clinicId, date: rsDate, start }, 'patient')
     if (err) return setModalError(err)
     setShowReschedule(false)
@@ -100,9 +112,20 @@ export function AppointmentDetails() {
     toast.success('Appointment rescheduled.')
   }
 
-  function doCancel() {
+  async function doCancel() {
     if (!cancelReasonId) return setModalError('Please choose a cancellation reason.')
-    const err = cancel(apt!.id, 'patient', cancelReasonId, cancelNote.trim() || undefined)
+    const note = cancelNote.trim() || undefined
+    if (isManggalehEnabled()) {
+      try {
+        await cancelMyAppointment(apt!.id, cancelReasonId, note)
+        useApp.setState((s) => ({ appointments: s.appointments.map((a) => a.id === apt!.id ? { ...a, status: 'CancelledByPatient', cancelledBy: 'patient', cancellationReasonId: cancelReasonId, cancellationNote: note } : a) }))
+        setShowCancel(false)
+        toast.success('Appointment cancelled.')
+        navigate('/patient/appointments', { replace: true })
+      } catch { setModalError('Could not cancel. Please try again.') }
+      return
+    }
+    const err = cancel(apt!.id, 'patient', cancelReasonId, note)
     if (err) return setModalError(err)
     setShowCancel(false)
     toast.success('Appointment cancelled.')

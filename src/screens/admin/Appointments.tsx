@@ -11,7 +11,9 @@ import { useApp } from '../../store/appStore'
 import { useCan } from '../../store/selectors'
 import { addDays, formatDate, formatDateShort, nowMinutes, todayISO, weekdayLabel } from '../../lib/date'
 import { computeBookingOptions, uniqueStarts } from '../../lib/booking'
-import type { Appointment, AppointmentStatus } from '../../data/types'
+import type { Appointment, AppointmentStatus, PackageStatus, PackageUsage } from '../../data/types'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { setAppointmentStatusFn, adminRescheduleFn } from '../../lib/manggaleh/write'
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: 'all', label: 'All statuses' },
@@ -36,6 +38,7 @@ export function AdminAppointments() {
   const cancelApt = useApp((s) => s.cancelAppointment)
   const markNoShow = useApp((s) => s.markNoShow)
   const rescheduleApt = useApp((s) => s.rescheduleAppointment)
+  const actor = useApp((s) => s.users.find((u) => u.id === s.currentUserId))
   const canManage = useCan('appointmentManagement')
 
   const [clinicFilter, setClinicFilter] = useState('all')
@@ -67,8 +70,27 @@ export function AdminAppointments() {
   const activeReasons = cancellationReasons.filter((r) => r.active)
   const isOtherReason = activeReasons.find((r) => r.id === cancelReasonId)?.label.toLowerCase() === 'other'
 
-  function complete(pkgId?: string) {
+  async function complete(pkgId?: string) {
     if (!completing) return
+    if (isManggalehEnabled()) {
+      const apt = completing
+      try {
+        const r = await setAppointmentStatusFn({ appointmentId: apt.id, action: 'complete', patientPackageId: pkgId, actorUserId: actor?.id, actorName: actor?.name })
+        useApp.setState((s) => ({
+          appointments: s.appointments.map((a) => (a.id === apt.id ? { ...a, status: 'Completed' } : a)),
+          patientPackages: pkgId && r.remaining != null
+            ? s.patientPackages.map((p) => (p.id === pkgId ? { ...p, remaining: r.remaining as number, status: (r.remaining! <= 0 ? 'used' : 'active') as PackageStatus } : p))
+            : s.patientPackages,
+          packageUsage: pkgId
+            ? [...s.packageUsage, { id: `use_${apt.id}`, patientPackageId: pkgId, appointmentId: apt.id, memberName: apt.forMemberName, date: todayISO(), recordedBy: actor?.name ?? 'Admin' } as PackageUsage]
+            : s.packageUsage,
+        }))
+        setCompleting(null); setError(null); toast.success('Session marked complete.')
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not complete the session.')
+      }
+      return
+    }
     const err = markCompleted(completing.id, pkgId)
     if (err) return setError(err)
     setCompleting(null)
@@ -83,6 +105,16 @@ export function AdminAppointments() {
       confirmLabel: 'Mark no-show',
     })
     if (!ok) return
+    if (isManggalehEnabled()) {
+      try {
+        await setAppointmentStatusFn({ appointmentId: a.id, action: 'noshow', actorUserId: actor?.id, actorName: actor?.name })
+        useApp.setState((s) => ({ appointments: s.appointments.map((x) => (x.id === a.id ? { ...x, status: 'NoShow' } : x)) }))
+        toast.info('Marked as no-show.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not mark no-show.')
+      }
+      return
+    }
     const err = markNoShow(a.id)
     if (err) return toast.error(err)
     toast.info('Marked as no-show.')
@@ -94,10 +126,24 @@ export function AdminAppointments() {
     setCancelNote('')
   }
 
-  function doCancel() {
+  async function doCancel() {
     if (!cancelling) return
     if (!cancelReasonId) return toast.error('Please choose a cancellation reason.')
-    const err = cancelApt(cancelling.id, 'admin', cancelReasonId, cancelNote.trim() || undefined)
+    const note = cancelNote.trim() || undefined
+    if (isManggalehEnabled()) {
+      const id = cancelling.id
+      try {
+        await setAppointmentStatusFn({ appointmentId: id, action: 'cancel', reasonId: cancelReasonId, note, actorUserId: actor?.id, actorName: actor?.name })
+        useApp.setState((s) => ({
+          appointments: s.appointments.map((a) => (a.id === id ? { ...a, status: 'CancelledByAdmin', cancelledBy: 'admin', cancellationReasonId: cancelReasonId, cancellationNote: note } : a)),
+        }))
+        setCancelling(null); toast.success('Appointment cancelled.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not cancel the appointment.')
+      }
+      return
+    }
+    const err = cancelApt(cancelling.id, 'admin', cancelReasonId, note)
     if (err) return toast.error(err)
     setCancelling(null)
     toast.success('Appointment cancelled.')
@@ -141,7 +187,7 @@ export function AdminAppointments() {
     return uniqueStarts(computeBookingOptions({ ...rsArgs, date: rsDate, minStartMin: rsDate === todayISO() ? nowMinutes() : null }))
   }, [rsArgs, rsDate])
 
-  async function doReschedule(start: string, therapistId: string) {
+  async function doReschedule(start: string, therapistId: string, end: string) {
     if (!rescheduling) return
     const ok = await confirm({
       title: 'Reschedule appointment?',
@@ -149,6 +195,19 @@ export function AdminAppointments() {
       confirmLabel: 'Reschedule',
     })
     if (!ok) return
+    if (isManggalehEnabled()) {
+      const apt = rescheduling
+      try {
+        await adminRescheduleFn({ appointmentId: apt.id, therapistId, clinicId: apt.clinicId, date: rsDate, start, end, actorUserId: actor?.id, actorName: actor?.name })
+        useApp.setState((s) => ({
+          appointments: s.appointments.map((a) => (a.id === apt.id ? { ...a, status: 'Rescheduled', therapistId, clinicId: apt.clinicId, date: rsDate, start, end } : a)),
+        }))
+        setRescheduling(null); setRsDate(''); toast.success('Appointment rescheduled.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not reschedule the appointment.')
+      }
+      return
+    }
     const err = rescheduleApt(rescheduling.id, { therapistId, clinicId: rescheduling.clinicId, date: rsDate, start }, 'admin')
     if (err) return toast.error(err)
     setRescheduling(null)
@@ -340,7 +399,7 @@ export function AdminAppointments() {
                   {rsOptions.map((o) => (
                     <button
                       key={o.start}
-                      onClick={() => doReschedule(o.start, o.therapistId)}
+                      onClick={() => doReschedule(o.start, o.therapistId, o.end)}
                       className="flex flex-col items-center rounded-xl border-2 border-outline-variant py-sm font-label-lg text-label-lg text-on-surface transition-colors hover:border-primary hover:bg-primary-fixed/40"
                     >
                       <span>{o.start}</span>

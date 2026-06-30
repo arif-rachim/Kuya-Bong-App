@@ -8,6 +8,8 @@ import { confirm } from '../../components/Confirm'
 import { cn } from '../../lib/cn'
 import { useApp } from '../../store/appStore'
 import type { Clinic } from '../../data/types'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { createClinicFn, updateClinicFn, setClinicActiveFn, deleteClinicFn } from '../../lib/manggaleh/write'
 
 export function ClinicSettings() {
   const clinics = useApp((s) => s.clinics)
@@ -33,7 +35,26 @@ export function ClinicSettings() {
     setError(null)
     setModal(true)
   }
-  function save() {
+  async function save() {
+    const name = form.name.trim()
+    if (!name) return setError('Clinic name can\'t be empty.')
+    if (isManggalehEnabled()) {
+      try {
+        if (editing) {
+          await updateClinicFn(editing.id, { name, address: form.address.trim() })
+          useApp.setState((s) => ({ clinics: s.clinics.map((c) => (c.id === editing.id ? { ...c, name, address: form.address.trim() } : c)) }))
+          toast.success('Clinic updated.')
+        } else {
+          const id = await createClinicFn({ name, address: form.address.trim() })
+          useApp.setState((s) => ({ clinics: [...s.clinics, { id, name, address: form.address.trim(), active: true }] }))
+          toast.success('Clinic added.')
+        }
+        setModal(false)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not save the clinic.')
+      }
+      return
+    }
     if (editing) {
       const err = updateClinic(editing.id, form)
       if (err) return setError(err)
@@ -44,6 +65,37 @@ export function ClinicSettings() {
       toast.success('Clinic added.')
     }
     setModal(false)
+  }
+
+  async function toggle(c: Clinic) {
+    if (isManggalehEnabled()) {
+      try {
+        await setClinicActiveFn(c.id, !c.active)
+        useApp.setState((s) => ({ clinics: s.clinics.map((x) => (x.id === c.id ? { ...x, active: !c.active } : x)) }))
+        toast.success(c.active ? 'Clinic deactivated.' : 'Clinic activated.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not update the clinic.')
+      }
+      return
+    }
+    toggleActive(c.id)
+    toast.success(c.active ? 'Clinic deactivated.' : 'Clinic activated.')
+  }
+
+  async function remove(c: Clinic) {
+    if (isManggalehEnabled()) {
+      try {
+        await deleteClinicFn(c.id)
+        useApp.setState((s) => ({ clinics: s.clinics.filter((x) => x.id !== c.id) }))
+        toast.success('Clinic deleted.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not delete the clinic.')
+      }
+      return
+    }
+    const err = deleteClinic(c.id)
+    if (err) return toast.error(err)
+    toast.success('Clinic deleted.')
   }
 
   return (
@@ -89,8 +141,7 @@ export function ClinicSettings() {
                       danger: c.active,
                     })
                     if (!ok) return
-                    toggleActive(c.id)
-                    toast.success(c.active ? 'Clinic deactivated.' : 'Clinic activated.')
+                    await toggle(c)
                   }}
                 >
                   {c.active ? 'Deactivate' : 'Activate'}
@@ -106,9 +157,7 @@ export function ClinicSettings() {
                       danger: true,
                     })
                     if (!ok) return
-                    const err = deleteClinic(c.id)
-                    if (err) return toast.error(err)
-                    toast.success('Clinic deleted.')
+                    await remove(c)
                   }}
                 >
                   <Icon name="delete" size={16} /> Delete

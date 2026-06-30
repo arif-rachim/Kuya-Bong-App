@@ -3,6 +3,12 @@
   command = "npm run build"
   publish = "dist"
 
+# Require email-OTP verification at registration (manggaleh built-in OTP; email
+# delivery is live). Non-secret flag; the manggaleh tenant + publishable key
+# still come from the Netlify UI env vars. UI env overrides this if also set.
+[build.environment]
+  VITE_MANGGALEH_OTP = "true"
+
 # App uses HashRouter, so deep links resolve client-side. This catch-all is a
 # harmless safety net (and future-proofs a switch to BrowserRouter).
 [[redirects]]

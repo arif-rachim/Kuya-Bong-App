@@ -10,6 +10,10 @@ import { useApp } from '../../store/appStore'
 import { formatPrice } from '../../lib/date'
 import { compressImage } from '../../lib/image'
 import type { Product, ProductCategory } from '../../data/types'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { createProductFn, updateProductFn, setProductActiveFn } from '../../lib/manggaleh/write'
+import { uploadDataUrl } from '../../lib/manggaleh/storage'
+import { StoredImage } from '../../components/StoredImage'
 
 export function AdminProducts() {
   const products = useApp((s) => s.products)
@@ -43,7 +47,9 @@ export function AdminProducts() {
     try {
       const next: string[] = []
       for (const file of Array.from(files)) {
-        next.push(await compressImage(file))
+        const dataUrl = await compressImage(file)
+        // manggaleh: upload to object storage and keep the id; mock: keep base64
+        next.push(isManggalehEnabled() ? await uploadDataUrl(dataUrl) : dataUrl)
       }
       setForm((f) => ({ ...f, images: [...f.images, ...next].slice(0, 5) }))
     } catch (e) {
@@ -55,8 +61,29 @@ export function AdminProducts() {
   function removePhoto(idx: number) {
     setForm((f) => ({ ...f, images: f.images.filter((_, i) => i !== idx) }))
   }
-  function save() {
+  async function save() {
+    const name = form.name.trim()
     const price = Number(form.price)
+    const notes = form.notes.trim()
+    if (!name) return setError('Product name can\'t be empty.')
+    if (!(price >= 0)) return setError('Price must be 0 or more.')
+    if (isManggalehEnabled()) {
+      try {
+        if (editing) {
+          await updateProductFn(editing.id, { name, category: form.category, price, notes, images: form.images })
+          useApp.setState((s) => ({ products: s.products.map((p) => (p.id === editing.id ? { ...p, name, category: form.category, price, notes: notes || undefined, images: form.images } : p)) }))
+          toast.success('Product updated.')
+        } else {
+          const id = await createProductFn({ name, category: form.category, price, notes, images: form.images })
+          useApp.setState((s) => ({ products: [...s.products, { id, name, category: form.category, price, notes: notes || undefined, images: form.images, active: true }] }))
+          toast.success('Product added.')
+        }
+        setModal(false)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not save the product.')
+      }
+      return
+    }
     if (editing) {
       const err = updateProduct(editing.id, { name: form.name, category: form.category, price, notes: form.notes, images: form.images })
       if (err) return setError(err)
@@ -67,6 +94,21 @@ export function AdminProducts() {
       toast.success('Product added.')
     }
     setModal(false)
+  }
+
+  async function toggle(p: Product) {
+    if (isManggalehEnabled()) {
+      try {
+        await setProductActiveFn(p.id, !p.active)
+        useApp.setState((s) => ({ products: s.products.map((x) => (x.id === p.id ? { ...x, active: !p.active } : x)) }))
+        toast.success(p.active ? 'Product deactivated.' : 'Product activated.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not update the product.')
+      }
+      return
+    }
+    toggleActive(p.id)
+    toast.success(p.active ? 'Product deactivated.' : 'Product activated.')
   }
 
   return (
@@ -85,7 +127,7 @@ export function AdminProducts() {
               <div className="flex items-start justify-between gap-sm">
                 <div className="flex min-w-0 gap-sm">
                   {p.images?.[0] ? (
-                    <img src={p.images[0]} alt={p.name} className="h-14 w-14 shrink-0 rounded-lg border border-outline-variant/30 object-cover" />
+                    <StoredImage src={p.images[0]} alt={p.name} className="h-14 w-14 shrink-0 rounded-lg border border-outline-variant/30 object-cover" />
                   ) : (
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-surface-container-high text-on-surface-variant">
                       <Icon name="image" size={22} />
@@ -121,8 +163,7 @@ export function AdminProducts() {
                       danger: p.active,
                     })
                     if (!ok) return
-                    toggleActive(p.id)
-                    toast.success(p.active ? 'Product deactivated.' : 'Product activated.')
+                    await toggle(p)
                   }}
                 >
                   {p.active ? 'Deactivate' : 'Activate'}
@@ -161,7 +202,7 @@ export function AdminProducts() {
             <div className="flex flex-wrap gap-sm">
               {form.images.map((src, i) => (
                 <div key={i} className="relative">
-                  <img src={src} alt={`Photo ${i + 1}`} className="h-16 w-16 rounded-lg border border-outline-variant/30 object-cover" />
+                  <StoredImage src={src} alt={`Photo ${i + 1}`} className="h-16 w-16 rounded-lg border border-outline-variant/30 object-cover" />
                   <button
                     type="button"
                     onClick={() => removePhoto(i)}

@@ -5,6 +5,8 @@ import { cn } from '../../lib/cn'
 import { useApp } from '../../store/appStore'
 import { formatDate } from '../../lib/date'
 import type { FollowUpStatus } from '../../data/types'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { setFollowUpStatusFn } from '../../lib/manggaleh/write'
 
 const NEXT: Record<FollowUpStatus, FollowUpStatus> = {
   NotDue: 'Due',
@@ -23,6 +25,21 @@ export function AdminFollowUps() {
   const purchases = useApp((s) => s.purchases)
   const users = useApp((s) => s.users)
   const setFollowUpStatus = useApp((s) => s.setFollowUpStatus)
+
+  async function advance(purchaseId: string, next: FollowUpStatus) {
+    if (isManggalehEnabled()) {
+      try {
+        await setFollowUpStatusFn(purchaseId, next)
+        useApp.setState((s) => ({ purchases: s.purchases.map((p) => (p.id === purchaseId ? { ...p, followUpStatus: next } : p)) }))
+        toast.success(`Marked as ${LABEL[next].text}.`)
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not update the follow-up status.')
+      }
+      return
+    }
+    setFollowUpStatus(purchaseId, next)
+    toast.success(`Marked as ${LABEL[next].text}.`)
+  }
 
   const list = purchases
     .filter((p) => p.followUpStatus !== 'Completed')
@@ -56,11 +73,7 @@ export function AdminFollowUps() {
                     size="sm"
                     variant="secondary"
                     className="mt-sm"
-                    onClick={() => {
-                      const next = NEXT[p.followUpStatus]
-                      setFollowUpStatus(p.id, next)
-                      toast.success(`Marked as ${LABEL[next].text}.`)
-                    }}
+                    onClick={() => advance(p.id, NEXT[p.followUpStatus])}
                   >
                     Mark as: {LABEL[NEXT[p.followUpStatus]].text}
                   </Button>

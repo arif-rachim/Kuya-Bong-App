@@ -16,6 +16,7 @@ import { Welcome } from './screens/shared/Welcome'
 import { Login } from './screens/shared/Login'
 import { Register } from './screens/shared/Register'
 import { Verify } from './screens/shared/Verify'
+import { VerifyEmail } from './screens/shared/VerifyEmail'
 import { ForgotPassword } from './screens/shared/ForgotPassword'
 
 // patient
@@ -97,6 +98,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/verify/:userId" element={<Verify />} />
+      <Route path="/verify-email/:email" element={<VerifyEmail />} />
       <Route path="/forgot" element={<ForgotPassword />} />
 
       {/* Patient */}

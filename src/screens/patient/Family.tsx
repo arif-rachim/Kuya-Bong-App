@@ -8,6 +8,9 @@ import { toast } from '../../components/Toast'
 import { confirm } from '../../components/Confirm'
 import { useApp } from '../../store/appStore'
 import { useCurrentProfile, useCurrentUser } from '../../store/selectors'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { addChildMember, linkAdultFn, familyRespondFn } from '../../lib/manggaleh/write'
+import type { FamilyMember, User } from '../../data/types'
 
 function initials(name: string) {
   return name
@@ -47,6 +50,16 @@ export function Family() {
       confirmLabel: 'Accept',
     })
     if (!ok) return
+    if (isManggalehEnabled()) {
+      try {
+        await familyRespondFn(memberId, 'accept')
+        useApp.setState((s) => ({ family: s.family.map((m) => (m.id === memberId ? { ...m, status: 'active' } : m)) }))
+        toast.success(`You're now linked with ${from}.`)
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not accept the request.')
+      }
+      return
+    }
     acceptLink(memberId)
     toast.success(`You're now linked with ${from}.`)
   }
@@ -59,6 +72,16 @@ export function Family() {
       danger: true,
     })
     if (!ok) return
+    if (isManggalehEnabled()) {
+      try {
+        await familyRespondFn(memberId, 'decline')
+        useApp.setState((s) => ({ family: s.family.filter((m) => m.id !== memberId) }))
+        toast.info('Request declined.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not decline the request.')
+      }
+      return
+    }
     declineLink(memberId)
     toast.info('Request declined.')
   }
@@ -74,6 +97,16 @@ export function Family() {
       danger: true,
     })
     if (!ok) return
+    if (isManggalehEnabled()) {
+      try {
+        await familyRespondFn(id, 'remove')
+        useApp.setState((s) => ({ family: s.family.filter((m) => m.id !== id) }))
+        toast.success(`${name} removed.`)
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not remove the member.')
+      }
+      return
+    }
     removeFamilyMember(id)
     toast.success(`${name} removed.`)
   }
@@ -83,12 +116,40 @@ export function Family() {
   const [contact, setContact] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  function submitChild() {
+  async function submitChild() {
+    if (!name.trim()) return setError('Child\'s name can\'t be empty.')
+    if (isManggalehEnabled()) {
+      try {
+        const id = await addChildMember(user!.id, name)
+        useApp.setState((s) => ({ family: [...s.family, { id, familyGroupId: user!.id, name: name.trim(), relationship: 'child', isChild: true, parentUserId: user!.id, status: 'active' }] }))
+        reset('Child added successfully.')
+      } catch { setError('Could not add child. Please try again.') }
+      return
+    }
     const err = addChild(user!.id, name)
     if (err) return setError(err)
     reset('Child added successfully.')
   }
-  function submitAdult() {
+  async function submitAdult() {
+    if (!contact.trim()) return setError('Enter an email or mobile number.')
+    if (isManggalehEnabled()) {
+      try {
+        const r = await linkAdultFn(contact)
+        const member: FamilyMember = {
+          id: r.id, familyGroupId: user!.id, name: r.name, relationship: 'spouse', isChild: false,
+          linkedUserId: r.linkedUserId, parentUserId: user!.id, status: 'pending',
+        }
+        const stub: User = { id: r.linkedUserId, role: 'patient', name: r.name, mobile: '', email: '', password: '', verification: 'verified', active: true }
+        useApp.setState((s) => ({
+          family: [...s.family, member],
+          users: s.users.some((u) => u.id === r.linkedUserId) ? s.users : [...s.users, stub],
+        }))
+        reset('Link request sent. Awaiting approval.')
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not send the link request.')
+      }
+      return
+    }
     const err = linkAdult(user!.id, contact)
     if (err) return setError(err)
     reset('Link request sent. Awaiting approval.')

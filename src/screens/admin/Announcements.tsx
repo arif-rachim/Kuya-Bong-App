@@ -9,6 +9,8 @@ import { cn } from '../../lib/cn'
 import { useApp } from '../../store/appStore'
 import { addDays, formatDate, todayISO } from '../../lib/date'
 import type { Announcement } from '../../data/types'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { createAnnouncementFn, unpublishAnnouncementFn, deleteAnnouncementFn } from '../../lib/manggaleh/write'
 
 function statusOf(a: Announcement): { label: string; cls: string } {
   if (!a.published) return { label: 'Unpublished', cls: 'bg-surface-container-highest text-on-surface-variant' }
@@ -31,11 +33,57 @@ export function AdminAnnouncements() {
     setError(null)
     setModal(true)
   }
-  function save() {
+  async function save() {
+    const title = form.title.trim()
+    const message = form.message.trim()
+    if (!title) return setError('Title can\'t be empty.')
+    if (!message) return setError('Message can\'t be empty.')
+    if (form.expiryDate < todayISO()) return setError('Expiry date can\'t be in the past.')
+    if (isManggalehEnabled()) {
+      try {
+        const id = await createAnnouncementFn({ title, message, expiryDate: form.expiryDate })
+        useApp.setState((s) => ({ announcements: [...s.announcements, { id, title, message, expiryDate: form.expiryDate, createdAt: todayISO(), published: true }] }))
+        toast.success('Announcement published.')
+        setModal(false)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not publish the announcement.')
+      }
+      return
+    }
     const err = createAnnouncement(form)
     if (err) return setError(err)
     toast.success('Announcement published.')
     setModal(false)
+  }
+
+  async function pull(a: Announcement) {
+    if (isManggalehEnabled()) {
+      try {
+        await unpublishAnnouncementFn(a.id)
+        useApp.setState((s) => ({ announcements: s.announcements.map((x) => (x.id === a.id ? { ...x, published: false } : x)) }))
+        toast.success('Announcement pulled.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not pull the announcement.')
+      }
+      return
+    }
+    unpublish(a.id)
+    toast.success('Announcement pulled.')
+  }
+
+  async function del(a: Announcement) {
+    if (isManggalehEnabled()) {
+      try {
+        await deleteAnnouncementFn(a.id)
+        useApp.setState((s) => ({ announcements: s.announcements.filter((x) => x.id !== a.id) }))
+        toast.success('Announcement deleted.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not delete the announcement.')
+      }
+      return
+    }
+    remove(a.id)
+    toast.success('Announcement deleted.')
   }
 
   const sorted = [...announcements].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -82,8 +130,7 @@ export function AdminAnnouncements() {
                           danger: true,
                         })
                         if (!ok) return
-                        unpublish(a.id)
-                        toast.success('Announcement pulled.')
+                        await pull(a)
                       }}
                     >
                       <Icon name="visibility_off" size={16} /> Pull
@@ -100,8 +147,7 @@ export function AdminAnnouncements() {
                         danger: true,
                       })
                       if (!ok) return
-                      remove(a.id)
-                      toast.success('Announcement deleted.')
+                      await del(a)
                     }}
                   >
                     <Icon name="delete" size={16} /> Delete

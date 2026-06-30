@@ -1,0 +1,20 @@
+import { chromium } from 'playwright'
+const proxy = process.env.HTTPS_PROXY
+const b = await chromium.launch({ args: ['--no-sandbox'], proxy: proxy ? { server: proxy, bypass: 'localhost,127.0.0.1' } : undefined })
+const ctx = await b.newContext({ viewport: { width: 390, height: 800 }, ignoreHTTPSErrors: true })
+const p = await ctx.newPage()
+const errs = []
+p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()) })
+await p.goto('http://localhost:4173/', { waitUntil: 'networkidle' })
+await p.waitForTimeout(1600)
+await p.getByText('As Patient', { exact: true }).click().catch(() => {})
+await p.waitForTimeout(4000)
+console.log('after login URL:', p.url())
+await p.goto('http://localhost:4173/#/patient/book', { waitUntil: 'networkidle' })
+await p.waitForTimeout(2500)
+const body = await p.evaluate(() => document.body.innerText)
+console.log('Book shows Physiotherapy?', /Physiotherapy/i.test(body))
+console.log('Book shows Grounding?', /Grounding/i.test(body))
+console.log('console errors:', errs.slice(0, 4))
+await b.close()
+console.log('(smoke done)')

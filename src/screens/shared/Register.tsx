@@ -5,23 +5,49 @@ import { TopBar } from '../../components/TopBar'
 import { AuthShell } from '../../components/AuthShell'
 import { Banner, Button, Field, Input } from '../../components/ui'
 import { useApp } from '../../store/appStore'
+import { homePathFor } from '../../store/selectors'
+import { isManggalehEnabled, isManggalehOtpEnabled } from '../../lib/manggaleh/client'
+import { registerPatient } from '../../lib/manggaleh/write'
+import { mgSendOtp } from '../../lib/manggaleh/auth'
+import { hydrateFromManggaleh } from '../../lib/manggaleh/hydrate'
 
 export function Register() {
   const navigate = useNavigate()
   const register = useApp((s) => s.register)
   const [form, setForm] = useState({ name: '', email: '', mobile: '', password: '' })
   const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
 
   function set(k: keyof typeof form, v: string) {
     setForm((f) => ({ ...f, [k]: v }))
   }
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     if (!form.name.trim() || !form.email.trim() || !form.mobile.trim())
       return setError('Please fill in all required fields.')
     if (form.password.length < 6) return setError('Password must be at least 6 characters.')
+    if (isManggalehEnabled()) {
+      setBusy(true)
+      try {
+        await registerPatient({ name: form.name, email: form.email, password: form.password })
+        if (isManggalehOtpEnabled()) {
+          // require email verification before entering the app
+          await mgSendOtp(form.email)
+          navigate(`/verify-email/${encodeURIComponent(form.email.trim().toLowerCase())}`, { replace: true })
+          return
+        }
+        await hydrateFromManggaleh()
+        const s = useApp.getState()
+        navigate(homePathFor(s.users.find((u) => u.id === s.currentUserId) ?? null, s.therapists), { replace: true })
+      } catch {
+        setError('Could not create the account. The email may already be registered.')
+      } finally {
+        setBusy(false)
+      }
+      return
+    }
     const res = register(form)
     if (res.error) return setError(res.error)
     navigate(`/verify/${res.userId}`, { replace: true })
@@ -44,8 +70,8 @@ export function Register() {
         <Field label="Password" hint="At least 6 characters">
           <Input type="password" value={form.password} onChange={(e) => set('password', e.target.value)} required />
         </Field>
-        <Button size="lg" type="submit">
-          Continue to Verification
+        <Button size="lg" type="submit" disabled={busy}>
+          {busy ? 'Creating…' : 'Continue to Verification'}
           <Icon name="arrow_forward" size={20} />
         </Button>
         <p className="text-center text-body-md text-on-surface-variant">

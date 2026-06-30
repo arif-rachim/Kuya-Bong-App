@@ -7,6 +7,8 @@ import { confirm } from '../../components/Confirm'
 import { cn } from '../../lib/cn'
 import { useApp } from '../../store/appStore'
 import type { Capability } from '../../data/types'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { appointSubAdminFn, removeSubAdminFn, setPermissionFn } from '../../lib/manggaleh/write'
 
 const CAPABILITIES: { key: Capability; label: string }[] = [
   { key: 'manageBooking', label: 'Manage Booking (availability)' },
@@ -34,12 +36,53 @@ export function AdminSubAdmins() {
   const patients = users.filter((u) => u.role === 'patient')
   const [pick, setPick] = useState('')
 
-  function appoint() {
+  async function appoint() {
     if (!pick) return toast.error('Choose a registered user first.')
+    if (isManggalehEnabled()) {
+      const userId = pick
+      try {
+        await appointSubAdminFn(userId)
+        useApp.setState((s) => ({ users: s.users.map((u) => (u.id === userId ? { ...u, role: 'admin', adminLevel: 'sub' } : u)) }))
+        setPick(''); toast.success('Sub-admin appointed.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not appoint the sub-admin.')
+      }
+      return
+    }
     const err = appointSubAdmin(pick)
     if (err) return toast.error(err)
     setPick('')
     toast.success('Sub-admin appointed.')
+  }
+
+  async function remove(userId: string) {
+    if (isManggalehEnabled()) {
+      try {
+        await removeSubAdminFn(userId)
+        useApp.setState((s) => ({ users: s.users.map((u) => (u.id === userId ? { ...u, role: 'patient', adminLevel: undefined } : u)) }))
+        toast.success('Sub-admin removed.')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not remove the sub-admin.')
+      }
+      return
+    }
+    const err = removeSubAdmin(userId)
+    if (err) return toast.error(err)
+    toast.success('Sub-admin removed.')
+  }
+
+  async function togglePermission(cap: Capability) {
+    const next = !permissions[cap]
+    if (isManggalehEnabled()) {
+      try {
+        await setPermissionFn(cap, next)
+        useApp.setState((s) => ({ subAdminPermissions: { ...s.subAdminPermissions, [cap]: next } }))
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not update the permission.')
+      }
+      return
+    }
+    setPermission(cap, next)
   }
 
   return (
@@ -106,9 +149,7 @@ export function AdminSubAdmins() {
                             danger: true,
                           })
                           if (!ok) return
-                          const err = removeSubAdmin(a.id)
-                          if (err) return toast.error(err)
-                          toast.success('Sub-admin removed.')
+                          await remove(a.id)
                         }}
                       >
                         <Icon name="person_remove" size={16} /> Remove access
@@ -132,7 +173,7 @@ export function AdminSubAdmins() {
                 role="switch"
                 aria-checked={permissions[c.key]}
                 aria-label={c.label}
-                onClick={() => setPermission(c.key, !permissions[c.key])}
+                onClick={() => togglePermission(c.key)}
                 className={cn('relative h-7 w-12 shrink-0 rounded-full transition-colors', permissions[c.key] ? 'bg-primary' : 'bg-outline-variant')}
               >
                 <span className={cn('absolute top-1 h-5 w-5 rounded-full bg-surface-container-lowest shadow transition-all', permissions[c.key] ? 'left-6' : 'left-1')} />
