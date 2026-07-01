@@ -3,36 +3,9 @@ import { Icon } from '../../components/Icon'
 import { AuthShell } from '../../components/AuthShell'
 import { Logo } from '../../components/Logo'
 import { Button } from '../../components/ui'
-import { useApp } from '../../store/appStore'
-import { homePathFor } from '../../store/selectors'
-import { isManggalehEnabled } from '../../lib/manggaleh/client'
-import { mgSignIn } from '../../lib/manggaleh/auth'
-import { hydrateFromManggaleh } from '../../lib/manggaleh/hydrate'
-
-// Demo accounts to use when the manggaleh backend is on.
-const DEMO = { patient: { email: 'maria@example.com', password: 'patient123' }, admin: { email: 'admin@reliefexpert.app', password: 'admin123' } }
 
 export function Welcome() {
   const navigate = useNavigate()
-  const loginAs = useApp((s) => s.loginAs)
-
-  function goHome() {
-    const s = useApp.getState()
-    navigate(homePathFor(s.users.find((u) => u.id === s.currentUserId) ?? null, s.therapists), { replace: true })
-  }
-
-  async function demo(role: 'patient' | 'admin') {
-    if (isManggalehEnabled()) {
-      try {
-        await mgSignIn(DEMO[role].email, DEMO[role].password)
-        await hydrateFromManggaleh()
-        goHome()
-      } catch { /* ignore — stay on welcome */ }
-      return
-    }
-    loginAs(role)
-    goHome()
-  }
 
   return (
     <AuthShell>
@@ -77,20 +50,6 @@ export function Welcome() {
         <Button size="lg" variant="secondary" onClick={() => navigate('/login')}>
           Log In
         </Button>
-
-        <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-md">
-          <p className="mb-sm text-center font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">
-            Quick demo
-          </p>
-          <div className="grid grid-cols-2 gap-sm">
-            <Button variant="ghost" onClick={() => demo('patient')}>
-              As Patient
-            </Button>
-            <Button variant="ghost" onClick={() => demo('admin')}>
-              As Admin
-            </Button>
-          </div>
-        </div>
       </div>
       </div>
     </AuthShell>

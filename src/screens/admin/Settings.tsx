@@ -23,18 +23,6 @@ export function AdminSettings() {
   const requireApproval = useApp((s) => s.requireApproval)
   const setRequireApproval = useApp((s) => s.setRequireApproval)
 
-  async function resetDemo() {
-    const ok = await confirm({
-      title: 'Reset demo data?',
-      message: 'This restores all demo data to its initial state and reloads the app. Any changes you made will be lost.',
-      confirmLabel: 'Reset',
-      danger: true,
-    })
-    if (!ok) return
-    localStorage.removeItem('kuya-bong-store')
-    location.reload()
-  }
-
   async function doLogout() {
     const ok = await confirm({
       title: 'Log out?',
@@ -135,10 +123,6 @@ export function AdminSettings() {
             </Card>
           </>
         )}
-
-        <Card onClick={resetDemo}>
-          <Item icon="restart_alt" label="Reset Demo Data" desc="Restore initial data" />
-        </Card>
 
         <Button variant="ghost" size="lg" onClick={doLogout}>
           <Icon name="logout" size={20} /> Log Out

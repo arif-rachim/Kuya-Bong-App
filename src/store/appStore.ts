@@ -8,30 +8,11 @@
  * Actions with validation return a `string` (error message) or `null` (success).
  */
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import { uid } from '../lib/uid'
 import { addDays, hoursUntil, todayISO } from '../lib/date'
 import { addMinutes, findConflict, timeToMin } from '../lib/booking'
 import { isManggalehEnabled } from '../lib/manggaleh/client'
 import { mgSignOut } from '../lib/manggaleh/auth'
-import {
-  FAMILY_GROUP,
-  generateAvailability,
-  seedAnnouncements,
-  seedAppointments,
-  seedCancellationReasons,
-  seedClinics,
-  seedFamily,
-  seedPackageDefs,
-  seedPatientPackages,
-  seedProducts,
-  seedProfiles,
-  seedPurchases,
-  seedServices,
-  seedSubAdminPermissions,
-  seedTherapists,
-  seedUsers,
-} from '../data/seed'
 import type {
   Announcement,
   Appointment,
@@ -102,7 +83,6 @@ interface AppState {
 
   // ---- auth ----
   login: (email: string, password: string) => Result
-  loginAs: (role: 'patient' | 'admin') => void
   register: (input: RegisterInput) => { error?: string; userId?: string }
   verify: (userId: string, code: string) => Result
   resendCode: (userId: string) => void
@@ -226,28 +206,34 @@ function recomputePackage(p: PatientPackage): PatientPackage {
   return { ...p, status }
 }
 
+/** Default family-group id for a patient without one yet (mock add-child/link-adult). */
+const FAMILY_GROUP = 'fam-1'
+
+/** All sub-admin capabilities off — the real profile is hydrated from manggaleh. */
+const EMPTY_PERMISSIONS: SubAdminPermissions = {
+  manageBooking: false, appointmentManagement: false, manageClinics: false, manageTherapists: false,
+  managePatients: false, manageProducts: false, manageServices: false, manageCancellationReasons: false,
+  manageAnnouncements: false, manageFollowUp: false, reportsServices: false, reportsProducts: false,
+}
+
+/**
+ * Empty data slices. The app is manggaleh-backed and hydrates fresh on every load,
+ * so there is no mock seed and nothing is persisted to localStorage. Also reused to
+ * wipe state on logout.
+ */
+type DataSlices = Pick<AppState,
+  | 'users' | 'profiles' | 'family' | 'clinics' | 'services' | 'therapists' | 'cancellationReasons'
+  | 'availability' | 'appointments' | 'packageDefs' | 'patientPackages' | 'packageUsage' | 'products'
+  | 'purchases' | 'announcements' | 'subAdminPermissions' | 'auditLog' | 'friends' | 'creditTransfers'>
+const emptyData = (): DataSlices => ({
+  users: [], profiles: [], family: [], clinics: [], services: [], therapists: [], cancellationReasons: [],
+  availability: [], appointments: [], packageDefs: [], patientPackages: [], packageUsage: [], products: [],
+  purchases: [], announcements: [], subAdminPermissions: EMPTY_PERMISSIONS, auditLog: [], friends: [], creditTransfers: [],
+})
+
 export const useApp = create<AppState>()(
-  persist(
     (set, get) => ({
-      users: seedUsers,
-      profiles: seedProfiles,
-      family: seedFamily,
-      clinics: seedClinics,
-      services: seedServices,
-      therapists: seedTherapists,
-      cancellationReasons: seedCancellationReasons,
-      availability: generateAvailability(),
-      appointments: seedAppointments(),
-      packageDefs: seedPackageDefs,
-      patientPackages: seedPatientPackages(),
-      packageUsage: [],
-      products: seedProducts,
-      purchases: seedPurchases(),
-      announcements: seedAnnouncements(),
-      subAdminPermissions: seedSubAdminPermissions,
-      auditLog: [],
-      friends: [],
-      creditTransfers: [],
+      ...emptyData(),
       currentUserId: null,
       requireApproval: false, // Q-07 default: auto-confirm. Admin can switch on manual approval.
 
@@ -260,11 +246,6 @@ export const useApp = create<AppState>()(
         if (user.active === false) return 'This account has been deactivated. Please contact the clinic.'
         set({ currentUserId: user.id })
         return null
-      },
-
-      loginAs: (role) => {
-        const user = get().users.find((u) => u.role === role && u.verification === 'verified' && u.active !== false)
-        if (user) set({ currentUserId: user.id })
       },
 
       register: ({ name, email, mobile, password }) => {
@@ -305,7 +286,8 @@ export const useApp = create<AppState>()(
 
       logout: () => {
         if (isManggalehEnabled()) mgSignOut().catch(() => {})
-        set({ currentUserId: null })
+        // wipe all data so nothing lingers in the tab after logout (there's no persistence either)
+        set({ ...emptyData(), currentUserId: null, requireApproval: false })
       },
 
       updateProfile: (patch) => {
@@ -1071,101 +1053,4 @@ export const useApp = create<AppState>()(
         return null
       },
     }),
-    {
-      name: 'kuya-bong-store',
-      version: 9,
-      // v2 introduces service types, therapists, cancellation reasons, and a
-      // duration-aware availability model (replacing fixed slots). v3 adds a
-      // next-week demo appointment. v4 adds a second demo patient (Ahmed) with
-      // his own next-week appointment. Backfill for older persisted stores so
-      // existing data survives.
-      migrate: (persisted, version) => {
-        const state = persisted as Record<string, unknown> | undefined
-        if (!state) return persisted as unknown as AppState
-        if (version < 2) {
-          state.services = state.services ?? seedServices
-          state.therapists = state.therapists ?? seedTherapists
-          state.cancellationReasons = state.cancellationReasons ?? seedCancellationReasons
-          state.availability = state.availability ?? generateAvailability()
-          delete state.slots
-          state.appointments = (Array.isArray(state.appointments) ? state.appointments : []).map((a) => {
-            const apt = a as Record<string, unknown>
-            return {
-              ...apt,
-              serviceTypeId: apt.serviceTypeId ?? 'svc-physio',
-              therapistId: apt.therapistId ?? 'th-bong',
-            }
-          })
-        }
-        if (version < 3) {
-          const appts = Array.isArray(state.appointments) ? state.appointments : []
-          if (!appts.some((a) => (a as Record<string, unknown>).id === 'apt-3')) {
-            const demo = seedAppointments().find((a) => a.id === 'apt-3')
-            if (demo) state.appointments = [...appts, demo]
-          }
-        }
-        if (version < 4) {
-          const users = Array.isArray(state.users) ? state.users : []
-          if (!users.some((u) => (u as Record<string, unknown>).id === 'u-pat-2')) {
-            const u = seedUsers.find((u) => u.id === 'u-pat-2')
-            if (u) state.users = [...users, u]
-          }
-          const profiles = Array.isArray(state.profiles) ? state.profiles : []
-          if (!profiles.some((p) => (p as Record<string, unknown>).id === 'p-2')) {
-            const p = seedProfiles.find((p) => p.id === 'p-2')
-            if (p) state.profiles = [...profiles, p]
-          }
-          const appts = Array.isArray(state.appointments) ? state.appointments : []
-          if (!appts.some((a) => (a as Record<string, unknown>).id === 'apt-4')) {
-            const demo = seedAppointments().find((a) => a.id === 'apt-4')
-            if (demo) state.appointments = [...appts, demo]
-          }
-        }
-        if (version < 5) {
-          // v0.4: designate the Master Admin and add a demo sub-admin.
-          let users = (Array.isArray(state.users) ? state.users : []) as Record<string, unknown>[]
-          users = users.map((u) => (u.id === 'u-admin' ? { ...u, name: 'Kuya Bong', adminLevel: 'master' } : u))
-          if (!users.some((u) => u.id === 'u-sub')) {
-            const sub = seedUsers.find((u) => u.id === 'u-sub')
-            if (sub) users = [...users, sub as unknown as Record<string, unknown>]
-          }
-          state.users = users
-        }
-        if (version < 6) {
-          // v0.4: announcements feature.
-          if (!Array.isArray(state.announcements)) state.announcements = seedAnnouncements()
-        }
-        if (version < 7) {
-          // v0.6: central sub-admin permission profile + audit log.
-          if (!state.subAdminPermissions) state.subAdminPermissions = seedSubAdminPermissions
-          if (!Array.isArray(state.auditLog)) state.auditLog = []
-        }
-        if (version < 8) {
-          // v0.6: friends + package-credit transfer.
-          if (!Array.isArray(state.friends)) state.friends = []
-          if (!Array.isArray(state.creditTransfers)) state.creditTransfers = []
-        }
-        if (version < 9) {
-          // v0.7: physiotherapist-as-user demo. Add Dr. Lina, link her therapist
-          // record, and assign apt-4 to her so "My Schedule" isn't empty.
-          const users = Array.isArray(state.users) ? state.users : []
-          if (!users.some((u) => (u as Record<string, unknown>).id === 'u-physio')) {
-            const physio = seedUsers.find((u) => u.id === 'u-physio')
-            if (physio) state.users = [...users, physio]
-          }
-          state.therapists = (Array.isArray(state.therapists) ? state.therapists : []).map((t) => {
-            const th = t as Record<string, unknown>
-            return th.id === 'th-brother' ? { ...th, name: 'Dr. Lina', userId: 'u-physio', active: true } : th
-          })
-          state.appointments = (Array.isArray(state.appointments) ? state.appointments : []).map((a) => {
-            const apt = a as Record<string, unknown>
-            return apt.id === 'apt-4'
-              ? { ...apt, therapistId: 'th-brother', clinicId: 'clinic-a', start: '13:00', end: '16:00' }
-              : apt
-          })
-        }
-        return state as unknown as AppState
-      },
-    },
-  ),
 )

@@ -31,6 +31,11 @@ export function isManggalehOtpEnabled(): boolean {
   return isManggalehEnabled() && import.meta.env.VITE_MANGGALEH_OTP === 'true'
 }
 
+/** True when a manggaleh session token is stored locally (a session may be restorable). */
+export function hasStoredSession(): boolean {
+  return typeof localStorage !== 'undefined' && !!localStorage.getItem(TOKEN_KEY)
+}
+
 let _client: ManggalehClient | null = null
 
 /** Lazily-created singleton client (publishable key, browser-safe). */

@@ -1,9 +1,12 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { MotionConfig } from 'framer-motion'
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useApp } from './store/appStore'
 import { useCurrentUser, useIsMaster, useIsPhysiotherapist, useCanAny } from './store/selectors'
 import type { Capability } from './data/types'
+import { isManggalehEnabled, hasStoredSession } from './lib/manggaleh/client'
+import { hydrateFromManggaleh } from './lib/manggaleh/hydrate'
+import { Logo } from './components/Logo'
 import { PatientLayout } from './layouts/PatientLayout'
 import { AdminLayout } from './layouts/AdminLayout'
 import { PhysiotherapistLayout } from './layouts/PhysiotherapistLayout'
@@ -90,6 +93,25 @@ function RequirePhysio({ children }: { children: ReactNode }) {
 
 export default function App() {
   const hasSession = useApp((s) => s.currentUserId !== null)
+
+  // No app data is persisted to localStorage, so on every load (including a reload on a
+  // deep route) restore the manggaleh session + hydrate BEFORE rendering routes — otherwise
+  // the route guards would see an empty store and bounce to /welcome despite a valid session.
+  const [booting, setBooting] = useState(() => isManggalehEnabled() && hasStoredSession())
+  useEffect(() => {
+    if (isManggalehEnabled() && hasStoredSession()) {
+      hydrateFromManggaleh().catch(() => {}).finally(() => setBooting(false))
+    }
+  }, [])
+
+  if (booting) {
+    return (
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-primary text-on-primary">
+        <Logo variant="onDark" tagline className="text-4xl" />
+        <p className="mt-lg text-body-md text-white/80">Physiotherapy &amp; Chiropractic</p>
+      </div>
+    )
+  }
 
   return (
     <MotionConfig reducedMotion="user">

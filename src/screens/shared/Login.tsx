@@ -67,12 +67,6 @@ export function Login() {
             Register
           </Link>
         </p>
-        <div className="rounded-lg bg-secondary-container px-sm py-sm text-center text-label-md text-on-secondary-container">
-          <p className="font-semibold">Demo accounts</p>
-          <p>Master Admin (Kuya): admin@reliefexpert.app / admin123</p>
-          <p>Sub-Admin (Erick): staff@reliefexpert.app / staff123</p>
-          <p>Patients: maria@example.com · ahmed@example.com / patient123</p>
-        </div>
       </form>
     </AuthShell>
   )

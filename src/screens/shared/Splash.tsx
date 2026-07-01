@@ -3,26 +3,20 @@ import { useNavigate } from 'react-router-dom'
 import { Logo } from '../../components/Logo'
 import { useApp } from '../../store/appStore'
 import { homePathFor } from '../../store/selectors'
-import { isManggalehEnabled } from '../../lib/manggaleh/client'
-import { hydrateFromManggaleh } from '../../lib/manggaleh/hydrate'
 
 export function Splash() {
   const navigate = useNavigate()
 
   useEffect(() => {
     let alive = true
+    // Session restore + hydration already happened in the app-level boot gate (App.tsx);
+    // here we just route based on the (already hydrated) current user.
     const route = () => {
       const s = useApp.getState()
       navigate(homePathFor(s.users.find((u) => u.id === s.currentUserId) ?? null, s.therapists), { replace: true })
     }
-    const boot = async () => {
-      // Restore a manggaleh session (and hydrate) before routing.
-      if (isManggalehEnabled()) await hydrateFromManggaleh().catch(() => {})
-      await new Promise((r) => setTimeout(r, 700))
-      if (alive) route()
-    }
-    boot()
-    return () => { alive = false }
+    const t = setTimeout(() => { if (alive) route() }, 700)
+    return () => { alive = false; clearTimeout(t) }
   }, [navigate])
 
   return (
