@@ -48,24 +48,19 @@ still runs everything it can. Verified green against `realief-expert/dev` (44 te
 > data (React #185 infinite render from array-returning selectors); fixed in
 > `src/store/selectors.ts` (`usePhysioTherapistIds`, `useFamilyMembers`).
 
-## Running (mock mode)
+## Running against manggaleh (primary)
 
 ```bash
 npm install
-# Pinned Playwright + a pre-provisioned browser → point at it instead of downloading:
-PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npm run test:e2e
+cp .env.e2e.example .env.e2e     # fill in tenant, publishable key, test accounts, service key
+npm run test:e2e:manggaleh       # loads .env.e2e, starts the relay, runs the full suite
 ```
 
-The `webServer` in `playwright.config.ts` runs `npm run build && npm run preview`
-automatically, so no separate server is needed.
-
-## Running against manggaleh
-
-```bash
-cp .env.e2e.example .env.e2e          # then fill in tenant, publishable key, test accounts
-set -a; source .env.e2e; set +a       # export VITE_* (baked into the build) + E2E_* creds
-npm run test:e2e
-```
+`scripts/e2e-manggaleh.sh` (behind that npm script) reads `.env.e2e`, forces
+`VITE_USE_MANGGALEH=true`, and routes API calls through the localhost relay so the
+browser reaches the tenant. The `webServer` in `playwright.config.ts` builds and
+serves the app automatically. This is the real integration run — every spec
+exercises the live backend.
 
 Requirements:
 1. A **dev/staging** tenant (never prod — the booking spec creates an appointment row).
@@ -73,6 +68,13 @@ Requirements:
    `MANGGALEH_SERVICE_KEY=… node scripts/manggaleh/seed.mjs` and `… seed_users.mjs`.
 3. Test accounts that exist in the tenant (the seed creates `maria@example.com` /
    `admin@reliefexpert.app`, etc.).
+
+### Mock mode (no-credential fallback only)
+
+With no `.env.e2e` / no manggaleh env, `npm run test:e2e` builds the app on the
+local mock store: only the backend-agnostic smoke specs run and every manggaleh
+spec skips. This exists so CI without secrets stays green — it is NOT the
+integration run. For real coverage always use `npm run test:e2e:manggaleh`.
 
 ## Restricted-egress environments (browser can't reach the API)
 

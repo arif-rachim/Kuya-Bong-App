@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "cap:sync": "cap sync",
     "test:e2e": "playwright test",
+    "test:e2e:manggaleh": "bash scripts/e2e-manggaleh.sh",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report"
   },
