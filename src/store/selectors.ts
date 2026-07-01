@@ -1,4 +1,5 @@
 /** Derived selector hooks on top of useApp. */
+import { useMemo } from 'react'
 import { useApp } from './appStore'
 import { todayISO } from '../lib/date'
 import type { Appointment, Capability, FamilyMember, PatientPackage, Therapist, User } from '../data/types'
@@ -18,7 +19,14 @@ export function useIsPhysiotherapist() {
 
 /** Therapist record ids linked to the logged-in physiotherapist user. */
 export function usePhysioTherapistIds() {
-  return useApp((s) => s.therapists.filter((t) => t.userId === s.currentUserId).map((t) => t.id))
+  // Derive with useMemo: a selector that returns a fresh array on every call
+  // makes useSyncExternalStore loop (React #185). Select stable slices instead.
+  const therapists = useApp((s) => s.therapists)
+  const currentUserId = useApp((s) => s.currentUserId)
+  return useMemo(
+    () => therapists.filter((t) => t.userId === currentUserId).map((t) => t.id),
+    [therapists, currentUserId],
+  )
 }
 
 export function useCurrentUser() {
@@ -87,6 +95,11 @@ export function isUpcoming(a: Appointment): boolean {
 }
 
 export function useFamilyMembers(familyGroupId: string | undefined): FamilyMember[] {
+  // Memoize: returning a fresh filtered array straight from the hook can loop
+  // consumers that treat the result as a render input (React #185).
   const family = useApp((s) => s.family)
-  return familyGroupId ? family.filter((m) => m.familyGroupId === familyGroupId) : []
+  return useMemo(
+    () => (familyGroupId ? family.filter((m) => m.familyGroupId === familyGroupId) : []),
+    [family, familyGroupId],
+  )
 }

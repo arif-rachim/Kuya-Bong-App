@@ -16,15 +16,37 @@ service-key reads, role guards).
 
 ## Layout
 
-- `helpers.ts` — env gating (`manggalehConfigured`, credential flags), route/login helpers.
+- `helpers.ts` — env gating (`manggalehConfigured`, per-role credential flags), route/login/dialog helpers.
+- `fixtures.ts` — service-key precondition helpers (seed an appointment/package, look up a user id) for
+  deterministic stateful/negative flows. No-op / skipped when `MANGGALEH_SERVICE_KEY` is absent.
+
+Auth & roles
 - `smoke.spec.ts` — backend-agnostic: boot, Welcome, login validation, register→verify→home (mock).
-- `auth.spec.ts` — manggaleh login / wrong-password / role separation / logout / (opt-in) registration.
+- `auth.spec.ts` — login / wrong-password / role separation / logout / (opt-in) registration.
+- `auth-roles.spec.ts` — admin & physiotherapist login, cross-role route guards, forgot-password.
+
+Patient
 - `patient-booking.spec.ts` — the booking wizard end-to-end → `book_appointment`.
-- `patient-nav.spec.ts` — every patient tab hydrates its own data without console errors.
-- `admin.spec.ts` — admin reaches Dashboard / Products / Patients (service-key reads).
+- `patient-nav.spec.ts` — every patient tab hydrates its own data without app errors.
+- `patient-appointments.spec.ts` — reschedule / cancel an existing appointment.
+- `patient-profile.spec.ts` — view + edit profile, change-password validation.
+- `patient-social.spec.ts` — family (add child, link-adult negative) & friends (request negative).
+- `patient-misc.spec.ts` — clinics, announcements, packages, home.
+
+Admin & physio
+- `admin.spec.ts` / `admin-catalog.spec.ts` — dashboard/reads + products/services/reasons/announcements CRUD.
+- `admin-patients.spec.ts` — search patient, assign package, record purchase.
+- `admin-appointments.spec.ts` — complete (deduct)/cancel appointment lifecycle.
+- `admin-config.spec.ts` — settings toggle, calendar, reports, sub-admins & the 12 permissions, audit log.
+- `physio.spec.ts` — physiotherapist schedule.
 
 Specs skip (not fail) when their prerequisites are missing, so a partial config
-still runs everything it can.
+still runs everything it can. Verified green against `realief-expert/dev` (44 tests:
+5 backend-agnostic + 39 manggaleh) via the relay below.
+
+> While building this suite the physiotherapist screen was found to crash under real
+> data (React #185 infinite render from array-returning selectors); fixed in
+> `src/store/selectors.ts` (`usePhysioTherapistIds`, `useFamilyMembers`).
 
 ## Running (mock mode)
 

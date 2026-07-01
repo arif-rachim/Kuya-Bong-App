@@ -28,11 +28,22 @@ export const creds = {
     email: process.env.E2E_ADMIN_EMAIL ?? '',
     password: process.env.E2E_ADMIN_PASSWORD ?? '',
   },
+  // A sub-admin (adminLevel=sub) — used for capability-gating tests.
+  subadmin: {
+    email: process.env.E2E_SUBADMIN_EMAIL ?? '',
+    password: process.env.E2E_SUBADMIN_PASSWORD ?? '',
+  },
+  physio: {
+    email: process.env.E2E_PHYSIO_EMAIL ?? '',
+    password: process.env.E2E_PHYSIO_PASSWORD ?? '',
+  },
 }
 
 export const hasPatientCreds = !!creds.patient.email && !!creds.patient.password
 export const hasPatient2Creds = !!creds.patient2.email && !!creds.patient2.password
 export const hasAdminCreds = !!creds.admin.email && !!creds.admin.password
+export const hasSubAdminCreds = !!creds.subadmin.email && !!creds.subadmin.password
+export const hasPhysioCreds = !!creds.physio.email && !!creds.physio.password
 
 /** A unique marker so rows this run creates can be spotted / cleaned up later. */
 export function runMarker(): string {
@@ -74,6 +85,32 @@ export async function loginAsPatient(page: Page, email: string, password: string
 export async function loginAsAdmin(page: Page, email: string, password: string): Promise<void> {
   await login(page, email, password)
   await expect(page).toHaveURL(/#\/admin\/dashboard/)
+}
+
+/** Log in and assert the physiotherapist schedule is shown. */
+export async function loginAsPhysio(page: Page, email: string, password: string): Promise<void> {
+  await login(page, email, password)
+  await expect(page).toHaveURL(/#\/physio\/schedule/)
+}
+
+/** Assert a toast with matching text appears (toasts auto-dismiss, so check fast). */
+export async function expectToast(page: Page, text: string | RegExp): Promise<void> {
+  await expect(page.getByText(text).first()).toBeVisible({ timeout: 10_000 })
+}
+
+/** A short unique suffix for names/emails created during a run. */
+export function uniq(prefix = 'qa'): string {
+  return `${prefix}-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e4)}`
+}
+
+/** The top-most open dialog (Modal or Confirm both use role="dialog"). */
+export function dialog(page: Page, name?: string | RegExp) {
+  return name ? page.getByRole('dialog', { name }) : page.getByRole('dialog').last()
+}
+
+/** Click a button inside the current confirm/modal dialog. */
+export async function clickInDialog(page: Page, buttonName: string | RegExp): Promise<void> {
+  await dialog(page).getByRole('button', { name: buttonName }).click()
 }
 
 /** Log out from the patient Profile screen (Log Out → confirm). */
