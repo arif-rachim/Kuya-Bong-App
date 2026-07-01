@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "cap:sync": "cap sync"
+    "cap:sync": "cap sync",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@manggaleh/sdk": "^0.5.0",
@@ -23,6 +26,7 @@
     "@capacitor/cli": "^6.2.0",
     "@capacitor/core": "^6.2.0",
     "@manggaleh/cli": "^0.3.0",
+    "@playwright/test": "^1.61.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
