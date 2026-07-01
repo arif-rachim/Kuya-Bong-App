@@ -10,9 +10,10 @@ import { mgResetPassword } from '../../lib/manggaleh/auth'
 export function ResetPassword() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  // token normally arrives as a query param; fall back to scraping the raw URL
-  // in case the email link encodes it differently.
-  const token = params.get('token') || /[?&]token=([^&]+)/.exec(window.location.href)?.[1] || ''
+  // manggaleh appends ?token=… to our redirectTo. With HashRouter that lands either
+  // INSIDE the hash (…#/reset-password?token=X — read by useSearchParams) or BEFORE it
+  // (…/?token=X#/reset-password — the document query). Check both.
+  const token = params.get('token') || new URLSearchParams(window.location.search).get('token') || ''
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
