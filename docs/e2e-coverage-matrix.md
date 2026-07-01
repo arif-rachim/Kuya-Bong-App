@@ -12,22 +12,22 @@ negative / business-rule scenarios and admin CRUD depth are not yet.**
 | 2 | Login & Password Reset | P | auth, auth-roles (login all roles, wrong password, role separation, forgot-password neutral msg) | full reset-with-token flow; denied reset on failed identity |
 | 3 | Profile & Clinic Info | P | patient-profile (view/edit, change-pw validation), patient-misc (clinics) | required-empty-field save warning |
 | 4 | Appointment Booking | P | patient-booking (service→clinic→date→time→review→confirm) | **double-book blocked**, **own-overlap blocked**, no-service stop, "no slots" msg, past-slot block |
-| 5 | Reschedule & Cancel | P | patient-appointments (reschedule, cancel w/ reason), My Visits list | note for "Other"; reschedule-to-unavailable; **24h cutoff block** |
+| 5 | Reschedule & Cancel | P | patient-appointments (reschedule, cancel w/ reason), patient-rules (**24h cutoff block** ✓), My Visits list | note for "Other"; reschedule-to-unavailable |
 | 6 | Admin — Availability | P | admin-config (calendar loads + Therapist control) | **publish/edit/remove window**; remove-booked warning; overlap block |
 | 7 | Admin — Manual Booking & Approval | G | — | **manual booking**; approve/reject pending request |
 | 7b | Admin — Reschedule & Cancel appt | P | admin-appointments (cancel w/ reason) | admin reschedule; no-reason block; package-intact-on-cancel |
 | 8 | Session Completion | P | admin-appointments (complete flow; skipped when no same-day card) | **deduct-one-session verified**; deduct only on completion; warn no package |
-| 9 | Treatment Packages | P | admin-patients (assign), patient-misc (packages loads) | create package definition; **zero-balance block**; **expired block**; balance/expiry assertions |
+| 9 | Treatment Packages | P | admin-patients (assign), patient-rules (**balance & expiry shown** ✓) | create package definition; **zero-balance block**; **expired block** |
 | 10 | Family Linking | P | patient-social (add child; link-adult unregistered rejected) | relationship types; **book on behalf**; usage-by-member; **adult-link acceptance** (2-user); pending-until-confirm |
-| 11 | Herbal/Supplement Catalogue | P | admin-catalog (create product), admin-patients (record purchase) | edit/activate-deactivate; **photo upload/display**; follow-up list; **price-change doesn't rewrite past sales**; deactivated hidden from sale |
+| 11 | Herbal/Supplement Catalogue | P | admin-catalog (create), admin-crud (**edit + deactivate** ✓), admin-patients (record purchase) | **photo upload/display**; follow-up list; **price-change doesn't rewrite past sales**; deactivated hidden from sale |
 | 12 | Admin — Patients & Dashboard | P | admin-patients (search→open profile), admin (dashboard reach) | dashboard stat/pending sections; "no results" message |
-| 13 / 20 | Admin — Clinic Management | G | — | create/edit/deactivate/delete clinic; delete-blocked-with-records; empty-name |
+| 13 / 20 | Admin — Clinic Management | C | admin-crud (**create → edit → deactivate → delete** ✓) | delete-blocked-with-records guard; empty-name block |
 | 14 | Service Type Management | P | admin-catalog (create service) | edit; activate/deactivate; empty-name / zero-duration block; deactivated hidden |
 | 15 | Physiotherapist Role Mgmt | P | physio (schedule loads), auth-roles (physio login, cross-role guards) | **appoint** physio; remove/deactivate; assign-to-appointment; access-other's-blocked |
 | 16 | Service Duration & Slot Logic | P | implicit in booking wizard | explicit end-time calc; not-enough-room hidden; duration-change stability |
 | 17 | Conflict Prevention | G | — | **therapist-occupied**, **patient-overlap**, resource-taken (all negative) |
 | 18 | Cancellation Reasons | P | admin-catalog (create reason) | edit; activate/deactivate; empty block; deactivate-keeps-past |
-| 21 | Announcements & Push | P | admin-catalog (publish), patient-misc (list loads) | unpublish/pull; delete; expiry auto-hide; empty/past-expiry block |
+| 21 | Announcements & Push | P | admin-catalog (publish), admin-crud (**pull + delete** ✓), patient-misc (list loads) | expiry auto-hide; empty/past-expiry block |
 | 22 / 26 | Master/Sub-Admin & 12 Permissions | P | admin-config (screen + permission labels render, audit-log loads) | appoint/remove sub-admin; **toggle-permission enforcement**; disabled-capability blocked (direct route); master-cannot-be-removed |
 | 23 | Financial Reports | P | admin-config (Reports screen loads) | category/service/product/date filters; **from>to block**; PDF share; no-records msg |
 | 25 | Friends & Credit Transfer | P | patient-social (friend request to unregistered rejected) | accept/decline (2-user); **credit transfer**; expiry-retained; transfer-before-confirm block; book-on-behalf-friend block |
@@ -51,6 +51,15 @@ negative / business-rule scenarios and admin CRUD depth are not yet.**
 4. **Untouched areas:** manual booking + approval (§7), household report (§27), user deactivation (§29),
    physio appoint/assign/own-actions (§15/§30), reports filtering + from>to (§23).
 5. **Verification/eligibility gates:** booking blocked before verified (§1), deactivated-user login blocked (§29).
+
+## Progress
+
+Priority 1 & 2 increment landed (specs `patient-rules`, `admin-crud`): §5 24h cutoff,
+§9 balance/expiry display, §11 product edit/deactivate, §13/20 full clinic lifecycle,
+§21 announcement pull/delete. §13/20 moved **G → C**. Still open from priority 1:
+conflict/double-booking (§4/§17), package zero/expired blocks (§9), deduction proof (§8),
+price-history immutability (§11) — most need finer fixtures or are enforced by the UI hiding
+options rather than surfacing an error.
 
 ## Summary
 

@@ -113,6 +113,19 @@ export async function clickInDialog(page: Page, buttonName: string | RegExp): Pr
   await dialog(page).getByRole('button', { name: buttonName }).click()
 }
 
+/**
+ * The list card that contains `name` AND an action button — i.e. the specific
+ * catalogue row for `name`. Deepest matching div = the Card itself.
+ * `anchorButton` is any button known to live on the card (default "Edit").
+ */
+export function rowCard(page: Page, name: string, anchorButton: string | RegExp = 'Edit') {
+  return page
+    .locator('div')
+    .filter({ hasText: name })
+    .filter({ has: page.getByRole('button', { name: anchorButton }) })
+    .last()
+}
+
 /** Log out from the patient Profile screen (Log Out → confirm). */
 export async function logoutFromProfile(page: Page): Promise<void> {
   await gotoRoute(page, 'patient/profile')
