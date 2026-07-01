@@ -14,6 +14,10 @@ const BASE = process.env.MANGGALEH_BASE_URL ?? 'https://api.manggaleh.com'
 const TENANT = process.env.VITE_MANGGALEH_TENANT ?? process.env.MANGGALEH_TENANT ?? 'realief-expert'
 const ENV = process.env.VITE_MANGGALEH_ENV ?? process.env.MANGGALEH_ENV ?? 'dev'
 const SERVICE_KEY = process.env.MANGGALEH_SERVICE_KEY ?? ''
+// The publishable key the app ships with — used to sign in as a real user and
+// invoke serverless Functions exactly as the browser does. Ignore a relay base:
+// Node fixtures talk to the real API directly.
+const PUB = process.env.VITE_MANGGALEH_API_KEY ?? ''
 
 /** True when a service key is available → fixtures (and the tests needing them) can run. */
 export const hasServiceKey = !!SERVICE_KEY
@@ -22,6 +26,30 @@ export const hasServiceKey = !!SERVICE_KEY
 export function svc(actAsUser?: string) {
   return createClient({ baseUrl: BASE, tenant: TENANT, env: ENV, apiKey: SERVICE_KEY, actAsUser })
 }
+
+/** In-memory token store so a fixture client can hold a session without touching disk. */
+function memStore() {
+  let t: string | null = null
+  return { get: () => t, set: (v: string | null) => { t = v } }
+}
+
+/**
+ * Sign in as a real user with the publishable key and return the client. Use
+ * `client.functions.invoke(name, { ...input, __callerToken: client.getToken() })`
+ * to call serverless Functions exactly as the app's invokeFn() does.
+ */
+export async function authedClient(email: string, password: string) {
+  const c = createClient({ baseUrl: BASE, tenant: TENANT, env: ENV, apiKey: PUB, storage: memStore() })
+  await c.auth.signIn({ email, password })
+  return c
+}
+
+/** Invoke a serverless Function as the signed-in user (attaches __callerToken). */
+export async function invokeAs<R = any>(client: any, name: string, input: Record<string, unknown>): Promise<R> {
+  return client.functions.invoke(name, { ...input, __callerToken: client.getToken() })
+}
+
+export const daysFromNow = (n: number) => addDays(n)
 
 /** Resolve a user's id by email (service-key admin lookup). */
 export async function userIdByEmail(email: string): Promise<string> {

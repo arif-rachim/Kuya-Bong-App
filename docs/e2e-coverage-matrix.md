@@ -11,13 +11,13 @@ negative / business-rule scenarios and admin CRUD depth are not yet.**
 | 1 | Registration & Verification | P | smoke (field + password validation, register→verify→home mock), auth (manggaleh register opt-in) | duplicate email/mobile rejected; **booking blocked before verified** |
 | 2 | Login & Password Reset | P | auth, auth-roles (login all roles, wrong password, role separation, forgot-password neutral msg) | full reset-with-token flow; denied reset on failed identity |
 | 3 | Profile & Clinic Info | P | patient-profile (view/edit, change-pw validation), patient-misc (clinics) | required-empty-field save warning |
-| 4 | Appointment Booking | P | patient-booking (service→clinic→date→time→review→confirm) | **double-book blocked**, **own-overlap blocked**, no-service stop, "no slots" msg, past-slot block |
+| 4 | Appointment Booking | C | patient-booking (wizard end-to-end), integration-functions (**therapist + own-overlap conflict rejected** ✓) | no-service stop; "no slots" msg; past-slot block (UI-enforced) |
 | 5 | Reschedule & Cancel | P | patient-appointments (reschedule, cancel w/ reason), patient-rules (**24h cutoff block** ✓), My Visits list | note for "Other"; reschedule-to-unavailable |
 | 6 | Admin — Availability | P | admin-config (calendar loads + Therapist control) | **publish/edit/remove window**; remove-booked warning; overlap block |
 | 7 | Admin — Manual Booking & Approval | G | — | **manual booking**; approve/reject pending request |
 | 7b | Admin — Reschedule & Cancel appt | P | admin-appointments (cancel w/ reason) | admin reschedule; no-reason block; package-intact-on-cancel |
-| 8 | Session Completion | P | admin-appointments (complete flow; skipped when no same-day card) | **deduct-one-session verified**; deduct only on completion; warn no package |
-| 9 | Treatment Packages | P | admin-patients (assign), patient-rules (**balance & expiry shown** ✓) | create package definition; **zero-balance block**; **expired block** |
+| 8 | Session Completion | C | integration-functions (**deduct exactly one, persisted** ✓), admin-appointments (complete flow via UI) | warn-no-package UI hint |
+| 9 | Treatment Packages | C | admin-patients (assign), patient-rules (balance & expiry shown), integration-functions (**zero-balance block + expired block** ✓) | create package definition (UI) |
 | 10 | Family Linking | P | patient-social (add child; link-adult unregistered rejected) | relationship types; **book on behalf**; usage-by-member; **adult-link acceptance** (2-user); pending-until-confirm |
 | 11 | Herbal/Supplement Catalogue | P | admin-catalog (create), admin-crud (**edit + deactivate** ✓), admin-patients (record purchase) | **photo upload/display**; follow-up list; **price-change doesn't rewrite past sales**; deactivated hidden from sale |
 | 12 | Admin — Patients & Dashboard | P | admin-patients (search→open profile), admin (dashboard reach) | dashboard stat/pending sections; "no results" message |
@@ -25,7 +25,7 @@ negative / business-rule scenarios and admin CRUD depth are not yet.**
 | 14 | Service Type Management | P | admin-catalog (create service) | edit; activate/deactivate; empty-name / zero-duration block; deactivated hidden |
 | 15 | Physiotherapist Role Mgmt | P | physio (schedule loads), auth-roles (physio login, cross-role guards) | **appoint** physio; remove/deactivate; assign-to-appointment; access-other's-blocked |
 | 16 | Service Duration & Slot Logic | P | implicit in booking wizard | explicit end-time calc; not-enough-room hidden; duration-change stability |
-| 17 | Conflict Prevention | G | — | **therapist-occupied**, **patient-overlap**, resource-taken (all negative) |
+| 17 | Conflict Prevention | C | integration-functions (**therapist-occupied + patient-overlap rejected** ✓) | resource/clinic-level conflict (not in scope of current rules) |
 | 18 | Cancellation Reasons | P | admin-catalog (create reason) | edit; activate/deactivate; empty block; deactivate-keeps-past |
 | 21 | Announcements & Push | P | admin-catalog (publish), admin-crud (**pull + delete** ✓), patient-misc (list loads) | expiry auto-hide; empty/past-expiry block |
 | 22 / 26 | Master/Sub-Admin & 12 Permissions | P | admin-config (screen + permission labels render, audit-log loads) | appoint/remove sub-admin; **toggle-permission enforcement**; disabled-capability blocked (direct route); master-cannot-be-removed |
@@ -54,12 +54,17 @@ negative / business-rule scenarios and admin CRUD depth are not yet.**
 
 ## Progress
 
-Priority 1 & 2 increment landed (specs `patient-rules`, `admin-crud`): §5 24h cutoff,
-§9 balance/expiry display, §11 product edit/deactivate, §13/20 full clinic lifecycle,
-§21 announcement pull/delete. §13/20 moved **G → C**. Still open from priority 1:
-conflict/double-booking (§4/§17), package zero/expired blocks (§9), deduction proof (§8),
-price-history immutability (§11) — most need finer fixtures or are enforced by the UI hiding
-options rather than surfacing an error.
+Priority 1 & 2 increments landed:
+- `patient-rules`, `admin-crud` (UI): §5 24h cutoff, §9 balance/expiry display, §11 product
+  edit/deactivate, §13/20 full clinic lifecycle, §21 announcement pull/delete.
+- `integration-functions` (Function level — signs in with the publishable key and invokes the
+  deployed serverless Functions as the app does): §4/§17 therapist + patient-overlap conflict
+  rejection, §8 deduct-exactly-one (persisted), §9 zero-balance & expired completion blocks.
+
+Moved **G → C**: §4, §8, §13/20, §17. **Still open** from priority 1: price-history immutability
+(§11 — needs a purchase then a price change then a re-read). Remaining priority 3+: cross-user
+flows (§25 transfer, §10 accept), manual booking/approval (§7), household report (§27), user
+deactivation (§29), physio actions (§30), report filtering (§23).
 
 ## Summary
 
