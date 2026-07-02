@@ -110,3 +110,51 @@ export async function makePackage(email: string, opts: { total?: number; remaini
 export async function deleteRow(collection: string, id: string, actAsUser?: string): Promise<void> {
   try { await svc(actAsUser).data.from(collection).remove(id) } catch { /* ignore */ }
 }
+
+/** Read a single row by id (service key). */
+export async function getRow<T = any>(collection: string, id: string): Promise<T> {
+  return svc().data.from<T>(collection).get(id) as Promise<T>
+}
+
+/** Create a shared catalogue product (service key). Returns its id. */
+export async function makeProduct(opts: { price: number; name?: string; active?: boolean } ): Promise<string> {
+  const row = await svc().data.from('products').insert({
+    name: opts.name ?? `E2E Product ${Date.now()}`, category: 'herbal', price: opts.price,
+    active: opts.active ?? true, image_object_ids: [],
+  })
+  return (row as any).id
+}
+
+/** Remove any friend link between two users, both directions (service key). */
+export async function clearFriendsBetween(uidA: string, uidB: string): Promise<void> {
+  const all = await svc().data.from<any>('friends').list({ limit: 500 })
+  for (const f of all)
+    if ((f.requester_user_id === uidA && f.addressee_user_id === uidB) ||
+        (f.requester_user_id === uidB && f.addressee_user_id === uidA))
+      await deleteRow('friends', f.id)
+}
+
+/** Create a confirmed (active) friend link uidA → uidB. */
+export async function linkFriends(uidA: string, uidB: string): Promise<void> {
+  await svc(uidA).data.from('friends').insert({ addressee_user_id: uidB, status: 'active' })
+}
+
+/**
+ * Ensure a user has a patient_profiles row whose family_group_id is their own id
+ * — the registration flow creates this, but users seeded via signUp lack it, and
+ * the Family screen keys its member list off profile.familyGroupId.
+ */
+export async function ensureProfile(email: string): Promise<void> {
+  const uid = await userIdByEmail(email)
+  const all = await svc().data.from<any>('patient_profiles').list({ limit: 500 })
+  if (!all.some((p) => p.user_id === uid)) {
+    await svc(uid).data.from('patient_profiles').insert({ family_group_id: uid, active: true })
+  }
+}
+
+/** Remove any family link that references `linkedUid` (both directions; service key). */
+export async function clearFamilyLinks(linkedUid: string): Promise<void> {
+  const all = await svc().data.from<any>('family_members').list({ limit: 500 })
+  for (const m of all)
+    if (m.linked_user_id === linkedUid) await deleteRow('family_members', m.id)
+}

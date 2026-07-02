@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test'
-import { manggalehConfigured, hasPatientCreds, hasAdminCreds, creds, uniq } from './helpers'
+import { manggalehConfigured, hasPatientCreds, hasPatient2Creds, hasAdminCreds, creds, uniq } from './helpers'
 import {
   hasServiceKey, authedClient, invokeAs, userIdByEmail, catalogIds,
-  makeAppointment, makePackage, deleteRow, svc, daysFromNow,
+  makeAppointment, makePackage, makeProduct, getRow, deleteRow, svc, daysFromNow,
+  clearFriendsBetween, linkFriends,
 } from './fixtures'
 
 /**
@@ -104,6 +105,95 @@ test.describe('manggaleh — server rules (Functions)', () => {
     } finally {
       await deleteRow('appointments', apptId, uid)
       await deleteRow('patient_packages', pkgId, uid)
+    }
+  })
+
+  test('a product price change does not rewrite past purchases (§11)', async () => {
+    const admin = await authedClient(creds.admin.email, creds.admin.password)
+    const uid = await userIdByEmail(creds.patient.email)
+    const productId = await makeProduct({ price: 100, name: `PriceTest ${uniq()}` })
+    let purchaseId = ''
+    try {
+      const rec = await invokeAs<any>(admin, 'record_purchase', { patientUserId: uid, productId, quantity: 1 })
+      expect(rec.id).toBeTruthy()
+      expect(Number(rec.unitPriceAtSale)).toBe(100)
+      purchaseId = rec.id
+
+      await svc().data.from('products').update(productId, { price: 250 })      // catalogue price changes
+      const sale = await getRow<any>('product_purchases', purchaseId)
+      expect(Number(sale.unit_price_at_sale)).toBe(100)                        // historical sale unchanged
+      const prod = await getRow<any>('products', productId)
+      expect(Number(prod.price)).toBe(250)                                     // sanity: product did change
+    } finally {
+      if (purchaseId) await deleteRow('product_purchases', purchaseId, uid)
+      await deleteRow('products', productId)
+    }
+  })
+})
+
+/** Friend credit transfer rules (US §25) — cross-user, at the Function layer. */
+test.describe('manggaleh — credit transfer (Functions)', () => {
+  test.skip(!manggalehConfigured, 'needs a manggaleh-wired build/config')
+  test.skip(!hasServiceKey, 'needs MANGGALEH_SERVICE_KEY (setup + cleanup)')
+  test.skip(!hasPatientCreds || !hasPatient2Creds, 'needs two patient credentials (E2E_PATIENT2_*)')
+
+  test('transfer moves sessions to a confirmed friend and keeps the original expiry', async () => {
+    const aUid = await userIdByEmail(creds.patient.email)
+    const bUid = await userIdByEmail(creds.patient2.email)
+    await clearFriendsBetween(aUid, bUid)
+    await linkFriends(aUid, bUid)
+    const pkgId = await makePackage(creds.patient.email, { total: 6, remaining: 6, daysValid: 45, name: `Xfer ${uniq()}` })
+    const before = await getRow<any>('patient_packages', pkgId)
+    const maria = await authedClient(creds.patient.email, creds.patient.password)
+    let recipId = ''
+    try {
+      const r = await invokeAs<any>(maria, 'transfer_credit', { fromPackageId: pkgId, toUserId: bUid, sessions: 2 })
+      expect(r.ok).toBe(true)
+      expect(r.fromRemaining).toBe(4)
+      recipId = r.recipientPackageId
+      const from = await getRow<any>('patient_packages', pkgId)
+      expect(Number(from.remaining)).toBe(4)                                    // sender decremented
+      const recip = await getRow<any>('patient_packages', recipId)
+      expect(recip.owner_user_id).toBe(bUid)                                    // owned by the recipient
+      expect(Number(recip.remaining)).toBe(2)
+      expect(String(recip.expiry_date).slice(0, 10)).toBe(String(before.expiry_date).slice(0, 10)) // expiry retained
+      expect(String(recip.name)).toMatch(/from friend/i)
+    } finally {
+      if (recipId) await deleteRow('patient_packages', recipId, bUid)
+      await deleteRow('patient_packages', pkgId, aUid)
+      await clearFriendsBetween(aUid, bUid)
+    }
+  })
+
+  test('transfer is rejected without a confirmed friendship', async () => {
+    const aUid = await userIdByEmail(creds.patient.email)
+    const bUid = await userIdByEmail(creds.patient2.email)
+    await clearFriendsBetween(aUid, bUid)   // ensure NOT friends
+    const pkgId = await makePackage(creds.patient.email, { total: 3, remaining: 3, daysValid: 45, name: `NoFriend ${uniq()}` })
+    const maria = await authedClient(creds.patient.email, creds.patient.password)
+    try {
+      const r = await invokeAs<any>(maria, 'transfer_credit', { fromPackageId: pkgId, toUserId: bUid, sessions: 1 })
+      expect(r.ok).toBeFalsy()
+      expect(String(r.error)).toMatch(/confirmed friend/i)
+    } finally {
+      await deleteRow('patient_packages', pkgId, aUid)
+    }
+  })
+
+  test('transfer is rejected for more sessions than remaining', async () => {
+    const aUid = await userIdByEmail(creds.patient.email)
+    const bUid = await userIdByEmail(creds.patient2.email)
+    await clearFriendsBetween(aUid, bUid)
+    await linkFriends(aUid, bUid)
+    const pkgId = await makePackage(creds.patient.email, { total: 2, remaining: 1, daysValid: 45, name: `Short ${uniq()}` })
+    const maria = await authedClient(creds.patient.email, creds.patient.password)
+    try {
+      const r = await invokeAs<any>(maria, 'transfer_credit', { fromPackageId: pkgId, toUserId: bUid, sessions: 5 })
+      expect(r.ok).toBeFalsy()
+      expect(String(r.error)).toMatch(/that many sessions/i)
+    } finally {
+      await deleteRow('patient_packages', pkgId, aUid)
+      await clearFriendsBetween(aUid, bUid)
     }
   })
 })

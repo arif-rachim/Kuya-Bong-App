@@ -18,8 +18,8 @@ negative / business-rule scenarios and admin CRUD depth are not yet.**
 | 7b | Admin — Reschedule & Cancel appt | P | admin-appointments (cancel w/ reason) | admin reschedule; no-reason block; package-intact-on-cancel |
 | 8 | Session Completion | C | integration-functions (**deduct exactly one, persisted** ✓), admin-appointments (complete flow via UI) | warn-no-package UI hint |
 | 9 | Treatment Packages | C | admin-patients (assign), patient-rules (balance & expiry shown), integration-functions (**zero-balance block + expired block** ✓) | create package definition (UI) |
-| 10 | Family Linking | P | patient-social (add child; link-adult unregistered rejected) | relationship types; **book on behalf**; usage-by-member; **adult-link acceptance** (2-user); pending-until-confirm |
-| 11 | Herbal/Supplement Catalogue | P | admin-catalog (create), admin-crud (**edit + deactivate** ✓), admin-patients (record purchase) | **photo upload/display**; follow-up list; **price-change doesn't rewrite past sales**; deactivated hidden from sale |
+| 10 | Family Linking | C | patient-social (add child; link-adult rejected), cross-user (**adult-link request → accept, 2 sessions** ✓) | book-on-behalf; usage-by-member; relationship-type variants |
+| 11 | Herbal/Supplement Catalogue | C | admin-catalog (create), admin-crud (edit + deactivate), admin-patients (record purchase), integration-functions (**price change doesn't rewrite past sales** ✓) | photo upload/display; follow-up list; deactivated-hidden-from-sale |
 | 12 | Admin — Patients & Dashboard | P | admin-patients (search→open profile), admin (dashboard reach) | dashboard stat/pending sections; "no results" message |
 | 13 / 20 | Admin — Clinic Management | C | admin-crud (**create → edit → deactivate → delete** ✓) | delete-blocked-with-records guard; empty-name block |
 | 14 | Service Type Management | P | admin-catalog (create service) | edit; activate/deactivate; empty-name / zero-duration block; deactivated hidden |
@@ -30,7 +30,7 @@ negative / business-rule scenarios and admin CRUD depth are not yet.**
 | 21 | Announcements & Push | P | admin-catalog (publish), admin-crud (**pull + delete** ✓), patient-misc (list loads) | expiry auto-hide; empty/past-expiry block |
 | 22 / 26 | Master/Sub-Admin & 12 Permissions | P | admin-config (screen + permission labels render, audit-log loads) | appoint/remove sub-admin; **toggle-permission enforcement**; disabled-capability blocked (direct route); master-cannot-be-removed |
 | 23 | Financial Reports | P | admin-config (Reports screen loads) | category/service/product/date filters; **from>to block**; PDF share; no-records msg |
-| 25 | Friends & Credit Transfer | P | patient-social (friend request to unregistered rejected) | accept/decline (2-user); **credit transfer**; expiry-retained; transfer-before-confirm block; book-on-behalf-friend block |
+| 25 | Friends & Credit Transfer | C | patient-social (request rejected), cross-user (**request → accept, 2 sessions** ✓), integration-functions (**transfer keeps expiry; blocked w/o confirmed friend; blocked if insufficient** ✓) | decline path; book-on-behalf-friend block |
 | 27 | Household Spending Report | G | — | household report screen + spending/package/used-by/friend-transfer sections |
 | 28 | Technical Integrity & Audit | P | admin-config (audit log loads) | immutable transfer refs; historical amounts; invalid-transition rejection |
 | 29 | User Deactivation | G | — | deactivate user; privileges ineffective; **deactivated login blocked**; records retained |
@@ -61,10 +61,13 @@ Priority 1 & 2 increments landed:
   deployed serverless Functions as the app does): §4/§17 therapist + patient-overlap conflict
   rejection, §8 deduct-exactly-one (persisted), §9 zero-balance & expired completion blocks.
 
-Moved **G → C**: §4, §8, §13/20, §17. **Still open** from priority 1: price-history immutability
-(§11 — needs a purchase then a price change then a re-read). Remaining priority 3+: cross-user
-flows (§25 transfer, §10 accept), manual booking/approval (§7), household report (§27), user
-deactivation (§29), physio actions (§30), report filtering (§23).
+Also added (option a+b): `integration-functions` §11 price-history immutability + §25 transfer
+(keeps expiry / confirmed-friend / insufficient guards); `cross-user` (two live sessions) §25
+friend request→accept and §10 adult-link request→accept.
+
+Moved **G → C**: §4, §8, §13/20, §17. Improved to **C**: §5, §9, §10, §11, §25.
+**Remaining**: manual booking/approval (§7), household report (§27), user deactivation (§29),
+physio own-actions (§30), report filtering + PDF (§23), and assorted per-field validation negatives.
 
 ## Summary
 
