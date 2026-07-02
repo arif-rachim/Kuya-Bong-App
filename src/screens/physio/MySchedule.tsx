@@ -11,7 +11,9 @@ import { cn } from '../../lib/cn'
 import { useApp } from '../../store/appStore'
 import { usePhysioTherapistIds } from '../../store/selectors'
 import { addDays, formatDate, formatDateShort, nowMinutes, todayISO, weekdayLabel } from '../../lib/date'
-import { computeBookingOptions, uniqueStarts } from '../../lib/booking'
+import { addMinutes, computeBookingOptions, uniqueStarts } from '../../lib/booking'
+import { isManggalehEnabled } from '../../lib/manggaleh/client'
+import { physioCancelFn, physioRescheduleFn } from '../../lib/manggaleh/write'
 import type { Appointment } from '../../data/types'
 
 export function PhysioMySchedule() {
@@ -47,10 +49,21 @@ export function PhysioMySchedule() {
     setCancelReasonId('')
     setCancelNote('')
   }
-  function doCancel() {
+  async function doCancel() {
     if (!cancelling) return
     if (!cancelReasonId) return toast.error('Please choose a cancellation reason.')
-    const err = cancelApt(cancelling.id, 'physiotherapist', cancelReasonId, cancelNote.trim() || undefined)
+    const id = cancelling.id
+    const note = cancelNote.trim() || undefined
+    if (isManggalehEnabled()) {
+      try {
+        await physioCancelFn(id, cancelReasonId, note)
+        useApp.setState((s) => ({ appointments: s.appointments.map((a) => (a.id === id ? { ...a, status: 'CancelledByPhysiotherapist', cancelledBy: 'physiotherapist', cancellationReasonId: cancelReasonId, cancellationNote: note } : a)) }))
+        setCancelling(null)
+        toast.success('Appointment cancelled.')
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not cancel the appointment.') }
+      return
+    }
+    const err = cancelApt(id, 'physiotherapist', cancelReasonId, note)
     if (err) return toast.error(err)
     setCancelling(null)
     toast.success('Appointment cancelled.')
@@ -94,7 +107,19 @@ export function PhysioMySchedule() {
       confirmLabel: 'Reschedule',
     })
     if (!ok) return
-    const err = rescheduleApt(rescheduling.id, { therapistId: rescheduling.therapistId, clinicId: rescheduling.clinicId, date: rsDate, start }, 'physiotherapist')
+    const appt = rescheduling
+    if (isManggalehEnabled()) {
+      const end = addMinutes(start, rsService?.durationMinutes ?? 0)
+      try {
+        await physioRescheduleFn({ appointmentId: appt.id, clinicId: appt.clinicId, date: rsDate, start, end })
+        useApp.setState((s) => ({ appointments: s.appointments.map((a) => (a.id === appt.id ? { ...a, status: 'Rescheduled', clinicId: appt.clinicId, date: rsDate, start, end } : a)) }))
+        setRescheduling(null)
+        setRsDate('')
+        toast.success('Appointment rescheduled.')
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not reschedule the appointment.') }
+      return
+    }
+    const err = rescheduleApt(appt.id, { therapistId: appt.therapistId, clinicId: appt.clinicId, date: rsDate, start }, 'physiotherapist')
     if (err) return toast.error(err)
     setRescheduling(null)
     setRsDate('')

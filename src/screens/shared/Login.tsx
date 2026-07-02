@@ -28,7 +28,12 @@ export function Login() {
       setBusy(true)
       try {
         await mgSignIn(email.trim(), password)
-        await hydrateFromManggaleh()
+        const ok = await hydrateFromManggaleh()
+        if (!ok) {
+          // hydrate signed the session out (deactivated account) — block entry.
+          setError('This account has been deactivated. Please contact the clinic.')
+          return
+        }
         goHome()
       } catch (err) {
         setError(err instanceof ManggalehError && err.status === 401 ? 'Incorrect email or password.' : 'Sign-in failed. Please try again.')

@@ -284,6 +284,22 @@ export async function setUserActiveFn(input: {
   if (r.error || !r.ok) throw new Error(r.error || 'Could not update the user.')
 }
 
+// ---------------- PHYSIOTHERAPIST (own assigned appointments) ----------------
+
+/** Physiotherapist cancels an appointment assigned to them (server-verified). */
+export async function physioCancelFn(appointmentId: string, reasonId?: string, note?: string): Promise<void> {
+  const r = await invokeFn<{ ok?: boolean; error?: string }>('physio_update_appointment', { appointmentId, action: 'cancel', reasonId, note })
+  if (r.error || !r.ok) throw new Error(r.error || 'Could not cancel the appointment.')
+}
+
+/** Physiotherapist reschedules an appointment assigned to them (conflict-checked). */
+export async function physioRescheduleFn(input: { appointmentId: string; clinicId?: string; date: string; start: string; end: string }): Promise<void> {
+  const r = await invokeFn<{ ok?: boolean; error?: string }>('physio_update_appointment', {
+    appointmentId: input.appointmentId, action: 'reschedule', clinicId: input.clinicId, date: input.date, start: input.start, end: input.end,
+  })
+  if (r.error || !r.ok) throw new Error(r.error || 'Could not reschedule the appointment.')
+}
+
 /** Add a child under the signed-in patient (owner-scoped). Returns the new row id. */
 export async function addChildMember(userId: string, name: string): Promise<string> {
   const row = await coll(COLLECTIONS.family).insert({

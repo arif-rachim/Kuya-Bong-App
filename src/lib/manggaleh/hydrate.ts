@@ -4,7 +4,7 @@
  * (session restore). Only active when VITE_USE_MANGGALEH is on.
  */
 import { useApp } from '../../store/appStore'
-import { mgGetSession } from './auth'
+import { mgGetSession, mgSignOut } from './auth'
 import * as repo from './repo'
 import type { PatientProfile, User } from '../../data/types'
 
@@ -23,6 +23,13 @@ export async function hydrateFromManggaleh(): Promise<boolean> {
     repo.getSubAdminPermissions(),
     repo.listMyAppointments(), repo.listMyPackages(), repo.friendsOverview(), repo.listMyTransfers(), repo.listMyPurchases(),
   ])
+
+  // BR (v0.7 §29): a deactivated user must not be able to sign in. RLS won't stop
+  // auth, so enforce it here — drop the session and abort hydration.
+  if (appUser && appUser.active === false) {
+    await mgSignOut().catch(() => {})
+    return false
+  }
 
   const me: User = {
     id: session.id,
@@ -61,6 +68,25 @@ export async function hydrateFromManggaleh(): Promise<boolean> {
     creditTransfers: transfers,
     purchases,
   })
+
+  // Physiotherapists (a patient-role user linked to a therapist record) additionally
+  // load appointments ASSIGNED to them — owner-scoped reads only return their own
+  // rows, so this comes from a service-key Function. Merge + add patient stubs so
+  // the schedule can render names.
+  const isPhysio = therapists.some((t) => t.userId === session.id && t.active)
+  if (me.role !== 'admin' && isPhysio) {
+    try {
+      const ps = await repo.physioAppointments()
+      useApp.setState((s) => {
+        const seen = new Set(s.appointments.map((a) => a.id))
+        const known = new Set(s.users.map((u) => u.id))
+        return {
+          appointments: [...s.appointments, ...ps.appointments.filter((a) => !seen.has(a.id))],
+          users: [...s.users, ...ps.patients.filter((p) => !known.has(p.id)).map((p) => stubUser(p.id, p.name))],
+        }
+      })
+    } catch { /* keep own data if the physio function is unavailable */ }
+  }
 
   // Admins (and sub-admins) additionally load ALL cross-user data via a
   // service-key Function (own-scoped reads only return their own rows).

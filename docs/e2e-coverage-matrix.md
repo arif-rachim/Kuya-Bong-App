@@ -34,8 +34,8 @@ negative / business-rule scenarios and admin CRUD depth are not yet.**
 | 25 | Friends & Credit Transfer | C | patient-social (request rejected), cross-user (**request → accept, 2 sessions** ✓), integration-functions (**transfer keeps expiry; blocked w/o confirmed friend; blocked if insufficient** ✓) | decline path; book-on-behalf-friend block |
 | 27 | Household Spending Report | C | admin-reports (**loads + select household → spending section** ✓) | per-section content assertions |
 | 28 | Technical Integrity & Audit | P | admin-config (audit log loads) | immutable transfer refs; historical amounts; invalid-transition rejection |
-| 29 | User Deactivation | C² | integration-functions (**deactivate persists; master-admin cannot be deactivated** ✓) | ²**deactivated-login-blocked is NOT enforced in manggaleh mode** (mock-only) — see Findings |
-| 30 | Physio Schedule & Actions | P³ | physio (My Schedule screen loads) | ³In manggaleh mode the schedule is **empty** (assigned appts aren't loaded) and cancel/reschedule are **mock-only** — see Findings |
+| 29 | User Deactivation | C | integration-functions (deactivate persists; master-admin protected), deactivation (**deactivated user blocked at login** ✓ — now enforced) | — |
+| 30 | Physio Schedule & Actions | C | physio-actions (**sees only own assigned appts; cancel + reschedule persist to manggaleh** ✓) | availability self-create (Q-03/Q-04, unresolved policy) |
 
 ## Biggest gaps, by priority
 
@@ -69,26 +69,30 @@ friend request→accept and §10 adult-link request→accept.
 Final sweep added: §7 approve/reject/on-behalf, §23 from>to, §27 household, §29 deactivate +
 master-guard (Functions/UI); per-field validation negatives (§13/§14/§18).
 
-Moved **G → C**: §4, §8, §13/20, §17, §7, §27, §29. Improved to **C**: §5, §9, §10, §11, §23, §25.
-**Remaining (deliberate)**: items behind the Findings below (physio schedule/actions §30,
-deactivated-login §29-enforcement) are app gaps, not test gaps; plus low-value leftovers
-(catalog edit/deactivate for services/reasons, PDF output bytes, per-filter report contents).
+Then all four Findings were **fixed in the app** (physio #185 crash, physio schedule load,
+physio cancel/reschedule wiring, deactivated-login enforcement) — §29 and §30 are now **C**.
 
-## Findings (real gaps in the app, surfaced by writing these tests)
+Moved **G → C**: §4, §8, §13/20, §17, §7, §27, §29, §30. Improved to **C**: §5, §9, §10, §11, §23, §25.
+**Remaining (low value)**: catalog edit/deactivate for services/reasons, PDF output bytes,
+per-filter report contents, manual-booking UI slot-picker (backend covered).
 
-These are product/integration gaps, not test gaps — flagged rather than papered over:
+## Findings (all fixed)
 
-1. **Physiotherapist role bug (fixed):** the schedule crashed under real data (React #185
-   infinite render); memoized `usePhysioTherapistIds`/`useFamilyMembers` in `src/store/selectors.ts`.
-2. **Physiotherapist schedule is non-functional on manggaleh:** hydrate loads only the caller's
-   own (owner-scoped) appointments, and a physio is a patient-role user — so appointments *assigned
-   to them* are never fetched. `My Schedule` renders empty. Needs a physio-scoped read (a Function
-   that returns appointments by therapist_id), analogous to `admin_bootstrap`.
-3. **Physio cancel/reschedule are mock-only:** `MySchedule.tsx` calls the local store actions with
-   no `isManggalehEnabled()` branch, so a physio's changes never persist to manggaleh.
-4. **Deactivated-login is not enforced on manggaleh:** the "account deactivated" block exists only in
-   the mock `login()`. `mgSignIn`/hydrate/route-guards never check `app_users.active`, so a
-   deactivated user can still sign in. (Deactivation itself persists correctly.)
+App/integration gaps surfaced by writing these tests — all now fixed and covered:
+
+1. **Physio schedule crashed under real data (React #185 infinite render).** Fix: memoized
+   `usePhysioTherapistIds` / `useFamilyMembers` in `src/store/selectors.ts`.
+2. **Physio schedule loaded no assigned appointments on manggaleh** (hydrate only fetched the
+   caller's own owner-scoped rows). Fix: new `functions/physio_appointments.mjs` (service-key read
+   of appointments by the caller's therapist_id) + `repo.physioAppointments()` wired into
+   `hydrate.ts`. Covered by physio-actions "sees only own assigned appts".
+3. **Physio cancel/reschedule were mock-only.** Fix: new `functions/physio_update_appointment.mjs`
+   (verifies the caller is the assigned therapist; conflict-checks reschedule) +
+   `physioCancelFn`/`physioRescheduleFn` in `write.ts`, wired into `MySchedule.tsx` behind
+   `isManggalehEnabled()`. Covered (cancel via UI, reschedule via Function).
+4. **Deactivated-login was not enforced on manggaleh.** Fix: `hydrateFromManggaleh` signs the
+   session out and aborts when `app_users.active === false`; `Login.tsx` shows the deactivated
+   message. Covered by the deactivation spec.
 
 ## Summary
 

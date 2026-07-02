@@ -112,6 +112,16 @@ export async function friendsOverview(): Promise<{ friends: Friend[]; friendUser
   return { friends: r.friends ?? [], friendUsers: r.friendUsers ?? [] }
 }
 
+/**
+ * Appointments assigned to the logged-in physiotherapist's therapist record(s),
+ * plus the patients' display names. Owner-scoped RLS hides appointments owned by
+ * other patients, so this goes through a service-key Function. See functions/.
+ */
+export async function physioAppointments(): Promise<{ appointments: Appointment[]; patients: { id: string; name: string }[] }> {
+  const r = await invokeFn<{ appointments: Row[]; patients: { id: string; name: string }[] }>('physio_appointments')
+  return { appointments: (r.appointments ?? []).map(toAppointment), patients: r.patients ?? [] }
+}
+
 /** The logged-in user's role row (app_users is owner-scoped → only their own). */
 export async function getMyAppUser(): Promise<AppUser | null> {
   const rows = await coll(COLLECTIONS.appUsers).list({ limit: 1 })
