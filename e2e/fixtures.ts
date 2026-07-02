@@ -83,15 +83,28 @@ export async function catalogIds() {
  * Create an appointment owned by `email`'s user, `daysAhead` from today (default
  * 5 → safely outside the 24h cancel cutoff). Returns the new appointment id.
  */
-export async function makeAppointment(email: string, opts: { daysAhead?: number; start?: string; end?: string; status?: string } = {}): Promise<string> {
+export async function makeAppointment(email: string, opts: { daysAhead?: number; start?: string; end?: string; status?: string; therapistId?: string; clinicId?: string; serviceId?: string; forMemberName?: string } = {}): Promise<string> {
   const uid = await userIdByEmail(email)
   const cat = await catalogIds()
   const row = await svc(uid).data.from('appointments').insert({
-    clinic_id: cat.clinicId, service_type_id: cat.serviceId, therapist_id: cat.therapistId,
+    clinic_id: opts.clinicId ?? cat.clinicId, service_type_id: opts.serviceId ?? cat.serviceId,
+    therapist_id: opts.therapistId ?? cat.therapistId,
     date: addDays(opts.daysAhead ?? 5), start: opts.start ?? '10:00', end: opts.end ?? '13:00',
-    for_member_name: 'E2E', status: opts.status ?? 'Confirmed', source: 'App',
+    for_member_name: opts.forMemberName ?? 'E2E', status: opts.status ?? 'Confirmed', source: 'App',
   })
   return (row as any).id
+}
+
+/** The therapist linked to a physiotherapist user (if any) + a different therapist. */
+export async function therapistIds(physioEmail?: string): Promise<{ physioTherapistId?: string; otherTherapistId: string }> {
+  const ths = (await svc().data.from<any>('therapists').list({ limit: 50 })).filter((t: any) => t.active !== false)
+  let physioTherapistId: string | undefined
+  if (physioEmail) {
+    const uid = await userIdByEmail(physioEmail)
+    physioTherapistId = ths.find((t: any) => t.user_id === uid)?.id
+  }
+  const otherTherapistId = (ths.find((t: any) => t.id !== physioTherapistId) ?? ths[0])?.id
+  return { physioTherapistId, otherTherapistId }
 }
 
 /** Give `email`'s user a package. `remaining`/`daysValid` let negatives (0 left / expired) be set up. */

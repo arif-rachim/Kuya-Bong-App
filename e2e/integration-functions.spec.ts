@@ -197,3 +197,81 @@ test.describe('manggaleh — credit transfer (Functions)', () => {
     }
   })
 })
+
+/** Admin approval workflow + manual (on-behalf) booking (US §7). */
+test.describe('manggaleh — approval & manual booking (Functions)', () => {
+  test.skip(!manggalehConfigured, 'needs a manggaleh-wired build/config')
+  test.skip(!hasServiceKey || !hasAdminCreds || !hasPatientCreds, 'needs service key + admin + patient creds')
+
+  test('admin approves a pending booking → Confirmed', async () => {
+    const admin = await authedClient(creds.admin.email, creds.admin.password)
+    const uid = await userIdByEmail(creds.patient.email)
+    const apptId = await makeAppointment(creds.patient.email, { daysAhead: 9, start: '08:09', end: '08:39', status: 'PendingApproval' })
+    try {
+      const r = await invokeAs<any>(admin, 'set_appointment_status', { appointmentId: apptId, action: 'approve' })
+      expect(r.ok).toBe(true)
+      expect(r.status).toBe('Confirmed')
+    } finally {
+      await deleteRow('appointments', apptId, uid)
+    }
+  })
+
+  test('admin rejects a pending booking → CancelledByAdmin', async () => {
+    const admin = await authedClient(creds.admin.email, creds.admin.password)
+    const uid = await userIdByEmail(creds.patient.email)
+    const apptId = await makeAppointment(creds.patient.email, { daysAhead: 9, start: '08:41', end: '09:11', status: 'PendingApproval' })
+    try {
+      const r = await invokeAs<any>(admin, 'set_appointment_status', { appointmentId: apptId, action: 'reject' })
+      expect(r.ok).toBe(true)
+      expect(r.status).toBe('CancelledByAdmin')
+    } finally {
+      await deleteRow('appointments', apptId, uid)
+    }
+  })
+
+  test('admin can book on behalf of a patient (manual booking)', async () => {
+    const admin = await authedClient(creds.admin.email, creds.admin.password)
+    const uid = await userIdByEmail(creds.patient.email)
+    const { clinicId, serviceId, therapistId } = await catalogIds()
+    const date = daysFromNow(10)
+    let id = ''
+    try {
+      const r = await invokeAs<any>(admin, 'book_appointment', {
+        patientUserId: uid, clinicId, serviceTypeId: serviceId, therapistId, date,
+        start: '08:13', end: '08:43', forMemberName: 'Manual', source: 'Manual',
+      })
+      expect(r.id, r.error).toBeTruthy()
+      id = r.id
+    } finally {
+      if (id) await deleteRow('appointments', id, uid)
+    }
+  })
+})
+
+/** User deactivation (US §29). */
+test.describe('manggaleh — user deactivation (Functions)', () => {
+  test.skip(!manggalehConfigured, 'needs a manggaleh-wired build/config')
+  test.skip(!hasServiceKey || !hasAdminCreds || !hasPatient2Creds, 'needs service key + master admin + a second patient')
+
+  test('master can deactivate a user and it persists', async () => {
+    const admin = await authedClient(creds.admin.email, creds.admin.password)
+    const bUid = await userIdByEmail(creds.patient2.email)
+    try {
+      const r = await invokeAs<any>(admin, 'set_user_active', { targetUserId: bUid, active: false })
+      expect(r.ok, r.error).toBe(true)
+      const rows = await svc().data.from<any>('app_users').list({ limit: 500 })
+      expect(rows.find((u: any) => u.user_id === bUid)?.active).toBe(false)
+    } finally {
+      // always restore so later specs can use this account
+      await invokeAs<any>(admin, 'set_user_active', { targetUserId: bUid, active: true })
+    }
+  })
+
+  test('the master admin cannot be deactivated', async () => {
+    const admin = await authedClient(creds.admin.email, creds.admin.password)
+    const mUid = await userIdByEmail(creds.admin.email)
+    const r = await invokeAs<any>(admin, 'set_user_active', { targetUserId: mUid, active: false })
+    expect(r.ok).toBeFalsy()
+    expect(String(r.error)).toMatch(/Master Admin can't be deactivated/i)
+  })
+})
