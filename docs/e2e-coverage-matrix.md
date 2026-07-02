@@ -27,7 +27,7 @@ negative / business-rule scenarios and admin CRUD depth are not yet.**
 | 16 | Service Duration & Slot Logic | P | implicit in booking wizard | explicit end-time calc; not-enough-room hidden; duration-change stability |
 | 17 | Conflict Prevention | C | integration-functions (**therapist-occupied + patient-overlap rejected** ✓) | resource/clinic-level conflict (not in scope of current rules) |
 | 18 | Cancellation Reasons | P | admin-catalog (create reason) | edit; activate/deactivate; empty block; deactivate-keeps-past |
-| 21 | Announcements & Push | P | admin-catalog (publish), admin-crud (**pull + delete** ✓), patient-misc (list loads) | expiry auto-hide; empty/past-expiry block |
+| 21 | Announcements & Push | C¹ | admin-catalog (publish), admin-crud (pull + delete), notifications (**patient receives: Home badge + list; pull hides it** ✓) | empty/past-expiry publish block. ¹Native push (FCM/APNs) is out of scope per the blueprint — "push" is the in-app badge + email, so there is no device-push to test. |
 | 22 / 26 | Master/Sub-Admin & 12 Permissions | P | admin-config (screen + permission labels render, audit-log loads) | appoint/remove sub-admin; **toggle-permission enforcement**; disabled-capability blocked (direct route); master-cannot-be-removed |
 | 23 | Financial Reports | P | admin-config (Reports screen loads) | category/service/product/date filters; **from>to block**; PDF share; no-records msg |
 | 25 | Friends & Credit Transfer | C | patient-social (request rejected), cross-user (**request → accept, 2 sessions** ✓), integration-functions (**transfer keeps expiry; blocked w/o confirmed friend; blocked if insufficient** ✓) | decline path; book-on-behalf-friend block |

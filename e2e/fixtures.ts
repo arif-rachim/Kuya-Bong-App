@@ -125,6 +125,15 @@ export async function makeProduct(opts: { price: number; name?: string; active?:
   return (row as any).id
 }
 
+/** Create a shared announcement (service key). Returns its id. */
+export async function makeAnnouncement(opts: { title: string; message?: string; daysValid?: number; published?: boolean }): Promise<string> {
+  const row = await svc().data.from('announcements').insert({
+    title: opts.title, message: opts.message ?? 'E2E notice',
+    expiry_date: addDays(opts.daysValid ?? 30), published: opts.published ?? true,
+  })
+  return (row as any).id
+}
+
 /** Remove any friend link between two users, both directions (service key). */
 export async function clearFriendsBetween(uidA: string, uidB: string): Promise<void> {
   const all = await svc().data.from<any>('friends').list({ limit: 500 })
